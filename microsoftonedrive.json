@@ -19,7 +19,7 @@
     "rest_handler": "microsoftonedrive_connector._handle_rest_request",
     "configuration": {
         "client_id": {
-            "description": "Client Id",
+            "description": "Client ID",
             "data_type": "string",
             "required": true,
             "order": 0
@@ -50,7 +50,7 @@
             "read_only": true,
             "parameters": {
                 "file_id": {
-                    "description": "Id of file",
+                    "description": "ID of file",
                     "data_type": "string",
                     "required": false,
                     "primary": true,
@@ -60,7 +60,7 @@
                     "order": 0
                 },
                 "drive_id": {
-                    "description": "Drive id",
+                    "description": "Drive ID",
                     "data_type": "string",
                     "required": false,
                     "primary": true,
