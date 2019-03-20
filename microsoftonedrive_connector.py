@@ -407,7 +407,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         asset_id = self.get_asset_id()
         rest_endpoint = MSONEDRIVE_PHANTOM_ASSET_INFO_URL.format(asset_id=asset_id)
-        url = '{}{}'.format(MSONEDRIVE_PHANTOM_BASE_URL, rest_endpoint)
+        url = '{0}{1}{2}'.format(BaseConnector._get_phantom_base_url(), 'rest', rest_endpoint)
         ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=url, verify=False)
 
         if phantom.is_fail(ret_val):
@@ -455,7 +455,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         base url of phantom
         """
 
-        url = '{}{}'.format(MSONEDRIVE_PHANTOM_BASE_URL, MSONEDRIVE_PHANTOM_SYS_INFO_URL)
+        url = '{0}{1}{2}'.format(BaseConnector._get_phantom_base_url(), 'rest', MSONEDRIVE_PHANTOM_SYS_INFO_URL)
         ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=url, verify=False)
         if phantom.is_fail(ret_val):
             return ret_val, None
@@ -1306,9 +1306,10 @@ if __name__ == '__main__':
         password = getpass.getpass("Password: ")
 
     if username and password:
+        login_url = BaseConnector._get_phantom_base_url() + "login"
         try:
             print ("Accessing the Login page")
-            r = requests.get("https://127.0.0.1/login", verify=False)
+            r = requests.get(login_url, verify=False)
             csrftoken = r.cookies['csrftoken']
 
             data = dict()
@@ -1318,10 +1319,10 @@ if __name__ == '__main__':
 
             headers = dict()
             headers['Cookie'] = 'csrftoken={0}'.format(csrftoken)
-            headers['Referer'] = 'https://127.0.0.1/login'
+            headers['Referer'] = login_url
 
             print ("Logging into Platform to get the session id")
-            r2 = requests.post("https://127.0.0.1/login", verify=False, data=data, headers=headers)
+            r2 = requests.post(login_url, verify=False, data=data, headers=headers)
             session_id = r2.cookies['sessionid']
         except Exception as e:
             print "Unable to get session id from the platform. Error: {0}".format(str(e))
