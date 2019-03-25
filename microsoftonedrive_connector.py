@@ -963,8 +963,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_VAULT_INFO_ABSENT_MSG)
 
         file_info = vault_info[0]
-        file_metadata = file_info[MSONEDRIVE_JSON_METADATA]
-        file_size = file_metadata[MSONEDRIVE_JSON_SIZE]
+        file_size = file_info[MSONEDRIVE_JSON_SIZE]
 
         # Read the content of the file
         file_data = None
