@@ -1103,7 +1103,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         action_result.add_data(response)
 
         # Return success, no need to set the message, only the status
-        return action_result.set_status(phantom.APP_SUCCESS, MSONEDRIVE_DELETE_FILE_SUCCUSS)
+        return action_result.set_status(phantom.APP_SUCCESS, MSONEDRIVE_DELETE_FILE_SUCCESS)
 
     def _handle_delete_folder(self, param):
         """ This function is used to handle delete folder action.

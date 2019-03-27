@@ -114,4 +114,4 @@ MSONEDRIVE_FILE_ALREADY_AVAILABLE = 'File already available in Vault'
 MSONEDRIVE_ADD_FILE_TO_VAULT_ERROR = 'Error while adding the file to vault'
 MSONEDRIVE_TOKEN_EXPIRED = 'Access token has expired'
 MSONEDRIVE_LIST_DRIVE_FAILED_MSG = 'List drive action failed.'
-MSONEDRIVE_DELETE_FILE_SUCCUSS = "File is deleted successfully."
+MSONEDRIVE_DELETE_FILE_SUCCESS = "File was deleted successfully."
