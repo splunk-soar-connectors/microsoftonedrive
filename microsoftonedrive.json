@@ -1,0 +1,1896 @@
+{
+    "appid": "564fe3f1-b1bb-4196-ba52-9422d0e4d430",
+    "name": "Microsoft OneDrive",
+    "description": "This app integrates with Microsoft OneDrive to execute various generic actions",
+    "type": "sandbox",
+    "product_vendor": "Microsoft",
+    "logo": "logo_microsoftonedrive.svg",
+    "logo_dark": "logo_microsoftonedrive_dark.svg",
+    "product_name": "Microsoft OneDrive",
+    "product_version_regex": ".*",
+    "publisher": "Splunk",
+    "license": "Copyright (c) 2019 Splunk Inc.",
+    "app_version": "1.0.4",
+    "utctime_updated": "2019-03-27T23:51:50.000000Z",
+    "package_name": "phantom_microsoftonedrive",
+    "main_module": "microsoftonedrive_connector.pyc",
+    "min_phantom_version": "4.0.1068",
+    "app_wizard_version": "1.0.0",
+    "rest_handler": "microsoftonedrive_connector._handle_rest_request",
+    "configuration": {
+        "client_id": {
+            "description": "Client ID",
+            "data_type": "string",
+            "required": true,
+            "order": 0
+        },
+        "client_secret": {
+            "description": "Client secret",
+            "data_type": "password",
+            "required": true,
+            "order": 1
+        }
+    },
+    "actions": [
+        {
+            "action": "test connectivity",
+            "identifier": "test_connectivity",
+            "description": "Validate the asset configuration for connectivity using supplied configuration",
+            "type": "test",
+            "read_only": true,
+            "parameters": {},
+            "output": [],
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "get file",
+            "identifier": "get_file",
+            "description": "Download a file from server and add it to the vault",
+            "type": "investigate",
+            "read_only": true,
+            "parameters": {
+                "file_id": {
+                    "description": "ID of file",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive file id"
+                    ],
+                    "order": 0
+                },
+                "drive_id": {
+                    "description": "Drive ID",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "order": 1,
+                    "contains": [
+                        "msonedrive drive id"
+                    ]
+                },
+                "file_path": {
+                    "description": "Path of file",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "order": 2,
+                    "contains": [
+                        "file path"
+                    ]
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.drive_id",
+                    "data_type": "string",
+                    "column_name": "Drive ID",
+                    "column_order": 1,
+                    "example_values": [
+                        "b!gy8xut3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.file_id",
+                    "data_type": "string",
+                    "column_name": "File ID",
+                    "column_order": 0,
+                    "example_values": [
+                        "01FMDEUQZPP6VBB2PJQRF3AQRCTXQVAWMO"
+                    ],
+                    "contains": [
+                        "msonedrive file id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.file_path",
+                    "data_type": "string",
+                    "column_name": "File Path",
+                    "column_order": 2,
+                    "example_values": [
+                        "newsample 1/filetxt.txt"
+                    ],
+                    "contains": [
+                        "file path"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.data.*.file_name",
+                    "data_type": "string",
+                    "column_name": "File Name",
+                    "column_order": 3,
+                    "example_values": [
+                        "filetxt.txt"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.size",
+                    "data_type": "numeric",
+                    "column_name": "Size (Bytes)",
+                    "column_order": 5,
+                    "example_values": [
+                        4
+                    ],
+                    "contains": [
+                        "file size"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.vault_id",
+                    "data_type": "string",
+                    "column_name": "Vault ID",
+                    "column_order": 4,
+                    "example_values": [
+                        "7110eda4d09e062aa5e4a390b0a572ac0d2c0220"
+                    ],
+                    "contains": [
+                        "vault id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.vault_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "7110eda4d09e062aa5e4a390b0a572ac0d2c0220"
+                    ],
+                    "contains": [
+                        "vault id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        ""
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "list items",
+            "identifier": "list_items",
+            "description": "List of items",
+            "type": "investigate",
+            "read_only": true,
+            "parameters": {
+                "drive_id": {
+                    "description": "Parent drive ID",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive drive id"
+                    ],
+                    "order": 0
+                },
+                "ph_0": {
+                    "description": "Placeholder",
+                    "data_type": "ph",
+                    "required": false,
+                    "order": 1
+                },
+                "folder_id": {
+                    "description": "Parent folder ID",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive folder id"
+                    ],
+                    "order": 2
+                },
+                "folder_path": {
+                    "description": "Parent folder path",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive folder path"
+                    ],
+                    "order": 3
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.drive_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "b!gy8xut3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.folder_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "01FMEDUQY3MRPCRFEYX5FJPU3KT7J24LJB"
+                    ],
+                    "contains": [
+                        "msonedrive folder id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.folder_path",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test",
+                        "Test/child_1/child_1_1"
+                    ],
+                    "contains": [
+                        "msonedrive folder path"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.@microsoft.graph.downloadUrl",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_layouts/15/download.aspx?UniqueId=deb45252-ede0-4437-b497-7eff590ffb8c&Translate=false&tempauth=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvdGVzdHBoYW50b20tbXukc2hhcmVwb2ludC5jb21AMWUzMDlhYmYtZGI2Yy00ZmNiLWExZDItMDdiZjY4MjRkNThkIiwiaXNzIjoiMDAwMDAwMDMtMDAwMC0wZmYxLWNlMDAtMDAwMDAwMDAwMDAwIiwibmJmIjoiMTUzNzM1NDc5NCIsImV4cCI6IjE1MzczNTgzOTQiLCJlbmRwb2ludHVybCI6InpZSkgzbWhYamcySnJZM0QxT1RDeUIrSGV0YWtWS2RTbDNCc2dMMW5Mc1U9IiwiZW5kcG9pbnR1cmxMZW5ndGgiOiIxNjciLCJpc2xvb3BiYWNrIjoiVHJ1ZSIsImNpZCI6Ik1HSXlPR1JtWkRndE5qTTRNQzAwTmpVMUxUZ3pabVF0TW1NNE16SXdOVGxoWldObSIsInZlciI6Imhhc2hlZHByb29mdG9rZW4iLCJzaXRlaWQiOiJZall6TVRKbU9ETXRabVpsWkMwME1UQTVMVGcyWTJRdE1qTTBaV0kxTkRCbFl6ZGsiLCJhcHBfZGlzcGxheW5hbWUiOiJQaGFudG9tX09uZS1kcml2ZSIsInNpZ25pbl9zdGF0ZSI6IltcImttc2lcIl0iLCJhcHBpZCI6ImJhNTYxMjJjLTg1NmMtNDY5Zi1iNmEwLWE0MzM1NjE0YzUwMiIsInRpZCI6IjFlMzA5YWJmLWRiNmMtNGZjYi1hMWQyLTA3YmY2ODI0ZDU4ZCIsInVwbiI6Im1hdHRAdGVzdHBoYW50b20ub25taWNyb3NvZnQuY29tIiwicHVpZCI6IjEwMDNCRkZEQURCQjYzNEIiLCJzY3AiOiJhbGxmaWxlcy53cml0ZSBhbGxwcm9maWxlcy53cml0ZSIsInR0IjoiMiIsInVzZVBlcnNpc3RlbnRDb29raWUiOm51bGx9.Q0VLMFIrYWNDR2NvVVp1bURsRlY5N0U1dXVzYmJrT092Rkx6UDlqVTlaRT0&ApiVersion=2.0",
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_layouts/15/download.aspx?UniqueId=deb45252-ede0-4437-b497-7eff590ffb8c&Translate=false&tempauth=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvdGVzdHBoYW50b20tbXukc2hhcmVwb2ludC5jb21AMWUzMDlhYmYtZGI2Yy00ZmNiLWExZDItMDdiZjY4MjRkNThkIiwiaXNzIjoiMDAwMDAwMDMtMDAwMC0wZmYxLWNlMDAtMDAwMDAwMDAwMDAwIiwibmJmIjoiMTUzNzM1MjY1MyIsImV4cCI6IjE1MzczNTYyNTMiLCJlbmRwb2ludHVybCI6InpZSkgzbWhYamcySnJZM0QxT1RDeUIrSGV0YWtWS2RTbDNCc2dMMW5Mc1U9IiwiZW5kcG9pbnR1cmxMZW5ndGgiOiIxNjciLCJpc2xvb3BiYWNrIjoiVHJ1ZSIsImNpZCI6Ik1UYzRZek15WmpndFlqa3hPQzAwTkdNNExXSXhaV0l0TWpGak9UUXlOV0l4T0dJeSIsInZlciI6Imhhc2hlZHByb29mdG9rZW4iLCJzaXRlaWQiOiJZall6TVRKbU9ETXRabVpsWkMwME1UQTVMVGcyWTJRdE1qTTBaV0kxTkRCbFl6ZGsiLCJhcHBfZGlzcGxheW5hbWUiOiJQaGFudG9tX09uZS1kcml2ZSIsInNpZ25pbl9zdGF0ZSI6IltcImttc2lcIl0iLCJhcHBpZCI6ImJhNTYxMjJjLTg1NmMtNDY5Zi1iNmEwLWE0MzM1NjE0YzUwMiIsInRpZCI6IjFlMzA5YWJmLWRiNmMtNGZjYi1hMWQyLTA3YmY2ODI0ZDU4ZCIsInVwbiI6Im1hdHRAdGVzdHBoYW50b20ub25taWNyb3NvZnQuY29tIiwicHVpZCI6IjEwMDNCRkZEQURCQjYzNEIiLCJzY3AiOiJhbGxmaWxlcy53cml0ZSBhbGxwcm9maWxlcy53cml0ZSIsInR0IjoiMiIsInVzZVBlcnNpc3RlbnRDb29raWUiOm51bGx9.cUdVdzc5am9HRlJRS3BPa01VU0NYWGRaeGV2ZDVuMng1MUhxVkxRSE1uZz0&ApiVersion=2.0"
+                    ],
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cTag",
+                    "data_type": "string",
+                    "example_values": [
+                        "\"c:{609AC0D8-C27A-479A-A966-1624388FE512},0\"",
+                        "\"c:{28E5641B-9894-4ABF-97D3-6A9FD3AE2D21},0\""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.application.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test_One-drive"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.application.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "ba56100c-856c-469f-b6a0-a4335614c502"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test User"
+                    ],
+                    "contains": [
+                        "user name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.email",
+                    "data_type": "string",
+                    "example_values": [
+                        "test@test.onmicrosoft.com"
+                    ],
+                    "contains": [
+                        "email"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "17b006d0-35ed-4881-ab62-d2eb73c2ebe3"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T10:37:09Z",
+                        "2018-09-01T09:21:24Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.currentUserRole.blocksDownload",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.currentUserRole.readOnly",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.eTag",
+                    "data_type": "string",
+                    "example_values": [
+                        "\"{60A90CD8-C27A-479A-A966-1624388FE512},1\"",
+                        "\"{2856E41B-9894-4ABF-97D3-6A9FD3AE2D21},1\""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.file.hashes.quickXorHash",
+                    "data_type": "string",
+                    "example_values": [
+                        "fio2VWDQgVGaX34LXedeos6Y6/s="
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.file.mimeType",
+                    "data_type": "string",
+                    "example_values": [
+                        "image/png"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.fileSystemInfo.createdDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T10:37:09Z",
+                        "2018-09-01T09:21:24Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.fileSystemInfo.lastModifiedDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T10:37:09Z",
+                        "2018-09-01T09:21:24Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.folder.childCount",
+                    "data_type": "numeric",
+                    "example_values": [
+                        3,
+                        17
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "01FMDUEQ6YYCUWA6WCTJD2SZQWEQ4I7ZIS",
+                        "01FMDUEQY3MRPCRFEYX5FJPU3KT7J24LJB"
+                    ],
+                    "contains": [
+                        "msonedrive file id",
+                        "msonedrive folder id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.image.height",
+                    "data_type": "numeric",
+                    "example_values": [
+                        183
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.image.width",
+                    "data_type": "numeric",
+                    "example_values": [
+                        275
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.application.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test_One-drive"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.application.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "ba56002c-856c-469f-b6a0-a4335614c502"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test User"
+                    ],
+                    "contains": [
+                        "user name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.email",
+                    "data_type": "string",
+                    "example_values": [
+                        "test@test.onmicrosoft.com"
+                    ],
+                    "contains": [
+                        "email"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "17be00d0-35ed-4881-ab62-d2eb73c2ebe3"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T10:37:09Z",
+                        "2018-09-01T09:21:24Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "child",
+                        "test folder",
+                        "test file"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.package.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "oneNote"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.driveId",
+                    "data_type": "string",
+                    "example_values": [
+                        "b!gyx8tu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.drivePath",
+                    "data_type": "string",
+                    "example_values": [
+                        "/drives/b!gy8txu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/root:/",
+                        "/drive/root:/"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.driveType",
+                    "data_type": "string",
+                    "example_values": [
+                        "business"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.folderPath",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test/child",
+                        "Test"
+                    ],
+                    "contains": [
+                        "msonedrive folder path"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "01FMDEUQY3MRPCRFEYX5FJPU3KT7J24LJB",
+                        "01FMDEUQ56Y2GOVW7725BZO354PWSELRRZ"
+                    ],
+                    "contains": [
+                        "msonedrive drive id",
+                        "msonedrive folder id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.size",
+                    "data_type": "numeric",
+                    "example_values": [
+                        97701,
+                        359666
+                    ],
+                    "contains": [
+                        "file size"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.webUrl",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test/child",
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test"
+                    ],
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.total_items",
+                    "data_type": "numeric",
+                    "example_values": [
+                        20,
+                        23
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Total items: 20",
+                        "Total items: 23"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "type": "custom",
+                "view": "microsoftonedrive_view.display_view"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "list drive",
+            "identifier": "list_drive",
+            "description": "List of Drives",
+            "type": "investigate",
+            "read_only": true,
+            "parameters": {},
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "column_name": "Status",
+                    "column_order": 0,
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.displayName",
+                    "data_type": "string",
+                    "column_name": "Created By",
+                    "column_order": 8,
+                    "example_values": [
+                        "System Account"
+                    ],
+                    "contains": [
+                        "user name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdDateTime",
+                    "data_type": "string",
+                    "column_name": "Created Date Time",
+                    "column_order": 7,
+                    "example_values": [
+                        "2018-09-04T01:34:10Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.description",
+                    "data_type": "string",
+                    "example_values": [
+                        ""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.driveType",
+                    "data_type": "string",
+                    "column_name": "Drive Type",
+                    "column_order": 2,
+                    "example_values": [
+                        "business"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "column_name": "Drive ID",
+                    "column_order": 3,
+                    "example_values": [
+                        "b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.displayName",
+                    "data_type": "string",
+                    "column_name": "Last Modified By",
+                    "column_order": 6,
+                    "example_values": [
+                        "Test User"
+                    ],
+                    "contains": [
+                        "user name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.email",
+                    "data_type": "string",
+                    "example_values": [
+                        "test@test.onmicrosoft.com"
+                    ],
+                    "contains": [
+                        "email"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "17be76d0-35ed-4881-ab62-d2eb73c2ebe3"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedDateTime",
+                    "data_type": "string",
+                    "column_name": "Last Modified Date Time",
+                    "column_order": 5,
+                    "example_values": [
+                        "2018-09-21T05:40:10Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "column_name": "Name",
+                    "column_order": 1,
+                    "example_values": [
+                        "OneDrive"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.owner.user.displayName",
+                    "data_type": "string",
+                    "column_name": "Owner",
+                    "column_order": 4,
+                    "example_values": [
+                        "Test User"
+                    ],
+                    "contains": [
+                        "user name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.owner.user.email",
+                    "data_type": "string",
+                    "example_values": [
+                        "test@test.onmicrosoft.com"
+                    ],
+                    "contains": [
+                        "email"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.owner.user.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "17be76d0-35ed-4881-ab62-d2eb73c2ebe3"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.quota.deleted",
+                    "data_type": "numeric",
+                    "example_values": [
+                        2555167314
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.quota.remaining",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1097114685696
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.quota.state",
+                    "data_type": "string",
+                    "example_values": [
+                        "normal"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.quota.total",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1099511627776
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.quota.used",
+                    "data_type": "numeric",
+                    "example_values": [
+                        355597522
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.webUrl",
+                    "data_type": "string",
+                    "column_name": "Web URL",
+                    "column_order": 9,
+                    "example_values": [
+                        "https://test-my.sharepoint.com/personal/test_test_onmicrosoft_com/Documents"
+                    ],
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.summary.total_drives",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "Total drives: 1"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "upload file",
+            "identifier": "upload_file",
+            "description": "Upload file",
+            "type": "generic",
+            "read_only": false,
+            "parameters": {
+                "drive_id": {
+                    "description": "Parent drive ID",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive drive id"
+                    ],
+                    "order": 0
+                },
+                "vault_id": {
+                    "description": "Vault ID",
+                    "data_type": "string",
+                    "required": true,
+                    "primary": true,
+                    "contains": [
+                        "vault id",
+                        "sha1"
+                    ],
+                    "order": 1
+                },
+                "file_path": {
+                    "description": "File path with file name",
+                    "data_type": "string",
+                    "required": true,
+                    "primary": true,
+                    "contains": [
+                        "file path"
+                    ],
+                    "order": 2
+                },
+                "auto_rename": {
+                    "description": "Auto rename file",
+                    "data_type": "boolean",
+                    "default": true,
+                    "order": 3
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.auto_rename",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.drive_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "b!gy8xuu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ],
+                    "column_name": "Drive ID",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.parameter.file_path",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test/test135.txt",
+                        "test135.png"
+                    ],
+                    "contains": [
+                        "file path"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.vault_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "c46f17281437ff7906b5c6779a2fb7c3f002b786"
+                    ],
+                    "contains": [
+                        "vault id",
+                        "sha1"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.@content.downloadUrl",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_layouts/15/download.aspx?UniqueId=0781d3bb-1400-442d-bf30-78f9f62a114d&Translate=false&tempauth=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvdGVzdHBoYW50b20tbXkuc2hhcmVwb2ludC5jb21AMWUzMDlhYmYtZGI2Yy00ZmNiLWExZDItMDdiZjY4MjRkNThkIiwiaXNzIjoiMDAwMDAwMDMtMDAwMC0wZmYxLWNlMDAtMDAwMDAwMDAwMDAwIiwibmJmIjoiMTUzNzUzMjU4MyIsImV4cCI6IjE1Mzc1MzYxODMiLCJlbmRwb2ludHVybCI6Im5OVUxONHlpTXUyWDY2SWxqUllPaERUSmYzMlRIaDZBRFQ3WUNsRVRJNVU9IiwiZW5kcG9pbnR1cmxMZW5ndGgiOiIxNjciLCJpc2xvb3BiYWNrIjoiVHJ1ZSIsImNpZCI6Ik1qQmxORGt3T1dVdFl6QTROUzB3TURBd0xURmlZVEl0WmpWak5XUXpabVl5TWprNCIsInZlciI6Imhhc2hlZHByb29mdG9rZW4iLCJzaXRlaWQiOiJZall6TVRKbU9ETXRabVpsWkMwME1UQTVMVGcyWTJRdE1qTTBaV0kxTkRCbFl6ZGsiLCJhcHBfZGlzcGxheW5hbWUiOiJQaGFudG9tX09uZS1kcml2ZSIsInNpZ25pbl9zdGF0ZSI6IltcImttc2lcIl0iLCJhcHBpZCI6ImJhNTYxMjJjLTg1NmMtNDY5Zi1iNmEwLWE0MzM1NjE0YzUwMiIsInRpZCI6IjFlMzA5YWJmLWRiNmMtNGZjYi1hMWQyLTA3YmY2ODI0ZDU4ZCIsInVwbiI6Im1hdHRAdGVzdHBoYW50b20ub25taWNyb3NvZnQuY29tIiwicHVpZCI6IjEwMDNCRkZEQURCQjYzNEIiLCJzY3AiOiJhbGxmaWxlcy53cml0ZSBhbGxwcm9maWxlcy53cml0ZSIsInR0IjoiMiIsInVzZVBlcnNpc3RlbnRDb29raWUiOm51bGx9.d1NQWmR6TnIxaHdkazYrMEZrSHJ4ZjhmQ0dHKzVBZUZySzczMzZycHluVT0&ApiVersion=2.0"
+                    ],
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.@odata.context",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_api/v2.0/$metadata#items/$entity"
+                    ],
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.@odata.editLink",
+                    "data_type": "string",
+                    "example_values": [
+                        "drives/b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/items/01FMDEUQ532OAQOAAUFVCL6MDY7H3CUEKN"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.@odata.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_api/v2.0/drives/b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/items/01FMDEUQ532OAQOAAUFVCL6MDY7H3CUEKN"
+                    ],
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.@odata.type",
+                    "data_type": "string",
+                    "example_values": [
+                        "#oneDrive.item"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cTag",
+                    "data_type": "string",
+                    "example_values": [
+                        "\"c:{0781D3BB-1400-442D-BF30-78F9F62A114D},2\""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.application.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test_One-drive"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.application.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "ba56122c-856c-469f-b6a0-a4335614c502"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test User"
+                    ],
+                    "contains": [
+                        "user name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.email",
+                    "data_type": "string",
+                    "example_values": [
+                        "test@test.onmicrosoft.com"
+                    ],
+                    "contains": [
+                        "email"
+                    ],
+                    "column_name": "Created By",
+                    "column_order": 6
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "17be76d0-35ed-4881-ab62-d2eb73c2ebe3"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-21T12:22:02Z"
+                    ],
+                    "column_name": "Created At",
+                    "column_order": 7
+                },
+                {
+                    "data_path": "action_result.data.*.eTag",
+                    "data_type": "string",
+                    "example_values": [
+                        "\"{0781D3BB-1400-442D-BF30-78F9F62A114D},3\""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.file.hashes.quickXorHash",
+                    "data_type": "string",
+                    "example_values": [
+                        "AAAAAAAAAAAAAAAAAIwPCgAAAAA="
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.file.mimeType",
+                    "data_type": "string",
+                    "example_values": [
+                        "text/plain"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.fileSystemInfo.createdDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T12:22:02Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.fileSystemInfo.lastModifiedDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T12:23:03Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "01FMDEUQ532OAQOAAUFVCL6MDY7H3CUEKN"
+                    ],
+                    "contains": [
+                        "msonedrive file id"
+                    ],
+                    "column_name": "File ID",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.application.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test_One-drive"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.application.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "ba56122c-856c-469f-b6a0-a4335614c502"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test User"
+                    ],
+                    "contains": [
+                        "user name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.email",
+                    "data_type": "string",
+                    "example_values": [
+                        "test@test.onmicrosoft.com"
+                    ],
+                    "contains": [
+                        "email"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "17be76d0-35ed-4881-ab62-d2eb73c2ebe3"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T12:23:03Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "test135 3.txt"
+                    ],
+                    "column_name": "File Name",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.driveId",
+                    "data_type": "string",
+                    "example_values": [
+                        "b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.drivePath",
+                    "data_type": "string",
+                    "example_values": [
+                        "/drives/b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/root:/"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.driveType",
+                    "data_type": "string",
+                    "example_values": [
+                        "business"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.folderPath",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test",
+                        "TestParent/child"
+                    ],
+                    "contains": [
+                        "msonedrive folder path"
+                    ],
+                    "column_name": "Folder Path",
+                    "column_order": 4
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "01FMDEUQZDNXCWNB3JIZCIM2A27DHROBE2"
+                    ],
+                    "contains": [
+                        "msonedrive drive id",
+                        "msonedrive folder id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.size",
+                    "data_type": "numeric",
+                    "example_values": [
+                        168791040
+                    ],
+                    "contains": [
+                        "file size"
+                    ],
+                    "column_name": "Size (Bytes)",
+                    "column_order": 5
+                },
+                {
+                    "data_path": "action_result.data.*.webUrl",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test/abc135%203.txt"
+                    ],
+                    "contains": [
+                        "url"
+                    ],
+                    "column_name": "File Web URL",
+                    "column_order": 3
+                },
+                {
+                    "data_path": "action_result.summary",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "The file is uploaded successfully"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1,
+                        0
+                    ]
+                }
+            ],
+            "render": {
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "delete file",
+            "identifier": "delete_file",
+            "description": "Delete file",
+            "type": "correct",
+            "read_only": false,
+            "parameters": {
+                "file_id": {
+                    "description": "File id",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive file id"
+                    ],
+                    "order": 0
+                },
+                "drive_id": {
+                    "description": "Drive id",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "order": 1,
+                    "contains": [
+                        "msonedrive drive id"
+                    ]
+                },
+                "file_path": {
+                    "description": "Path of file",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "order": 2,
+                    "contains": [
+                        "file path"
+                    ]
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "column_name": "Status",
+                    "column_order": 3,
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.drive_id",
+                    "data_type": "string",
+                    "column_name": "Drive ID",
+                    "column_order": 1,
+                    "example_values": [
+                        "b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.file_id",
+                    "data_type": "string",
+                    "column_name": "File ID",
+                    "column_order": 0,
+                    "example_values": [
+                        "01FMDEUQYMRSDNYGDC3NB3KAX7M2UWFZLA"
+                    ],
+                    "contains": [
+                        "msonedrive file id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.file_path",
+                    "data_type": "string",
+                    "column_name": "File Path",
+                    "column_order": 2,
+                    "example_values": [
+                        "/Phantom/a.txt"
+                    ],
+                    "contains": [
+                        "file path"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.summary",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "File is deleted successfully.",
+                        "Either File ID or File Path is mandatory"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "delete folder",
+            "identifier": "delete_folder",
+            "description": "Delete a folder",
+            "type": "generic",
+            "undo": "create folder",
+            "read_only": false,
+            "parameters": {
+                "drive_id": {
+                    "description": "Parent drive ID",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive drive id"
+                    ],
+                    "order": 0
+                },
+                "ph_0": {
+                    "description": "Placeholder",
+                    "data_type": "ph",
+                    "required": false,
+                    "order": 1
+                },
+                "folder_id": {
+                    "description": "Folder ID",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive folder id"
+                    ],
+                    "order": 2
+                },
+                "folder_path": {
+                    "description": "Folder path",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive folder path"
+                    ],
+                    "order": 3
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "column_name": "Status",
+                    "column_order": 3,
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.drive_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "b!gy8txu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ],
+                    "column_name": "Drive ID",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.parameter.folder_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "01FMDUEQUZHRA4VF6BJBDYUI6OWI4SERVD",
+                        "01FMDUEQ3KNL7RSCKRLZCJEHH6PPDLMSKW"
+                    ],
+                    "contains": [
+                        "msonedrive folder id"
+                    ],
+                    "column_name": "Folder ID",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.parameter.folder_path",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test/child/Test_2 3",
+                        "Test/child/test1234567",
+                        "Test"
+                    ],
+                    "contains": [
+                        "msonedrive folder path"
+                    ],
+                    "column_name": "Folder Path",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.summary",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "The folder is deleted successfully",
+                        "Either Folder ID or Folder Path is mandatory"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        },
+        {
+            "action": "create folder",
+            "identifier": "create_folder",
+            "description": "Create a folder",
+            "type": "generic",
+            "undo": "delete folder",
+            "read_only": false,
+            "parameters": {
+                "drive_id": {
+                    "description": "Parent drive ID",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive drive id"
+                    ],
+                    "order": 0
+                },
+                "folder_id": {
+                    "description": "Parent folder ID",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive folder id"
+                    ],
+                    "order": 1
+                },
+                "folder_path": {
+                    "description": "Parent folder path",
+                    "data_type": "string",
+                    "required": false,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive folder path"
+                    ],
+                    "order": 2
+                },
+                "folder_name": {
+                    "description": "Folder name",
+                    "data_type": "string",
+                    "required": true,
+                    "primary": true,
+                    "contains": [
+                        "msonedrive folder name"
+                    ],
+                    "order": 3
+                },
+                "auto_rename": {
+                    "description": "Auto rename folder",
+                    "data_type": "boolean",
+                    "default": true,
+                    "order": 4
+                }
+            },
+            "output": [
+                {
+                    "data_path": "action_result.status",
+                    "data_type": "string",
+                    "example_values": [
+                        "success",
+                        "failed"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.auto_rename",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.drive_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "b!gy8xu3t_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.folder_id",
+                    "data_type": "string",
+                    "example_values": [
+                        "01FMDUEQ3YMRPCRFEYX5FJPU3KT7J24LJB"
+                    ],
+                    "contains": [
+                        "msonedrive folder id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.folder_name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test_1"
+                    ],
+                    "contains": [
+                        "msonedrive folder name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.parameter.folder_path",
+                    "data_type": "string",
+                    "example_values": [
+                        "TestParentFolder/child"
+                    ],
+                    "contains": [
+                        "msonedrive folder path"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.@odata.context",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://graph.microsoft.com/v1.0/$metadata#users('17be76d0-00ed-4881-ab62-d2eb73c2ebe3')/drives('b%21gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q')/items('01FMDEUQY3MRPCRFEYX5FJPU3KT7J24LJB')/children/$entity",
+                        "https://graph.microsoft.com/v1.0/$metadata#users('17be76d0-00ed-4881-ab62-d2eb73c2ebe3')/drive/items('01FMDEUQY3MRPCRFEYX5FJPU3KT7J24LJB')/children/$entity"
+                    ],
+                    "contains": [
+                        "url"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.cTag",
+                    "data_type": "string",
+                    "example_values": [
+                        "\"c:{63A758BF-9E00-473B-891B-096B3CAFA041},0\"",
+                        "\"c:{4C780F33-4300-4608-9CD5-290D23DD630A},0\""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.application.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test_One-drive"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.application.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "ba56002c-856c-469f-b6a0-a4335614c502"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test User"
+                    ],
+                    "contains": [
+                        "user name"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.email",
+                    "data_type": "string",
+                    "example_values": [
+                        "test@test.onmicrosoft.com"
+                    ],
+                    "contains": [
+                        "email"
+                    ],
+                    "column_name": "Created By",
+                    "column_order": 6
+                },
+                {
+                    "data_path": "action_result.data.*.createdBy.user.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "17be00d0-35ed-4881-ab62-d2eb73c2ebe3"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.createdDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T08:50:43Z",
+                        "2018-09-01T08:49:18Z"
+                    ],
+                    "column_name": "Created At",
+                    "column_order": 7
+                },
+                {
+                    "data_path": "action_result.data.*.eTag",
+                    "data_type": "string",
+                    "example_values": [
+                        "\"{63A700BF-9E63-473B-891B-096B3CAFA041},1\"",
+                        "\"{4C700F33-4318-4608-9CD5-290D23DD630A},1\""
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.fileSystemInfo.createdDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T08:50:43Z",
+                        "2018-09-01T08:49:18Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.fileSystemInfo.lastModifiedDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T08:50:43Z",
+                        "2018-09-01T08:49:18Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.folder.childCount",
+                    "data_type": "numeric",
+                    "example_values": [
+                        0
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "01FMDUEQ57LCTWGY46HNDYSGYJNM6K7ICB",
+                        "01FMDUEQZTB54EYGCDBBDJZVJJBUR52YYK"
+                    ],
+                    "contains": [
+                        "msonedrive folder id"
+                    ],
+                    "column_name": "Folder ID",
+                    "column_order": 1
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.application.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test_One-drive"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.application.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "ba56002c-856c-469f-b6a0-a4335614c502"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.displayName",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test User"
+                    ],
+                    "contains": [
+                        "file path"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.email",
+                    "data_type": "string",
+                    "example_values": [
+                        "test@test.onmicrosoft.com"
+                    ],
+                    "contains": [
+                        "email"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedBy.user.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "17be00d0-35ed-4881-ab62-d2eb73c2ebe3"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.lastModifiedDateTime",
+                    "data_type": "string",
+                    "example_values": [
+                        "2018-09-01T08:50:43Z",
+                        "2018-09-01T08:49:18Z"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.name",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test_1 1",
+                        "Test_1"
+                    ],
+                    "contains": [
+                        "msonedrive folder name"
+                    ],
+                    "column_name": "Folder Name",
+                    "column_order": 2
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.driveId",
+                    "data_type": "string",
+                    "example_values": [
+                        "b!gy8txu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                    ],
+                    "contains": [
+                        "msonedrive drive id"
+                    ],
+                    "column_name": "Drive ID",
+                    "column_order": 0
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.drivePath",
+                    "data_type": "string",
+                    "example_values": [
+                        "/drives/b!gy8txu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/root:/",
+                        "/drive/root:/"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.driveType",
+                    "data_type": "string",
+                    "example_values": [
+                        "business"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.folderPath",
+                    "data_type": "string",
+                    "example_values": [
+                        "Test/child",
+                        "Test"
+                    ],
+                    "contains": [
+                        "msonedrive folder path"
+                    ],
+                    "column_name": "Folder Path",
+                    "column_order": 4
+                },
+                {
+                    "data_path": "action_result.data.*.parentReference.id",
+                    "data_type": "string",
+                    "example_values": [
+                        "01FMDUEQY3MRPCRFEYX5FJPU3KT7J24LJB"
+                    ],
+                    "contains": [
+                        "msonedrive drive id",
+                        "msonedrive folder id"
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.size",
+                    "data_type": "numeric",
+                    "example_values": [
+                        0
+                    ],
+                    "contains": [
+                        "file size"
+                    ],
+                    "column_name": "Size (Bytes)",
+                    "column_order": 5
+                },
+                {
+                    "data_path": "action_result.data.*.webUrl",
+                    "data_type": "string",
+                    "example_values": [
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test/Test_1%201",
+                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test/Test_1"
+                    ],
+                    "contains": [
+                        "url"
+                    ],
+                    "column_name": "Folder Web URL",
+                    "column_order": 3
+                },
+                {
+                    "data_path": "action_result.summary",
+                    "data_type": "string"
+                },
+                {
+                    "data_path": "action_result.message",
+                    "data_type": "string",
+                    "example_values": [
+                        "The folder: Test_1 1 is created successfully",
+                        "The folder: Test_1 is created successfully"
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                },
+                {
+                    "data_path": "summary.total_objects_successful",
+                    "data_type": "numeric",
+                    "example_values": [
+                        1
+                    ]
+                }
+            ],
+            "render": {
+                "type": "table"
+            },
+            "versions": "EQ(*)"
+        }
+    ]
+}
