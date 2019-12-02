@@ -511,10 +511,25 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
             return action_result.set_status(phantom.APP_ERROR, status_message='Error while generating access_token')
 
-        self._state[MSONEDRIVE_TOKEN_STRING] = resp_json
+        self._state[MSONEDRIVE_TOKEN_STRING] = resp_json 
+        self.save_state(self._state)
+        self._state = self.load_state()
+
         self._access_token = resp_json[MSONEDRIVE_ACCESS_TOKEN_STRING]
         self._refresh_token = resp_json[MSONEDRIVE_REFRESH_TOKEN_STRING]
-        self.save_state(self._state)
+
+        # Scenario -
+        # 
+        # If the corresponding state file doesn't have correct owner, owner group or permissions,
+        # the newely generated token is not being saved to state file and automatic workflow for token has been stopped.
+        # So we have to check that token from response and token which are saved to state file after successfully generated token are same or not.
+
+        if self._access_token == self._state.get(MSONEDRIVE_TOKEN_STRING, {}).get(MSONEDRIVE_ACCESS_TOKEN_STRING):
+            message = "Error occurred while saving the newly generated access token (in place of the expired token) in the state file."
+            message += " Please check the owner, owner group, and the permissions of the state file."
+            message += " The Phantom user should be having correct access rights and ownership for the corresponding state file."
+            return action_result.set_status(phantom.APP_ERROR, message)
+
         return phantom.APP_SUCCESS
 
     def _update_request(self, action_result, endpoint, headers=None, params=None, data=None, method='get'):
