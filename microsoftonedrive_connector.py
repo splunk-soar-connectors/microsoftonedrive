@@ -522,7 +522,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         # 
         # If the corresponding state file doesn't have correct owner, owner group or permissions,
         # the newely generated token is not being saved to state file and automatic workflow for token has been stopped.
-        # So we have to check that token from response and token which are saved to state file after successfully generated token are same or not.
+        # So we have to check that token from response and token which are saved to state file after successful generation of new token are same or not.
 
         if self._access_token == self._state.get(MSONEDRIVE_TOKEN_STRING, {}).get(MSONEDRIVE_ACCESS_TOKEN_STRING):
             message = "Error occurred while saving the newly generated access token (in place of the expired token) in the state file."
