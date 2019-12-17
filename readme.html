@@ -6,41 +6,47 @@
 -->
 
 <html>
-<head></head>
-<body>
-<h2>Authentication</h2>
-<br>
-This app requires creating a Microsoft Graph Application. To do so, navigate to <a target='_blank' href="https://apps.dev.microsoft.com">https://apps.dev.microsoft.com</a> in a browser and log in with a Microsoft account, then select <b>Add an app</b>.
-<br><br>
-On the next page, give your application a name and select <b>Create</b>.
-<br><br>
-Once the app is created, three steps need to be taken on the next page:
-<ul>
-    <li>Under <b>Application Secrets</b> select <b>Generate New Password</b>. Note this key somewhere secure, as it cannot be retrieved after closing the window.</li>
-    <li>Under <b>Platforms</b> select <b>Add Platform</b>. In the <b>Add Platform</b> window, select <b>Web</b>. The <b>Redirect URLs</b> field will be filled in a later step.</li>
-    <li>Under <b>Microsoft Graph Permissions</b> the following <b>Delegated Permissions</b> need to be added:
-    <ul>
-        <li>Group.ReadWrite.All</li>
-        <li>offline_access</li>
-        <li>User.ReadWrite.All</li>
-    </ul>
-</ul>
-After making these changes, click <b>Save</b> at the bottom of the screen.
+  <head></head>
+  <body>
+    <h2>Authentication</h2>
+      <p>This app requires creating a Microsoft Azure Application. To do so, navigate to <a href="https://portal.azure.com" target="_blank">https://portal.azure.com</a> in a browser and log in with a Microsoft account, then select <b>Azure Active Directory</b>.</p>
 
-<h2>Phantom Graph Asset</h2>
-When creating an asset for the <b>Microsoft OneDrive</b> app, place <b>Application Id</b> of the app created during the previous step in the <b>Client ID</b> field and place the password generated during the app creation process in the <b>Client Secret</b> field. Then, click <b>SAVE</b>.
-<br><br>
-After saving, a new field will appear in the <b>Asset Settings</b> tab. Take the URL found in the <b>POST incoming for Microsoft OneDrive to this location</b> field and place it in the <b>Redirect URLs</b> field mentioned in a previous step. To this URL, add <b>/result</b>. After doing so the URL should look something like:
-<br><br>
-<pre>
-https://&lt;phantom_host&gt;/rest/handler/microsoftonedrive_564fe3f1-b1bb-4196-ba52-9422d0e4d430/&lt;asset_name&gt;/result
-</pre>
-<br>
-Once again, click save at the bottom of the screen.
-<h2>Method to run test connectivity</h2>
-After setting up the asset and user, click the <b>TEST CONNECTIVITY</b> button. A window should pop up and display a URL. Navigate to this URL in a separate browser tab. This new tab will redirect to a Microsoft login page. Log in to a Microsoft account. After logging in, review the requested permissions listed, then click <b>Accept</b>. Finally, close that tab. The test connectivity window should show success.
-<br><br>
-The app should now be ready to use.
+      <ol>
+        <li>Go to <b>App Registrations</b> and click on <b>+ New registration</b>.</li>
+        <li>Give an appropriate name and Redirect URI will be filled in later steps.</li>
+        <li>Select a supported account types.</li>
+        <li>Click on the <b>Register</b>.</li>
+        <ul>
+          <li>Under <b>Certificates & secrets</b>, add <b>New client secret</b>. Note this key somewhere secure, as it cannot be retrieved after closing the window.</li>
+          <li>Under <b>Authentication</b>, add the <b>Redirect URIs</b> field which will be filled in a later step.</li>
+          <li>Under <b>API Permissions</b>, click on <b>Add a permission</b></li>
+          <li>Go to <b>Microsoft Graph Permissions</b>, the following <b>Delegated Permissions</b> need to be added:
+            <ul>
+              <li>Group.ReadWrite.All</li>
+              <li>offline_access</li>
+              <li>User.ReadWrite.All</li>
+            </ul>
+          </li>
+          <li> Click on the <b>Add permissions.</b></li>
+        </ul>
+      </ol>
 
-</body>
+      After making these changes, click on the <b>Grant admin consent</b>.
+
+    <h2>Phantom Graph Asset</h2>
+      When creating an asset for the <b>Microsoft OneDrive</b> app, place <b>Application Id</b> of the app created during the previous step in the <b>Client ID</b> field and place the password generated during the app creation process in the <b>Client Secret</b> field. Then, click <b>SAVE</b>.
+      <br><br>
+      After saving, a new field will appear in the <b>Asset Settings</b> tab. Take the URL found in the <b>POST incoming for Microsoft OneDrive to this location</b> field and place it in the <b>Redirect URIs</b> field mentioned in a previous step. To this URL, add <b>/result</b>. After doing so the URL should look something like:
+      <br><br>
+      <p>
+      https://&lt;phantom_host&gt;/rest/handler/microsoftonedrive_564fe3f1-b1bb-4196-ba52-9422d0e4d430/&lt;asset_name&gt;/result
+      </p>
+      <br>
+      Once again, click on Save.
+
+    <h2>Method to run test connectivity</h2>
+      After setting up the asset and user, click the <b>TEST CONNECTIVITY</b> button. A window should pop up and display a URL. Navigate to this URL in a separate browser tab. This new tab will redirect to a Microsoft login page. Log in to a Microsoft account. After logging in, review the requested permissions listed, then click <b>Accept</b>. Finally, close that tab. The test connectivity window should show a success.
+      <br><br>
+      The app should now be ready to use.
+  </body>
 </html>
