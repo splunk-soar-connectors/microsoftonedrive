@@ -9,7 +9,7 @@
     "product_name": "Microsoft OneDrive",
     "product_version_regex": ".*",
     "publisher": "Splunk",
-    "license": "Copyright (c) 2019 Splunk Inc.",
+    "license": "Copyright (c) 2019-2020 Splunk Inc.",
     "app_version": "1.0.4",
     "utctime_updated": "2019-03-27T23:51:50.000000Z",
     "package_name": "phantom_microsoftonedrive",
