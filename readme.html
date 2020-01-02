@@ -14,7 +14,7 @@
       <ol>
         <li>Go to <b>App Registrations</b> and click on <b>+ New registration</b>.</li>
         <li>Give an appropriate name and Redirect URI will be filled in later steps.</li>
-        <li>Select a supported account types (Configure the application to be multitenant).</li>
+        <li>Select a supported account type (Configure the application to be multitenant).</li>
         <li>Click on the <b>Register</b>.</li>
         <ul>
           <li>Under <b>Certificates & secrets</b>, add <b>New client secret</b>. Note this key somewhere secure, as it cannot be retrieved after closing the window.</li>
@@ -44,9 +44,22 @@
       <br>
       Once again, click on Save.
 
-    <h2>Method to run test connectivity</h2>
+    <h2>Method to Run Test Connectivity</h2>
       After setting up the asset and user, click the <b>TEST CONNECTIVITY</b> button. A window should pop up and display a URL. Navigate to this URL in a separate browser tab. This new tab will redirect to a Microsoft login page. Log in to a Microsoft account. After logging in, review the requested permissions listed, then click <b>Accept</b>. Finally, close that tab. The test connectivity window should show a success.
       <br><br>
       The app should now be ready to use.
+
+    <h2>State File Permissions</h2>
+      Please check the permissions for the state file as mentioned below.
+      <h4>State Filepath</h4>
+      <ul>
+        <li>For Non-NRI Instance : /opt/phantom/local_data/app_states/a73f6d32-c9d5-4fec-b024-43876700daa6/{asset_id}_state.json</li>
+        <li>For NRI Instance : /phantomcyber/local_data/app_states/a73f6d32-c9d5-4fec-b024-43876700daa6/{asset_id}_state.json</li>
+      </ul>
+      <h4>State File Permissions</h4>
+      <ul>
+        <li>File Rights: rw-rw-r-- (664) (The phantom user should have read and write access for the state file)</li>
+        <li>File Owner: appropriate phantom user</li>
+      </ul>
   </body>
 </html>
