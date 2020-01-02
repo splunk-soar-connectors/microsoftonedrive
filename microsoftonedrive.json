@@ -174,10 +174,7 @@
                 },
                 {
                     "data_path": "action_result.message",
-                    "data_type": "string",
-                    "example_values": [
-                        ""
-                    ]
+                    "data_type": "string"
                 },
                 {
                     "data_path": "summary.total_objects",
@@ -484,16 +481,13 @@
                     "data_path": "action_result.data.*.lastModifiedDateTime",
                     "data_type": "string",
                     "example_values": [
-                        "2018-09-01T10:37:09Z",
-                        "2018-09-01T09:21:24Z"
+                        "2018-09-01T10:37:09Z"
                     ]
                 },
                 {
                     "data_path": "action_result.data.*.name",
                     "data_type": "string",
                     "example_values": [
-                        "child",
-                        "test folder",
                         "test file"
                     ]
                 },
@@ -544,7 +538,6 @@
                     "data_path": "action_result.data.*.parentReference.id",
                     "data_type": "string",
                     "example_values": [
-                        "01FMDEUQY3MRPCRFEYX5FJPU3KT7J24LJB",
                         "01FMDEUQ56Y2GOVW7725BZO354PWSELRRZ"
                     ],
                     "contains": [
@@ -578,16 +571,14 @@
                     "data_path": "action_result.summary.total_items",
                     "data_type": "numeric",
                     "example_values": [
-                        20,
-                        23
+                        20
                     ]
                 },
                 {
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
-                        "Total items: 20",
-                        "Total items: 23"
+                        "Total items: 20"
                     ]
                 },
                 {
@@ -652,10 +643,7 @@
                 },
                 {
                     "data_path": "action_result.data.*.description",
-                    "data_type": "string",
-                    "example_values": [
-                        ""
-                    ]
+                    "data_type": "string"
                 },
                 {
                     "data_path": "action_result.data.*.driveType",
@@ -1232,8 +1220,7 @@
                     "data_path": "summary.total_objects_successful",
                     "data_type": "numeric",
                     "example_values": [
-                        1,
-                        0
+                        1
                     ]
                 }
             ],
