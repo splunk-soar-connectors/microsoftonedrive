@@ -13,13 +13,13 @@
 
       <ol>
         <li>Go to <b>App Registrations</b> and click on <b>+ New registration</b>.</li>
-        <li>Give an appropriate name and Redirect URI will be filled in later steps.</li>
-        <li>Select a supported account type (Configure the application to be multitenant).</li>
+        <li>Give the app an appropriate name. The Redirect URI will be populated in a later steps.</li>
+        <li>Select a supported account type (configure the application to be multitenant).</li>
         <li>Click on the <b>Register</b>.</li>
         <ul>
           <li>Under <b>Certificates & secrets</b>, add <b>New client secret</b>. Note this key somewhere secure, as it cannot be retrieved after closing the window.</li>
           <li>Under <b>Authentication</b>, add the <b>Redirect URIs</b> field which will be filled in a later step.</li>
-          <li>Under <b>API Permissions</b>, click on <b>Add a permission</b></li>
+          <li>Under <b>API Permissions</b>, click on <b>Add a permission</b>.</li>
           <li>Go to <b>Microsoft Graph Permissions</b>, the following <b>Delegated Permissions</b> need to be added:
             <ul>
               <li>Group.ReadWrite.All</li>
@@ -27,14 +27,14 @@
               <li>User.ReadWrite.All</li>
             </ul>
           </li>
-          <li> Click on the <b>Add permissions.</b></li>
+          <li> Click on the <b>Add permissions</b>.</li>
         </ul>
       </ol>
 
-      After making these changes, click on the <b>Grant admin consent</b>.
+      After making these changes, click on <b>Grant admin consent</b>.
 
     <h2>Phantom Graph Asset</h2>
-      When creating an asset for the <b>Microsoft OneDrive</b> app, place <b>Application Id</b> of the app created during the previous step in the <b>Client ID</b> field and place the password generated during the app creation process in the <b>Client Secret</b> field. Then, click <b>SAVE</b>.
+      When creating an asset for the <b>Microsoft OneDrive</b> app, place <b>Application ID</b> of the app created during the previous step in the <b>Client ID</b> field and place the password generated during the app creation process in the <b>Client Secret</b> field. Then, click <b>SAVE</b>.
       <br><br>
       After saving, a new field will appear in the <b>Asset Settings</b> tab. Take the URL found in the <b>POST incoming for Microsoft OneDrive to this location</b> field and place it in the <b>Redirect URIs</b> field mentioned in a previous step. To this URL, add <b>/result</b>. After doing so the URL should look something like:
       <br><br>
@@ -54,7 +54,7 @@
       <h4>State Filepath</h4>
       <ul>
         <li>For Non-NRI Instance: /opt/phantom/local_data/app_states/a73f6d32-c9d5-4fec-b024-43876700daa6/{asset_id}_state.json</li>
-        <li>For NRI Instance: /phantomcyber/local_data/app_states/a73f6d32-c9d5-4fec-b024-43876700daa6/{asset_id}_state.json</li>
+        <li>For NRI Instance: /<PHANTOM_HOME_DIRECTORY>/local_data/app_states/a73f6d32-c9d5-4fec-b024-43876700daa6/{asset_id}_state.json</li>
       </ul>
       <h4>State File Permissions</h4>
       <ul>

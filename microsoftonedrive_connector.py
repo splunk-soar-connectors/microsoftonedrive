@@ -527,7 +527,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         if self._access_token != self._state.get(MSONEDRIVE_TOKEN_STRING, {}).get(MSONEDRIVE_ACCESS_TOKEN_STRING):
             message = "Error occurred while saving the newly generated access token (in place of the expired token) in the state file."
             message += " Please check the owner, owner group, and the permissions of the state file. The Phantom "
-            message += "user should be having correct access rights and ownership for the corresponding state file (refer readme file for more information)."
+            message += "user should be having correct access rights and ownership for the corresponding state file (refer to readme file for more information)."
             return action_result.set_status(phantom.APP_ERROR, message)
 
         return phantom.APP_SUCCESS
