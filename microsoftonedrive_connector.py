@@ -1,5 +1,5 @@
 # File: microsoftonedrive_connector.py
-# Copyright (c) 2019 Splunk Inc.
+# Copyright (c) 2019-2020 Splunk Inc.
 #
 # SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
 # without a valid written license from Splunk Inc. is PROHIBITED.
@@ -512,9 +512,24 @@ class MicrosoftOnedriveConnector(BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, status_message='Error while generating access_token')
 
         self._state[MSONEDRIVE_TOKEN_STRING] = resp_json
+        self.save_state(self._state)
+        self._state = self.load_state()
+
         self._access_token = resp_json[MSONEDRIVE_ACCESS_TOKEN_STRING]
         self._refresh_token = resp_json[MSONEDRIVE_REFRESH_TOKEN_STRING]
-        self.save_state(self._state)
+
+        # Scenario -
+        #
+        # If the corresponding state file doesn't have correct owner, owner group or permissions,
+        # the newely generated token is not being saved to state file and automatic workflow for token has been stopped.
+        # So we have to check that token from response and token which are saved to state file after successful generation of new token are same or not.
+
+        if self._access_token != self._state.get(MSONEDRIVE_TOKEN_STRING, {}).get(MSONEDRIVE_ACCESS_TOKEN_STRING):
+            message = "Error occurred while saving the newly generated access token (in place of the expired token) in the state file."
+            message += " Please check the owner, owner group, and the permissions of the state file. The Phantom "
+            message += "user should have the correct access rights and ownership for the corresponding state file (refer to readme file for more information)."
+            return action_result.set_status(phantom.APP_ERROR, message)
+
         return phantom.APP_SUCCESS
 
     def _update_request(self, action_result, endpoint, headers=None, params=None, data=None, method='get'):
@@ -810,7 +825,10 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         # 2. Update global variable 'list_items' representing list of all items
         # within entire hierarchy based on given parameters of drive_id, folder_id and folder_path
-        self._get_list_items(endpoint, drive_id, action_result, list_files, list_folders, list_items)
+        ret_val = self._get_list_items(endpoint, drive_id, action_result, list_files, list_folders, list_items)
+
+        if phantom.is_fail(ret_val):
+            return action_result.get_status()
 
         for item in list_items:
             # Split the parentReference data path to extract folder_path from it for contextual actions
@@ -854,7 +872,8 @@ class MicrosoftOnedriveConnector(BaseConnector):
         list_children = self._get_list_response(endpoint, action_result)
 
         if list_children is None:
-            return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_LIST_ITEMS_FAILED_MSG)
+            message = action_result.get_message()
+            return action_result.set_status(phantom.APP_ERROR, "{0} {1}".format(message, MSONEDRIVE_LIST_ITEMS_FAILED_MSG))
 
         # 2. Update the global variables for all the child items and recursively
         # call the same function if child is a folder found at this hierarchy level
@@ -872,7 +891,12 @@ class MicrosoftOnedriveConnector(BaseConnector):
                 endpoint = MSONEDRIVE_LIST_ITEMS_DRIVE_FOLDER_ID.format(drive_id=drive_id, folder_id=child.get(MSONEDRIVE_JSON_ID))
             else:
                 endpoint = MSONEDRIVE_LIST_ITEMS_FOLDER_ID.format(folder_id=child.get(MSONEDRIVE_JSON_ID))
-            self._get_list_items(endpoint, drive_id, action_result, list_files, list_folders, list_items)
+            ret_val = self._get_list_items(endpoint, drive_id, action_result, list_files, list_folders, list_items)
+
+            if phantom.is_fail(ret_val):
+                return action_result.get_status()
+
+        return phantom.APP_SUCCESS
 
     def _get_list_response(self, url, action_result):
         """ This function is used to fetch list response based on API URL to be fetched,
@@ -919,7 +943,8 @@ class MicrosoftOnedriveConnector(BaseConnector):
         list_drive = self._get_list_response(action_result=action_result, url=endpoint)
 
         if list_drive is None:
-            return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_LIST_DRIVE_FAILED_MSG)
+            message = action_result.get_message()
+            return action_result.set_status(phantom.APP_ERROR, "{0} {1}".format(message, MSONEDRIVE_LIST_DRIVE_FAILED_MSG))
 
         # Add the response into the data section
         for drive in list_drive:
