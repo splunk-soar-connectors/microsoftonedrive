@@ -11,7 +11,9 @@
     "publisher": "Splunk",
     "license": "Copyright (c) 2019-2020 Splunk Inc.",
     "app_version": "1.0.9",
-    "latest_tested_versions": ["Cloud v19.192.0926.0012"],
+    "latest_tested_versions": [
+        "Cloud v19.192.0926.0012"
+    ],
     "utctime_updated": "2020-01-22T22:26:10.000000Z",
     "package_name": "phantom_microsoftonedrive",
     "main_module": "microsoftonedrive_connector.pyc",
