@@ -17,7 +17,7 @@
     "utctime_updated": "2020-01-24T20:24:03.000000Z",
     "package_name": "phantom_microsoftonedrive",
     "main_module": "microsoftonedrive_connector.pyc",
-    "min_phantom_version": "4.5.15922",
+    "min_phantom_version": "4.8.24304",
     "app_wizard_version": "1.0.0",
     "rest_handler": "microsoftonedrive_connector._handle_rest_request",
     "configuration": {
