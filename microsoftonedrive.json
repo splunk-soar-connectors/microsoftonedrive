@@ -10,13 +10,13 @@
     "product_version_regex": ".*",
     "publisher": "Splunk",
     "license": "Copyright (c) 2019-2020 Splunk Inc.",
-    "app_version": "1.0.12",
+    "app_version": "2.0.0",
     "latest_tested_versions": [
         "Cloud v19.192.0926.0012"
     ],
     "utctime_updated": "2020-07-08T20:29:30.000000Z",
     "package_name": "phantom_microsoftonedrive",
-    "main_module": "microsoftonedrive_connector.pyc",
+    "main_module": "microsoftonedrive_connector.py",
     "min_phantom_version": "4.8.24304",
     "app_wizard_version": "1.0.0",
     "rest_handler": "microsoftonedrive_connector._handle_rest_request",
@@ -55,7 +55,6 @@
                 "file_id": {
                     "description": "ID of file",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive file id"
@@ -65,7 +64,6 @@
                 "drive_id": {
                     "description": "Drive ID",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "order": 1,
                     "contains": [
@@ -75,7 +73,6 @@
                 "file_path": {
                     "description": "Path of file",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "order": 2,
                     "contains": [
@@ -209,7 +206,6 @@
                 "drive_id": {
                     "description": "Parent drive ID",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive drive id"
@@ -219,13 +215,11 @@
                 "ph_0": {
                     "description": "Placeholder",
                     "data_type": "ph",
-                    "required": false,
                     "order": 1
                 },
                 "folder_id": {
                     "description": "Parent folder ID",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive folder id"
@@ -235,7 +229,6 @@
                 "folder_path": {
                     "description": "Parent folder path",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive folder path"
@@ -836,7 +829,6 @@
                 "drive_id": {
                     "description": "Parent drive ID",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive drive id"
@@ -1037,6 +1029,14 @@
                     "data_type": "string",
                     "example_values": [
                         "AAAAAAAAAAAAAAAAAIwPCgAAAAA="
+                    ]
+                },
+                {
+                    "data_path": "action_result.data.*.file.irmEnabled",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
                     ]
                 },
                 {
@@ -1242,7 +1242,6 @@
                 "file_id": {
                     "description": "File id",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive file id"
@@ -1252,7 +1251,6 @@
                 "drive_id": {
                     "description": "Drive id",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "order": 1,
                     "contains": [
@@ -1262,7 +1260,6 @@
                 "file_path": {
                     "description": "Path of file",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "order": 2,
                     "contains": [
@@ -1329,7 +1326,7 @@
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
-                        "File is deleted successfully.",
+                        "File is deleted successfully",
                         "Either File ID or File Path is mandatory"
                     ]
                 },
@@ -1364,7 +1361,6 @@
                 "drive_id": {
                     "description": "Parent drive ID",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive drive id"
@@ -1374,13 +1370,11 @@
                 "ph_0": {
                     "description": "Placeholder",
                     "data_type": "ph",
-                    "required": false,
                     "order": 1
                 },
                 "folder_id": {
                     "description": "Folder ID",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive folder id"
@@ -1390,7 +1384,6 @@
                 "folder_path": {
                     "description": "Folder path",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive folder path"
@@ -1495,7 +1488,6 @@
                 "drive_id": {
                     "description": "Parent drive ID",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive drive id"
@@ -1505,7 +1497,6 @@
                 "folder_id": {
                     "description": "Parent folder ID",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive folder id"
@@ -1515,7 +1506,6 @@
                 "folder_path": {
                     "description": "Parent folder path",
                     "data_type": "string",
-                    "required": false,
                     "primary": true,
                     "contains": [
                         "msonedrive folder path"
