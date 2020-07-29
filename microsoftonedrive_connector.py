@@ -372,7 +372,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         :return: error message
         """
 
-        error_msg = "Unknown error occurred. Please check the asset configuration and|or action parameters."
+        error_msg = "Unknown error occurred. Please check the asset configuration and/or action parameters."
         error_code = "Error code unavailable"
         try:
             if hasattr(e, "args"):
@@ -384,17 +384,17 @@ class MicrosoftOnedriveConnector(BaseConnector):
                     error_msg = e.args[0]
             else:
                 error_code = "Error code unavailable"
-                error_msg = "Unknown error occurred. Please check the asset configuration and|or action parameters."
+                error_msg = "Unknown error occurred. Please check the asset configuration and/or action parameters."
         except:
             error_code = "Error code unavailable"
-            error_msg = "Unknown error occurred. Please check the asset configuration and|or action parameters."
+            error_msg = "Unknown error occurred. Please check the asset configuration and/or action parameters."
 
         try:
             error_msg = self._handle_py_ver_compat_for_input_str(error_msg)
         except TypeError:
-            error_msg = "Error occurred while connecting to the Microsoft server. Please check the asset configuration and|or the action parameters."
+            error_msg = "Error occurred while connecting to the Microsoft server. Please check the asset configuration and/or the action parameters."
         except:
-            error_msg = "Unknown error occurred. Please check the asset configuration and|or action parameters."
+            error_msg = "Unknown error occurred. Please check the asset configuration and/or action parameters."
 
         return "Error Code: {0}. Error Message: {1}".format(error_code, error_msg)
 
