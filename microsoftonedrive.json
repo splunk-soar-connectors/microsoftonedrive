@@ -925,6 +925,14 @@
                     ]
                 },
                 {
+                    "data_path": "action_result.data.*.file.irmEnabled",
+                    "data_type": "boolean",
+                    "example_values": [
+                        true,
+                        false
+                    ]
+                },
+                {
                     "data_path": "action_result.data.*.@odata.context",
                     "data_type": "string",
                     "example_values": [
@@ -1029,14 +1037,6 @@
                     "data_type": "string",
                     "example_values": [
                         "AAAAAAAAAAAAAAAAAIwPCgAAAAA="
-                    ]
-                },
-                {
-                    "data_path": "action_result.data.*.file.irmEnabled",
-                    "data_type": "boolean",
-                    "example_values": [
-                        true,
-                        false
                     ]
                 },
                 {
@@ -1236,7 +1236,7 @@
             "action": "delete file",
             "identifier": "delete_file",
             "description": "Delete file",
-            "type": "correct",
+            "type": "generic",
             "read_only": false,
             "parameters": {
                 "file_id": {
@@ -1308,7 +1308,7 @@
                     "column_name": "File Path",
                     "column_order": 2,
                     "example_values": [
-                        "/Phantom/a.txt"
+                        "/Test/a.txt"
                     ],
                     "contains": [
                         "file path"
