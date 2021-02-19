@@ -1,5 +1,5 @@
 # File: microsoftonedrive_connector.py
-# Copyright (c) 2019-2020 Splunk Inc.
+# Copyright (c) 2019-2021 Splunk Inc.
 #
 # SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
 # without a valid written license from Splunk Inc. is PROHIBITED.
@@ -458,6 +458,9 @@ class MicrosoftOnedriveConnector(BaseConnector):
         """
 
         resp_json = None
+
+        if headers is None:
+            headers = {}
 
         try:
             request_func = getattr(requests, method)
