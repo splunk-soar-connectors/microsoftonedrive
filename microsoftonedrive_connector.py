@@ -1023,7 +1023,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
             if not response.get(MSONEDRIVE_JSON_NEXT_LINK):
                 break
-            url = response[MSONEDRIVE_JSON_NEXT_LINK].encode('utf-8')
+            url = response[MSONEDRIVE_JSON_NEXT_LINK]
 
         return response_items_list
 
