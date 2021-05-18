@@ -20,6 +20,12 @@ from phantom.base_connector import BaseConnector
 from phantom.action_result import ActionResult
 from phantom.vault import Vault
 from bs4 import UnicodeDammit
+import phantom.rules as ph_rules
+
+try:
+    from urllib.parse import unquote
+except:
+    from urllib import unquote
 
 
 def _handle_login_redirect(request, key):
@@ -60,7 +66,7 @@ def _load_app_state(asset_id, app_connector=None):
 
     app_dir = os.path.dirname(os.path.abspath(__file__))
     state_file = '{0}/{1}_state.json'.format(app_dir, asset_id)
-    real_state_file_path = os.path.realpath(state_file)
+    real_state_file_path = os.path.abspath(state_file)
     if not os.path.dirname(real_state_file_path) == app_dir:
         if app_connector:
             app_connector.debug_print('In _load_app_state: Invalid asset_id')
@@ -99,7 +105,7 @@ def _save_app_state(state, asset_id, app_connector):
     app_dir = os.path.split(__file__)[0]
     state_file = '{0}/{1}_state.json'.format(app_dir, asset_id)
 
-    real_state_file_path = os.path.realpath(state_file)
+    real_state_file_path = os.path.abspath(state_file)
     if not os.path.dirname(real_state_file_path) == app_dir:
         if app_connector:
             app_connector.debug_print('In _save_app_state: Invalid asset_id')
@@ -176,7 +182,7 @@ def _handle_rest_request(request, path_parts):
         if asset_id and asset_id.isalnum():
             app_dir = os.path.dirname(os.path.abspath(__file__))
             auth_status_file_path = '{0}/{1}_{2}'.format(app_dir, asset_id, MSONEDRIVE_TC_FILE)
-            real_auth_status_file_path = os.path.realpath(auth_status_file_path)
+            real_auth_status_file_path = os.path.abspath(auth_status_file_path)
             if not os.path.dirname(real_auth_status_file_path) == app_dir:
                 return HttpResponse("Error: Invalid asset_id", content_type="text/plain", status=400)
             open(auth_status_file_path, 'w').close()
@@ -837,9 +843,20 @@ class MicrosoftOnedriveConnector(BaseConnector):
         # filename = filename.translate(None, invalid_chars)
         # Replacing the file_name parameter with container_id parameter as
         # the Vault.get_file_info() does not handle URL characters on Phantom v4.8 Python v3
-        vault_file_list = Vault.get_file_info(container_id=self.get_container_id())
+
+        # The phantom.get_file_info API is defunct. Using the vault_info API instead.
+        try:
+            success, message, vault_meta_info = ph_rules.vault_info(container_id=self.get_container_id())
+            vault_meta_info = list(vault_meta_info)
+            if not success or not vault_meta_info:
+                error_msg = " Error Details: {}".format(unquote(message)) if message else ''
+                return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG, error_msg))
+        except Exception as e:
+            err = self._get_error_message_from_exception(e)
+            return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG, err))
+
         # Iterate through files of Vault
-        for file in vault_file_list:
+        for file in vault_meta_info:
             # If file name and file size are same file is duplicate
             if self._handle_py_ver_compat_for_input_str(file.get('name')) == filename and file.get('size') == os.path.getsize(temp_file_path):
                 self.debug_print(MSONEDRIVE_FILE_ALREADY_AVAILABLE)
@@ -1006,7 +1023,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
             if not response.get(MSONEDRIVE_JSON_NEXT_LINK):
                 break
-            url = response[MSONEDRIVE_JSON_NEXT_LINK].encode('utf-8')
+            url = response[MSONEDRIVE_JSON_NEXT_LINK]
 
         return response_items_list
 
@@ -1059,20 +1076,29 @@ class MicrosoftOnedriveConnector(BaseConnector):
         if file_path:
             file_path = file_path.strip('/\\')
 
-        # Find vault path  and info for given vault ID
-        vault_path = Vault.get_file_path(vault_id)
-        vault_info = Vault.get_file_info(vault_id)
+        # The phantom.get_file_info API is defunct. Using the vault_info API instead.
+
+        try:
+            success, message, vault_meta_info = ph_rules.vault_info(vault_id=vault_id)
+            vault_meta_info = list(vault_meta_info)
+            if not success or not vault_meta_info:
+                error_msg = " Error Details: {}".format(unquote(message)) if message else ''
+                return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG, error_msg))
+        except Exception as e:
+            err = self._get_error_message_from_exception(e)
+            return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG, err))
+
+        # Find vault path and file size for given vault ID
+        vault_path = vault_meta_info[0].get('path')
+        file_size = vault_meta_info[0].get(MSONEDRIVE_JSON_SIZE)
 
         # check if vault path is accessible
         if not vault_path:
             return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_VAULT_PATH_ABSENT_MSG)
 
         # check if vault info is accessible
-        if not vault_info:
+        if not file_size:
             return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_VAULT_INFO_ABSENT_MSG)
-
-        file_info = vault_info[0]
-        file_size = file_info[MSONEDRIVE_JSON_SIZE]
 
         # Read the content of the file
         file_data = None
