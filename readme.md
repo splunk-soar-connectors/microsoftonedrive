@@ -40,17 +40,17 @@ After making these changes, click on **Grant admin consent** .
 
 When creating an asset for the **Microsoft OneDrive** app, place the **Application ID** of the app
 created during the previous step in the **Client ID** field and place the password generated during
-the app creation process in the **Client Secret** field. Then, click **SAVE** .  
-  
+the app creation process in the **Client Secret** field. Then, click **SAVE** .
+
 After saving, a new field will appear in the **Asset Settings** tab. Take the URL found in the
 **POST incoming for Microsoft OneDrive to this location** field and place it in the **Redirect
 URIs** field mentioned in a previous step. To this URL, add **/result** . After doing so the URL
-should look something like:  
-  
+should look something like:
+
 
 https://\<phantom_host>/rest/handler/microsoftonedrive_564fe3f1-b1bb-4196-ba52-9422d0e4d430/\<asset_name>/result
 
-  
+
 Once again, click on Save.
 
 ## Method to Run Test Connectivity
@@ -59,8 +59,8 @@ After setting up the asset and user, click the **TEST CONNECTIVITY** button. A w
 and display a URL. Navigate to this URL in a separate browser tab. This new tab will redirect to a
 Microsoft login page. Log in to a Microsoft account. After logging in, review the requested
 permissions listed, then click **Accept** . Finally, close that tab. The test connectivity window
-should show a success.  
-  
+should show a success.
+
 The app should now be ready to use.
 
 ## State File Permissions
