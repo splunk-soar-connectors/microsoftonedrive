@@ -124,3 +124,4 @@ MSONEDRIVE_TOKEN_EXPIRED = 'Access token has expired'
 MSONEDRIVE_LIST_DRIVE_FAILED_MSG = 'List drive action failed'
 MSONEDRIVE_DELETE_FILE_SUCCESS = "File was deleted successfully"
 MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG = "Unable to retrieve vault item details"
+DEFAULT_TIMEOUT = 30
