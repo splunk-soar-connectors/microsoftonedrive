@@ -10,13 +10,13 @@
     "product_version_regex": ".*",
     "publisher": "Splunk",
     "license": "Copyright (c) 2019-2022 Splunk Inc.",
-    "app_version": "2.2.5",
+    "app_version": "2.2.6",
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
         "Cloud v19.192.0926.0012"
     ],
-    "utctime_updated": "2022-01-11T23:23:05.000000Z",
+    "utctime_updated": "2022-01-27T22:09:50.000000Z",
     "package_name": "phantom_microsoftonedrive",
     "main_module": "microsoftonedrive_connector.py",
     "min_phantom_version": "5.1.0",
