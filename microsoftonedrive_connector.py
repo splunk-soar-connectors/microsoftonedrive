@@ -37,6 +37,7 @@ except:
 
 DEFAULT_TIMEOUT = 30
 
+
 def _handle_login_redirect(request, key):
     """ This function is used to redirect login request to Microsoft OneDrive login page.
 
