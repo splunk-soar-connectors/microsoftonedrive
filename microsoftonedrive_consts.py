@@ -1,9 +1,17 @@
 # File: microsoftonedrive_consts.py
-# Copyright (c) 2019-2021 Splunk Inc.
 #
-# SPLUNK CONFIDENTIAL - Use or disclosure of this material in whole or in part
-# without a valid written license from Splunk Inc. is PROHIBITED.
-
+# Copyright (c) 2019-2022 Splunk Inc.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software distributed under
+# the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+# either express or implied. See the License for the specific language governing permissions
+# and limitations under the License.
 MSONEDRIVE_CONFIG_CLIENT_ID = 'client_id'
 MSONEDRIVE_CONFIG_CLIENT_SECRET = 'client_secret'
 MSONEDRIVE_TOKEN_STRING = 'token'
@@ -116,3 +124,4 @@ MSONEDRIVE_TOKEN_EXPIRED = 'Access token has expired'
 MSONEDRIVE_LIST_DRIVE_FAILED_MSG = 'List drive action failed'
 MSONEDRIVE_DELETE_FILE_SUCCESS = "File was deleted successfully"
 MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG = "Unable to retrieve vault item details"
+DEFAULT_TIMEOUT = 30
