@@ -34,6 +34,13 @@
             "data_type": "password",
             "required": true,
             "order": 1
+        },
+        "tenant_id": {
+            "description": "Tenant ID",
+            "data_type": "string",
+            "required": false,
+            "order": 2,
+            "default": "common"
         }
     },
     "actions": [

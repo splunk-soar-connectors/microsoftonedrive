@@ -14,13 +14,14 @@
 # and limitations under the License.
 MSONEDRIVE_CONFIG_CLIENT_ID = 'client_id'
 MSONEDRIVE_CONFIG_CLIENT_SECRET = 'client_secret'
+MSONEDRIVE_CONFIG_TENANT_ID = 'tenant_id'
 MSONEDRIVE_TOKEN_STRING = 'token'
 MSONEDRIVE_ACCESS_TOKEN_STRING = 'access_token'
 MSONEDRIVE_REFRESH_TOKEN_STRING = 'refresh_token'
 MSONEDRIVE_PHANTOM_SYS_INFO_URL = '/system_info'
 MSONEDRIVE_LOGIN_BASE_URL = 'https://login.microsoftonline.com'
-MSONEDRIVE_SERVER_TOKEN_URL = '/common/oauth2/token'
-MSONEDRIVE_AUTHORIZE_URL = '/common/oauth2/v2.0/authorize?client_id={client_id}&redirect_uri={redirect_uri}' \
+MSONEDRIVE_SERVER_TOKEN_URL = '/{tenant_id}/oauth2/token'
+MSONEDRIVE_AUTHORIZE_URL = '/{tenant_id}/oauth2/v2.0/authorize?client_id={client_id}&redirect_uri={redirect_uri}' \
     '&response_type={response_type}&scope={scope}&state={state}'
 MSONEDRIVE_PHANTOM_ASSET_INFO_URL = '/asset/{asset_id}'
 MSONEDRIVE_MSGRAPH_API_BASE_URL = 'https://graph.microsoft.com/v1.0'
