@@ -1420,7 +1420,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         config = self.get_config()
 
-        self._tenant = self._handle_py_ver_compat_for_input_str(config[MSONEDRIVE_CONFIG_TENANT_ID])
+        self._tenant = self._handle_py_ver_compat_for_input_str(config.get(MSONEDRIVE_CONFIG_TENANT_ID, MSONEDRIVE_CONFIG_DEFAULT_TENANT_ID))
         self._client_id = self._handle_py_ver_compat_for_input_str(config[MSONEDRIVE_CONFIG_CLIENT_ID])
         self._client_secret = config[MSONEDRIVE_CONFIG_CLIENT_SECRET]
         self._access_token = self._state.get(MSONEDRIVE_TOKEN_STRING, {}).get(MSONEDRIVE_ACCESS_TOKEN_STRING)
