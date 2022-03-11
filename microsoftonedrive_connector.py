@@ -1052,6 +1052,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         """
 
         self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+        self.debug_print("Calling _handle_list_drive method")
 
         # Add an action result object to self (BaseConnector) to represent the action for this param
         action_result = self.add_action_result(ActionResult(dict(param)))
