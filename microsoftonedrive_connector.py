@@ -1051,8 +1051,9 @@ class MicrosoftOnedriveConnector(BaseConnector):
         :return: status(phantom.APP_SUCCESS/phantom.APP_ERROR)
         """
 
-        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
-        self.debug_print("Calling _handle_list_drive method")
+        progress_message = "In action handler for: {0}".format(self.get_action_identifier())
+        self.save_progress(progress_message)
+        self.debug_print(progress_message)
 
         # Add an action result object to self (BaseConnector) to represent the action for this param
         action_result = self.add_action_result(ActionResult(dict(param)))
