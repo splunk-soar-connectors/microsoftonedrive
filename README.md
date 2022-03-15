@@ -2,7 +2,7 @@
 # Microsoft OneDrive
 
 Publisher: Splunk  
-Connector Version: 2\.2\.6  
+Connector Version: 2\.2\.7  
 Product Vendor: Microsoft  
 Product Name: Microsoft OneDrive  
 Product Version Supported (regex): "\.\*"  
@@ -100,6 +100,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 -------- | -------- | ---- | -----------
 **client\_id** |  required  | string | Client ID
 **client\_secret** |  required  | password | Client secret
+**tenant\_id** |  optional  | string | Tenant ID
 
 ### Supported Actions  
 [test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity using supplied configuration  
