@@ -597,7 +597,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         :return: status phantom.APP_ERROR/phantom.APP_SUCCESS
         """
 
-        req_url = '{}{}'.format(MSONEDRIVE_LOGIN_BASE_URL, MSONEDRIVE_SERVER_TOKEN_URL)
+        req_url = '{}{}'.format(MSONEDRIVE_LOGIN_BASE_URL, MSONEDRIVE_SERVER_TOKEN_URL.format(tenant_id=self._tenant))
         ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=req_url,
                                                   data=data, method=MSONEDRIVE_METHOD_POST)
         if phantom.is_fail(ret_val):
@@ -722,7 +722,8 @@ class MicrosoftOnedriveConnector(BaseConnector):
         self.save_progress(redirect_uri)
 
         # Authorization URL used to make request for getting code which is used to generate access token
-        authorization_url = MSONEDRIVE_AUTHORIZE_URL.format(client_id=self._client_id,
+        authorization_url = MSONEDRIVE_AUTHORIZE_URL.format(tenant_id=self._tenant,
+                                                            client_id=self._client_id,
                                                             redirect_uri=redirect_uri,
                                                             response_type=MSONEDRIVE_JSON_CODE,
                                                             state=self.get_asset_id(),
@@ -1050,7 +1051,9 @@ class MicrosoftOnedriveConnector(BaseConnector):
         :return: status(phantom.APP_SUCCESS/phantom.APP_ERROR)
         """
 
-        self.save_progress("In action handler for: {0}".format(self.get_action_identifier()))
+        progress_message = "In action handler for: {0}".format(self.get_action_identifier())
+        self.save_progress(progress_message)
+        self.debug_print(progress_message)
 
         # Add an action result object to self (BaseConnector) to represent the action for this param
         action_result = self.add_action_result(ActionResult(dict(param)))
@@ -1419,6 +1422,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         config = self.get_config()
 
+        self._tenant = self._handle_py_ver_compat_for_input_str(config.get(MSONEDRIVE_CONFIG_TENANT_ID, MSONEDRIVE_CONFIG_DEFAULT_TENANT_ID))
         self._client_id = self._handle_py_ver_compat_for_input_str(config[MSONEDRIVE_CONFIG_CLIENT_ID])
         self._client_secret = config[MSONEDRIVE_CONFIG_CLIENT_SECRET]
         self._access_token = self._state.get(MSONEDRIVE_TOKEN_STRING, {}).get(MSONEDRIVE_ACCESS_TOKEN_STRING)
