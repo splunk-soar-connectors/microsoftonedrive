@@ -193,12 +193,12 @@ def _handle_rest_request(request, path_parts):
             real_auth_status_file_path = os.path.abspath(auth_status_file_path)
             if not os.path.dirname(real_auth_status_file_path) == app_dir:
                 return HttpResponse("Error: Invalid asset_id", content_type="text/plain", status=400)
-            open(real_auth_status_file_path, 'w').close()
+            open(auth_status_file_path, 'w').close()
             try:
                 uid = pwd.getpwnam('apache').pw_uid
                 gid = grp.getgrnam('phantom').gr_gid
-                os.chown(real_auth_status_file_path, uid, gid)
-                os.chmod(real_auth_status_file_path, '0664')
+                os.chown(auth_status_file_path, uid, gid)
+                os.chmod(auth_status_file_path, '0664')
             except:
                 pass
 
