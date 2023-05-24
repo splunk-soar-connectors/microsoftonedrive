@@ -188,18 +188,17 @@ def _handle_rest_request(request, path_parts):
         return_val = _handle_login_response(request)
         asset_id = request.GET.get('state')
         if asset_id and asset_id.isalnum():
-            asset_number = asset_id
             app_dir = os.path.dirname(os.path.abspath(__file__))
-            auth_status_file_path = '{0}/{1}_{2}'.format(app_dir, asset_number, MSONEDRIVE_TC_FILE)
+            auth_status_file_path = '{0}/{1}_{2}'.format(app_dir, asset_id, MSONEDRIVE_TC_FILE)
             real_auth_status_file_path = os.path.abspath(auth_status_file_path)
             if not os.path.dirname(real_auth_status_file_path) == app_dir:
                 return HttpResponse("Error: Invalid asset_id", content_type="text/plain", status=400)
-            open(auth_status_file_path, 'w').close()
+            open(real_auth_status_file_path, 'w').close()
             try:
                 uid = pwd.getpwnam('apache').pw_uid
                 gid = grp.getgrnam('phantom').gr_gid
-                os.chown(auth_status_file_path, uid, gid)
-                os.chmod(auth_status_file_path, '0664')
+                os.chown(real_auth_status_file_path, uid, gid)
+                os.chmod(real_auth_status_file_path, '0664')
             except:
                 pass
 
