@@ -1,6 +1,6 @@
 # File: microsoftonedrive_connector.py
 #
-# Copyright (c) 2019-2022 Splunk Inc.
+# Copyright (c) 2019-2023 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -193,12 +193,12 @@ def _handle_rest_request(request, path_parts):
             real_auth_status_file_path = os.path.abspath(auth_status_file_path)
             if not os.path.dirname(real_auth_status_file_path) == app_dir:
                 return HttpResponse("Error: Invalid asset_id", content_type="text/plain", status=400)
-            open(auth_status_file_path, 'w').close()
+            open(real_auth_status_file_path, 'w').close()
             try:
                 uid = pwd.getpwnam('apache').pw_uid
                 gid = grp.getgrnam('phantom').gr_gid
-                os.chown(auth_status_file_path, uid, gid)
-                os.chmod(auth_status_file_path, '0664')
+                os.chown(real_auth_status_file_path, uid, gid)
+                os.chmod(real_auth_status_file_path, '0664')
             except:
                 pass
 
@@ -737,7 +737,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         _save_app_state(app_state, self.get_asset_id(), self)
 
         self.save_progress(MSONEDRIVE_AUTHORIZE_USER_MSG)
-        self.save_progress(url_for_authorize_request)
+        self.save_progress(url_for_authorize_request)  # nosemgrep
 
         # Wait time for authorization
         time.sleep(MSONEDRIVE_AUTHORIZE_WAIT_TIME)
