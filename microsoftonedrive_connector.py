@@ -867,11 +867,11 @@ class MicrosoftOnedriveConnector(BaseConnector):
             if not success or not vault_meta_info:
                 error_msg = " Error Details: {}".format(unquote(message)) if message else ''
                 return action_result.set_status(phantom.APP_ERROR,
-                                        "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERROR_MSG, error_msg))
+                                        "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg))
         except Exception as e:
             err = self._get_error_message_from_exception(e)
             return action_result.set_status(phantom.APP_ERROR,
-                                        "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERROR_MSG, err))
+                                        "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, err))
 
         # Iterate through files of Vault
         for file in vault_meta_info:
@@ -1105,11 +1105,11 @@ class MicrosoftOnedriveConnector(BaseConnector):
             if not success or not vault_meta_info:
                 error_msg = " Error Details: {}".format(unquote(message)) if message else ''
                 return action_result.set_status(phantom.APP_ERROR,
-                                    "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERROR_MSG, error_msg))
+                                    "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg))
         except Exception as e:
             err = self._get_error_message_from_exception(e)
             return action_result.set_status(phantom.APP_ERROR,
-                                    "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERROR_MSG, err))
+                                    "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, err))
 
         # Find vault path and file size for given vault ID
         vault_path = vault_meta_info[0].get('path')
