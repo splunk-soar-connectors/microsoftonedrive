@@ -6,7 +6,7 @@ Connector Version: 2.2.8
 Product Vendor: Microsoft  
 Product Name: Microsoft OneDrive  
 Product Version Supported (regex): ".\*"  
-Minimum Product Version: 5.1.0  
+Minimum Product Version: 5.5.0  
 
 This app integrates with Microsoft OneDrive to execute various generic actions
 
