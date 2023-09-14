@@ -9,8 +9,16 @@
     "product_name": "Microsoft OneDrive",
     "product_version_regex": ".*",
     "publisher": "Splunk",
+    "contributors": [
+        {
+            "name": "Dallan Wagner"
+        },
+        {
+            "name": "Mhike Funderburk"
+        }
+    ],
     "license": "Copyright (c) 2019-2023 Splunk Inc.",
-    "app_version": "2.2.9",
+    "app_version": "2.3.0",
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
