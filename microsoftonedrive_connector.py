@@ -681,18 +681,18 @@ class MicrosoftOnedriveConnector(BaseConnector):
         ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=endpoint, headers=headers,
                                                   params=params, data=data, method=method)
 
+        message = action_result.get_message()
+        self.debug_print(f"message: {message}")
         # If token is expired, generate new token
-        for error_msg in MSONEDRIVE_TOKEN_EXPIRED:
-            if error_msg in action_result.get_message():
-                self.debug_print("MSONEDRIVE", f"Error '{error_msg}' found in API response. Requesting new access token using refresh token")
-                self.save_progress(f"Error message '{error_msg}' found in API response. Requesting new access token using refresh token")
-                status = self._generate_new_access_token(action_result=action_result, data=token_data)
-                if phantom.is_fail(status):
-                    return action_result.get_status(), None
+        if message and ('token' in message and 'expired' in message):
+            self.save_progress(f"Error message '{message}' found in API response. Requesting new access token using refresh token")
+            status = self._generate_new_access_token(action_result=action_result, data=token_data)
+            if phantom.is_fail(status):
+                return action_result.get_status(), None
 
-                headers.update({'Authorization': 'Bearer {0}'.format(self._access_token)})
-                ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=endpoint, headers=headers,
-                                                      params=params, data=data, method=method)
+            headers.update({'Authorization': 'Bearer {0}'.format(self._access_token)})
+            ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=endpoint, headers=headers,
+                                                    params=params, data=data, method=method)
         if phantom.is_fail(ret_val):
             return action_result.get_status(), None
 

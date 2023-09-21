@@ -122,7 +122,6 @@ MSONEDRIVE_MANDATORY_FILE_ID_OR_PATH_MSG = 'Either File ID or File Path is manda
 MSONEDRIVE_NO_DATA_FOUND_MSG = 'File has no content'
 MSONEDRIVE_FILE_ALREADY_AVAILABLE = 'File already available in Vault'
 MSONEDRIVE_ADD_FILE_TO_VAULT_ERROR = 'Error while adding the file to vault'
-MSONEDRIVE_TOKEN_EXPIRED = ['Access token has expired', 'Lifetime validation failed, the token is expired.']
 MSONEDRIVE_LIST_DRIVE_FAILED_MSG = 'List drive action failed'
 MSONEDRIVE_DELETE_FILE_SUCCESS = "File was deleted successfully"
 MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG = "Unable to retrieve vault item details"
