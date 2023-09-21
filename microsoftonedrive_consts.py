@@ -13,7 +13,7 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 MSONEDRIVE_CONFIG_CLIENT_ID = 'client_id'
-MSONEDRIVE_CONFIG_CLIENT_SECRET = 'client_secret'
+MSONEDRIVE_CONFIG_CLIENT_SECRET = 'client_secret'  # pragma: allowlist secret
 MSONEDRIVE_CONFIG_TENANT_ID = 'tenant_id'
 MSONEDRIVE_CONFIG_DEFAULT_TENANT_ID = 'common'
 MSONEDRIVE_TOKEN_STRING = 'token'
