@@ -2,11 +2,11 @@
 # Microsoft OneDrive
 
 Publisher: Splunk  
-Connector Version: 2.2.9  
+Connector Version: 2.3.0  
 Product Vendor: Microsoft  
 Product Name: Microsoft OneDrive  
 Product Version Supported (regex): ".\*"  
-Minimum Product Version: 5.5.0  
+Minimum Product Version: 6.1.0  
 
 This app integrates with Microsoft OneDrive to execute various generic actions
 
