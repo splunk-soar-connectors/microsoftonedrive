@@ -9,8 +9,16 @@
     "product_name": "Microsoft OneDrive",
     "product_version_regex": ".*",
     "publisher": "Splunk",
+    "contributors": [
+        {
+            "name": "Dallan Wagner"
+        },
+        {
+            "name": "Mhike Funderburk"
+        }
+    ],
     "license": "Copyright (c) 2019-2023 Splunk Inc.",
-    "app_version": "2.2.10",
+    "app_version": "2.3.0",
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
@@ -19,7 +27,7 @@
     "utctime_updated": "2023-06-07T22:55:56.000000Z",
     "package_name": "phantom_microsoftonedrive",
     "main_module": "microsoftonedrive_connector.py",
-    "min_phantom_version": "5.5.0",
+    "min_phantom_version": "6.1.0",
     "app_wizard_version": "1.0.0",
     "rest_handler": "microsoftonedrive_connector._handle_rest_request",
     "configuration": {
