@@ -13,7 +13,7 @@
 # either express or implied. See the License for the specific language governing permissions
 # and limitations under the License.
 MSONEDRIVE_CONFIG_CLIENT_ID = 'client_id'
-MSONEDRIVE_CONFIG_CLIENT_SECRET = 'client_secret'
+MSONEDRIVE_CONFIG_CLIENT_SECRET = 'client_secret'   # pragma: allowlist secret
 MSONEDRIVE_CONFIG_TENANT_ID = 'tenant_id'
 MSONEDRIVE_CONFIG_DEFAULT_TENANT_ID = 'common'
 MSONEDRIVE_TOKEN_STRING = 'token'
@@ -66,7 +66,7 @@ MSONEDRIVE_JSON_ID = 'id'
 MSONEDRIVE_JSON_NAME = 'name'
 MSONEDRIVE_JSON_FOLDER = 'folder'
 MSONEDRIVE_JSON_RENAME = 'rename'
-MSONEDRIVE_JSON_FAIL = 'fail'
+MSONEDRIVE_JSON_FAILED = 'fail'
 MSONEDRIVE_JSON_FILE = 'file'
 MSONEDRIVE_JSON_CODE = 'code'
 MSONEDRIVE_JSON_SCOPE = 'scope'
@@ -83,7 +83,7 @@ MSONEDRIVE_JSON_ROOT_SPLIT = 'root:/'
 MSONEDRIVE_JSON_ERROR = 'error'
 MSONEDRIVE_JSON_CODE = 'code'
 MSONEDRIVE_JSON_ERROR_CODES = 'error_codes'
-MSONEDRIVE_JSON_MESSAGE = 'message'
+MSONEDRIVE_JSON_MSG = 'message'
 MSONEDRIVE_JSON_DRIVE_PATH = 'drivePath'
 MSONEDRIVE_JSON_AUTHORIZATION_URL = 'authorization_url'
 MSONEDRIVE_JSON_ERROR_DESCRIPTION = 'error_description'
@@ -122,8 +122,7 @@ MSONEDRIVE_MANDATORY_FILE_ID_OR_PATH_MSG = 'Either File ID or File Path is manda
 MSONEDRIVE_NO_DATA_FOUND_MSG = 'File has no content'
 MSONEDRIVE_FILE_ALREADY_AVAILABLE = 'File already available in Vault'
 MSONEDRIVE_ADD_FILE_TO_VAULT_ERROR = 'Error while adding the file to vault'
-MSONEDRIVE_TOKEN_EXPIRED = 'Access token has expired'
 MSONEDRIVE_LIST_DRIVE_FAILED_MSG = 'List drive action failed'
 MSONEDRIVE_DELETE_FILE_SUCCESS = "File was deleted successfully"
-MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG = "Unable to retrieve vault item details"
+MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG = "Unable to retrieve vault item details"
 DEFAULT_TIMEOUT = 30

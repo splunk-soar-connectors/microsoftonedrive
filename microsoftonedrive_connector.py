@@ -312,7 +312,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
                     format(error_code, self._handle_py_ver_compat_for_input_str(error_message))
         elif resp_json.get(MSONEDRIVE_JSON_ERROR):
             error_code = resp_json.get(MSONEDRIVE_JSON_ERROR).get(MSONEDRIVE_JSON_CODE)
-            error_message = resp_json.get(MSONEDRIVE_JSON_ERROR).get(MSONEDRIVE_JSON_MESSAGE)
+            error_message = resp_json.get(MSONEDRIVE_JSON_ERROR).get(MSONEDRIVE_JSON_MSG)
 
             if error_code == 'UnknownError':
                 error = "Unknown error occured"
@@ -681,16 +681,18 @@ class MicrosoftOnedriveConnector(BaseConnector):
         ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=endpoint, headers=headers,
                                                   params=params, data=data, method=method)
 
+        message = action_result.get_message()
+        self.debug_print(f"message: {message}")
         # If token is expired, generate new token
-        if MSONEDRIVE_TOKEN_EXPIRED in action_result.get_message():
+        if message and ('token' in message and 'expired' in message):
+            self.save_progress(f"Error message '{message}' found in API response. Requesting new access token using refresh token")
             status = self._generate_new_access_token(action_result=action_result, data=token_data)
-
             if phantom.is_fail(status):
                 return action_result.get_status(), None
 
             headers.update({'Authorization': 'Bearer {0}'.format(self._access_token)})
             ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=endpoint, headers=headers,
-                                                      params=params, data=data, method=method)
+                                                    params=params, data=data, method=method)
         if phantom.is_fail(ret_val):
             return action_result.get_status(), None
 
@@ -866,10 +868,12 @@ class MicrosoftOnedriveConnector(BaseConnector):
             vault_meta_info = list(vault_meta_info)
             if not success or not vault_meta_info:
                 error_msg = " Error Details: {}".format(unquote(message)) if message else ''
-                return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG, error_msg))
+                return action_result.set_status(phantom.APP_ERROR,
+                                        "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg))
         except Exception as e:
             err = self._get_error_message_from_exception(e)
-            return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG, err))
+            return action_result.set_status(phantom.APP_ERROR,
+                                        "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, err))
 
         # Iterate through files of Vault
         for file in vault_meta_info:
@@ -1102,10 +1106,12 @@ class MicrosoftOnedriveConnector(BaseConnector):
             vault_meta_info = list(vault_meta_info)
             if not success or not vault_meta_info:
                 error_msg = " Error Details: {}".format(unquote(message)) if message else ''
-                return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG, error_msg))
+                return action_result.set_status(phantom.APP_ERROR,
+                                    "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg))
         except Exception as e:
             err = self._get_error_message_from_exception(e)
-            return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETREIVE_VAULT_ITEM_ERR_MSG, err))
+            return action_result.set_status(phantom.APP_ERROR,
+                                    "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, err))
 
         # Find vault path and file size for given vault ID
         vault_path = vault_meta_info[0].get('path')
@@ -1140,7 +1146,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         if auto_rename:
             inner_data[MSONEDRIVE_JSON_CONFLICT_BEHAVIOR] = MSONEDRIVE_JSON_RENAME
         else:
-            inner_data[MSONEDRIVE_JSON_CONFLICT_BEHAVIOR] = MSONEDRIVE_JSON_FAIL
+            inner_data[MSONEDRIVE_JSON_CONFLICT_BEHAVIOR] = MSONEDRIVE_JSON_FAILED
         data[MSONEDRIVE_JSON_ITEM] = inner_data
 
         ret_val, session_response = self._update_request(action_result=action_result, endpoint=endpoint, data=json.dumps(data), method='post')
