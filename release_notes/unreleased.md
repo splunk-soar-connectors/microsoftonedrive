@@ -1,1 +1,2 @@
 **Unreleased**
+* Bug fix for get file action [PAPP-34715]

@@ -1,6 +1,6 @@
 # File: microsoftonedrive_connector.py
 #
-# Copyright (c) 2019-2023 Splunk Inc.
+# Copyright (c) 2019-2024 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -37,29 +37,29 @@ except:
 
 
 def _handle_login_redirect(request, key):
-    """ This function is used to redirect login request to Microsoft OneDrive login page.
+    """This function is used to redirect login request to Microsoft OneDrive login page.
 
     :param request: Data given to REST endpoint
     :param key: Key to search in state file
     :return: response authorization_url/admin_consent_url
     """
 
-    asset_id = request.GET.get('asset_id')
+    asset_id = request.GET.get("asset_id")
     if not asset_id:
-        return HttpResponse('ERROR: Asset ID not found in URL', content_type="text/plain", status=400)
+        return HttpResponse("ERROR: Asset ID not found in URL", content_type="text/plain", status=400)
     state = _load_app_state(asset_id)
     if not state:
-        return HttpResponse('ERROR: Invalid asset_id', content_type="text/plain", status=400)
+        return HttpResponse("ERROR: Invalid asset_id", content_type="text/plain", status=400)
     url = state.get(key)
     if not url:
-        return HttpResponse('App state is invalid, {key} not found.'.format(key=key), content_type="text/plain", status=400)
+        return HttpResponse("App state is invalid, {key} not found.".format(key=key), content_type="text/plain", status=400)
     response = HttpResponse(status=302)
-    response['Location'] = url
+    response["Location"] = url
     return response
 
 
 def _load_app_state(asset_id, app_connector=None):
-    """ This function is used to load the current state file.
+    """This function is used to load the current state file.
 
     :param asset_id: asset_id
     :param app_connector: Object of app_connector class
@@ -69,34 +69,34 @@ def _load_app_state(asset_id, app_connector=None):
     asset_id = str(asset_id)
     if not asset_id or not asset_id.isalnum():
         if app_connector:
-            app_connector.debug_print('In _load_app_state: Invalid asset_id')
+            app_connector.debug_print("In _load_app_state: Invalid asset_id")
         return {}
 
     app_dir = os.path.dirname(os.path.abspath(__file__))
-    state_file = '{0}/{1}_state.json'.format(app_dir, asset_id)
+    state_file = "{0}/{1}_state.json".format(app_dir, asset_id)
     real_state_file_path = os.path.abspath(state_file)
     if not os.path.dirname(real_state_file_path) == app_dir:
         if app_connector:
-            app_connector.debug_print('In _load_app_state: Invalid asset_id')
+            app_connector.debug_print("In _load_app_state: Invalid asset_id")
         return {}
 
     state = {}
     try:
-        with open(real_state_file_path, 'r') as state_file_obj:
+        with open(real_state_file_path, "r") as state_file_obj:
             state_file_data = state_file_obj.read()
             state = json.loads(state_file_data)
     except Exception as e:
         if app_connector:
-            app_connector.debug_print('In _load_app_state: Exception: {0}'.format(str(e)))
+            app_connector.debug_print("In _load_app_state: Exception: {0}".format(str(e)))
 
     if app_connector:
-        app_connector.debug_print('Loaded state: ', state)
+        app_connector.debug_print("Loaded state: ", state)
 
     return state
 
 
 def _save_app_state(state, asset_id, app_connector):
-    """ This function is used to save current state in file.
+    """This function is used to save current state in file.
 
     :param state: Dictionary which contains data to write in state file
     :param asset_id: asset_id
@@ -107,67 +107,67 @@ def _save_app_state(state, asset_id, app_connector):
     asset_id = str(asset_id)
     if not asset_id or not asset_id.isalnum():
         if app_connector:
-            app_connector.debug_print('In _save_app_state: Invalid asset_id')
+            app_connector.debug_print("In _save_app_state: Invalid asset_id")
         return {}
 
     app_dir = os.path.split(__file__)[0]
-    state_file = '{0}/{1}_state.json'.format(app_dir, asset_id)
+    state_file = "{0}/{1}_state.json".format(app_dir, asset_id)
 
     real_state_file_path = os.path.abspath(state_file)
     if not os.path.dirname(real_state_file_path) == app_dir:
         if app_connector:
-            app_connector.debug_print('In _save_app_state: Invalid asset_id')
+            app_connector.debug_print("In _save_app_state: Invalid asset_id")
         return {}
 
     if app_connector:
-        app_connector.debug_print('Saving state: ', state)
+        app_connector.debug_print("Saving state: ", state)
 
     try:
-        with open(real_state_file_path, 'w+') as state_file_obj:
+        with open(real_state_file_path, "w+") as state_file_obj:
             state_file_obj.write(json.dumps(state))
     except Exception as e:
-        print('Unable to save state file: {0}'.format(str(e)))
+        print("Unable to save state file: {0}".format(str(e)))
 
     return phantom.APP_SUCCESS
 
 
 def _handle_login_response(request):
-    """ This function is used to get the login response of authorization request from Microsoft OneDrive login page.
+    """This function is used to get the login response of authorization request from Microsoft OneDrive login page.
 
     :param request: Data given to REST endpoint
     :return: HttpResponse. The response displayed on authorization URL page
     """
 
-    asset_id = request.GET.get('state')
+    asset_id = request.GET.get("state")
     if not asset_id:
-        return HttpResponse('ERROR: Asset ID not found in URL\n{}'.format(json.dumps(request.GET)), content_type="text/plain", status=400)
+        return HttpResponse("ERROR: Asset ID not found in URL\n{}".format(json.dumps(request.GET)), content_type="text/plain", status=400)
 
     # Check for error in URL
-    error = request.GET.get('error')
-    error_description = request.GET.get('error_description')
+    error = request.GET.get("error")
+    error_description = request.GET.get("error_description")
 
     # If there is an error in response
     if error:
-        message = 'Error: {0}'.format(error)
+        message = "Error: {0}".format(error)
         if error_description:
-            message = '{0} Details: {1}'.format(message, error_description)
-        return HttpResponse('Server returned {0}'.format(message), content_type="text/plain", status=400)
+            message = "{0} Details: {1}".format(message, error_description)
+        return HttpResponse("Server returned {0}".format(message), content_type="text/plain", status=400)
 
-    code = request.GET.get('code')
+    code = request.GET.get("code")
 
     # If code is not available
     if not code:
-        return HttpResponse('Error while authenticating\n{0}'.format(json.dumps(request.GET)), content_type="text/plain", status=400)
+        return HttpResponse("Error while authenticating\n{0}".format(json.dumps(request.GET)), content_type="text/plain", status=400)
 
     state = _load_app_state(asset_id)
-    state['code'] = code
+    state["code"] = code
     _save_app_state(state, asset_id, None)
 
-    return HttpResponse('Code received. Please close this window, the action will continue to get new token.', content_type="text/plain")
+    return HttpResponse("Code received. Please close this window, the action will continue to get new token.", content_type="text/plain")
 
 
 def _handle_rest_request(request, path_parts):
-    """ Handle requests for authorization.
+    """Handle requests for authorization.
 
     :param request: Data given to REST endpoint
     :param path_parts: Parts of the URL passed
@@ -175,48 +175,48 @@ def _handle_rest_request(request, path_parts):
     """
 
     if len(path_parts) < 2:
-        return HttpResponse('error: True, message: Invalid REST endpoint request', content_type="text/plain", status=404)
+        return HttpResponse("error: True, message: Invalid REST endpoint request", content_type="text/plain", status=404)
 
     call_type = path_parts[1]
 
     # To handle authorize request in test connectivity action
-    if call_type == 'start_oauth':
-        return _handle_login_redirect(request, 'authorization_url')
+    if call_type == "start_oauth":
+        return _handle_login_redirect(request, "authorization_url")
 
     # To handle response from Microsoft OneDrive login page
-    if call_type == 'result':
+    if call_type == "result":
         return_val = _handle_login_response(request)
-        asset_id = request.GET.get('state')
+        asset_id = request.GET.get("state")
         if asset_id and asset_id.isalnum():
             app_dir = os.path.dirname(os.path.abspath(__file__))
-            auth_status_file_path = '{0}/{1}_{2}'.format(app_dir, asset_id, MSONEDRIVE_TC_FILE)
+            auth_status_file_path = "{0}/{1}_{2}".format(app_dir, asset_id, MSONEDRIVE_TC_FILE)
             real_auth_status_file_path = os.path.abspath(auth_status_file_path)
             if not os.path.dirname(real_auth_status_file_path) == app_dir:
                 return HttpResponse("Error: Invalid asset_id", content_type="text/plain", status=400)
-            open(real_auth_status_file_path, 'w').close()
+            open(real_auth_status_file_path, "w").close()
             try:
-                uid = pwd.getpwnam('apache').pw_uid
-                gid = grp.getgrnam('phantom').gr_gid
+                uid = pwd.getpwnam("apache").pw_uid
+                gid = grp.getgrnam("phantom").gr_gid
                 os.chown(real_auth_status_file_path, uid, gid)
-                os.chmod(real_auth_status_file_path, '0664')
+                os.chmod(real_auth_status_file_path, "0664")
             except:
                 pass
 
         return return_val
-    return HttpResponse('error: Invalid endpoint', content_type="text/plain", status=404)
+    return HttpResponse("error: Invalid endpoint", content_type="text/plain", status=404)
 
 
 def _get_dir_name_from_app_name(app_name):
-    """ Get name of the directory for the app.
+    """Get name of the directory for the app.
 
     :param app_name: Name of the application for which directory name is required
     :return: app_name: Name of the directory for the application
     """
 
-    app_name = ''.join([x for x in app_name if x.isalnum()])
+    app_name = "".join([x for x in app_name if x.isalnum()])
     app_name = app_name.lower()
     if not app_name:
-        app_name = 'app_for_phantom'
+        app_name = "app_for_phantom"
     return app_name
 
 
@@ -239,7 +239,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         self._refresh_token = None
 
     def _process_empty_response(self, response, action_result):
-        """ This function is used to process empty response.
+        """This function is used to process empty response.
 
         :param response: Response data
         :param action_result: Object of Action Result
@@ -253,7 +253,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return RetVal(action_result.set_status(phantom.APP_ERROR, "Empty response and no information in the header"), None)
 
     def _process_html_response(self, response, action_result):
-        """ This function is used to process html response.
+        """This function is used to process html response.
 
         :param response: Response data
         :param action_result: Object of Action Result
@@ -272,21 +272,20 @@ class MicrosoftOnedriveConnector(BaseConnector):
             for element in soup(["script", "style", "footer", "nav"]):
                 element.extract()
             error_text = soup.text
-            split_lines = error_text.split('\n')
+            split_lines = error_text.split("\n")
             split_lines = [x.strip() for x in split_lines if x.strip()]
-            error_text = '\n'.join(split_lines)
+            error_text = "\n".join(split_lines)
         except:
             error_text = "Cannot parse error details"
 
-        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code,
-                                                                      self._handle_py_ver_compat_for_input_str(error_text))
+        message = "Status Code: {0}. Data from server:\n{1}\n".format(status_code, self._handle_py_ver_compat_for_input_str(error_text))
 
-        message = message.replace('{', '{{').replace('}', '}}')
+        message = message.replace("{", "{{").replace("}", "}}")
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
     def _process_json_response(self, r, action_result):
-        """ This function is used to process json response.
+        """This function is used to process json response.
 
         :param r: Response data
         :param action_result: Object of Action Result
@@ -297,8 +296,12 @@ class MicrosoftOnedriveConnector(BaseConnector):
         try:
             resp_json = r.json()
         except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Unable to parse JSON response. Error: {0}".format(
-                self._get_error_message_from_exception(e))), None)
+            return RetVal(
+                action_result.set_status(
+                    phantom.APP_ERROR, "Unable to parse JSON response. Error: {0}".format(self._get_error_message_from_exception(e))
+                ),
+                None,
+            )
 
         # Please specify the status codes here
         if 200 <= r.status_code < 399:
@@ -308,27 +311,26 @@ class MicrosoftOnedriveConnector(BaseConnector):
         if resp_json.get(MSONEDRIVE_JSON_ERROR_CODES):
             error_code = resp_json.get(MSONEDRIVE_JSON_ERROR_CODES)[0]
             error_message = resp_json.get(MSONEDRIVE_JSON_ERROR_DESCRIPTION)
-            error = 'ErrorCode: {0}\nErrorMessage: {1}'.\
-                    format(error_code, self._handle_py_ver_compat_for_input_str(error_message))
+            error = "ErrorCode: {0}\nErrorMessage: {1}".format(error_code, self._handle_py_ver_compat_for_input_str(error_message))
         elif resp_json.get(MSONEDRIVE_JSON_ERROR):
             error_code = resp_json.get(MSONEDRIVE_JSON_ERROR).get(MSONEDRIVE_JSON_CODE)
             error_message = resp_json.get(MSONEDRIVE_JSON_ERROR).get(MSONEDRIVE_JSON_MSG)
 
-            if error_code == 'UnknownError':
+            if error_code == "UnknownError":
                 error = "Unknown error occured"
             else:
-                error = 'ErrorCode: {0}\nErrorMessage: {1}'.\
-                        format(error_code, self._handle_py_ver_compat_for_input_str(error_message))
+                error = "ErrorCode: {0}\nErrorMessage: {1}".format(error_code, self._handle_py_ver_compat_for_input_str(error_message))
         else:
-            error = r.text.replace('{', '{{').replace('}', '}}')
+            error = r.text.replace("{", "{{").replace("}", "}}")
 
         message = "Error from server. Status Code: {0} Data from server: {1}".format(
-            r.status_code, self._handle_py_ver_compat_for_input_str(error))
+            r.status_code, self._handle_py_ver_compat_for_input_str(error)
+        )
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
     def _process_response(self, r, action_result):
-        """ This function is used to process html response.
+        """This function is used to process html response.
 
         :param r: Response data
         :param action_result: Object of Action Result
@@ -336,25 +338,25 @@ class MicrosoftOnedriveConnector(BaseConnector):
         """
 
         # store the r_text in debug data, it will get dumped in the logs if the action fails
-        if hasattr(action_result, 'add_debug_data'):
-            action_result.add_debug_data({'r_status_code': r.status_code})
-            action_result.add_debug_data({'r_text': r.text})
-            action_result.add_debug_data({'r_headers': r.headers})
+        if hasattr(action_result, "add_debug_data"):
+            action_result.add_debug_data({"r_status_code": r.status_code})
+            action_result.add_debug_data({"r_text": r.text})
+            action_result.add_debug_data({"r_headers": r.headers})
 
         # Process each 'Content-Type' of response separately
 
         # Process a json response
-        if 'json' in r.headers.get('Content-Type', ''):
+        if "json" in r.headers.get("Content-Type", ""):
             return self._process_json_response(r, action_result)
 
-        if 'text/javascript' in r.headers.get('Content-Type', ''):
+        if "text/javascript" in r.headers.get("Content-Type", ""):
             return self._process_json_response(r, action_result)
 
         # Process an HTML response, Do this no matter what the API talks.
         # There is a high chance of a PROXY in between phantom and the rest of
         # world, in case of errors, PROXY's return HTML, this function parses
         # the error and adds it to the action_result.
-        if 'html' in r.headers.get('Content-Type', ''):
+        if "html" in r.headers.get("Content-Type", ""):
             return self._process_html_response(r, action_result)
 
         # it's not content-type that is to be parsed, handle an empty response
@@ -363,7 +365,8 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         # everything else is actually an error at this point
         message = "Can't process response from server. Status Code: {0} Data from server: {1}".format(
-                r.status_code, self._handle_py_ver_compat_for_input_str(r.text.replace('{', '{{').replace('}', '}}')))
+            r.status_code, self._handle_py_ver_compat_for_input_str(r.text.replace("{", "{{").replace("}", "}}"))
+        )
 
         return RetVal(action_result.set_status(phantom.APP_ERROR, message), None)
 
@@ -376,14 +379,14 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         try:
             if input_str and self._python_version == 2:
-                input_str = UnicodeDammit(input_str).unicode_markup.encode('utf-8')
+                input_str = UnicodeDammit(input_str).unicode_markup.encode("utf-8")
         except:
             self.debug_print("Error occurred while handling python 2to3 compatibility for the input string")
 
         return input_str
 
     def _get_error_message_from_exception(self, e):
-        """ This method is used to get appropriate error message from the exception.
+        """This method is used to get appropriate error message from the exception.
         :param e: Exception object
         :return: error message
         """
@@ -416,7 +419,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return "Error Code: {0}. Error Message: {1}".format(error_code, error_msg)
 
     def _make_rest_call_for_get_file(self, endpoint, action_result, headers=None, params=None, data=None, method="get", verify=True):
-        """ This function is used to make the REST call.
+        """This function is used to make the REST call.
 
         :param endpoint: REST URL that needs to be called
         :param action_result: Object of ActionResult class
@@ -437,32 +440,30 @@ class MicrosoftOnedriveConnector(BaseConnector):
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Invalid method: {0}".format(method)), resp_json)
 
         try:
-            r = request_func(
-                            endpoint,
-                            data=data,
-                            headers=headers,
-                            verify=verify,
-                            params=params)
+            r = request_func(endpoint, data=data, headers=headers, verify=verify, params=params)
 
             # In case of get_file action store response into temp file
-            if self.get_action_identifier() == 'get_file':
-                temp_file_path = '{dir}{asset}_temp_get_file'.format(dir=self.get_state_dir(),
-                                                                     asset=self.get_asset_id())
+            if self.get_action_identifier() == "get_file":
+                temp_file_path = "{dir}{asset}_temp_get_file".format(dir=self.get_state_dir(), asset=self.get_asset_id())
                 # If API call is success
                 if 200 == r.status_code:
                     # Store response into file
-                    with open(temp_file_path, 'wb') as temp_file:
+                    with open(temp_file_path, "wb") as temp_file:
                         temp_file.write(r.content)
                     return RetVal(phantom.APP_SUCCESS, {})
 
         except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(
-                self._get_error_message_from_exception(e))), resp_json)
+            return RetVal(
+                action_result.set_status(
+                    phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(self._get_error_message_from_exception(e))
+                ),
+                resp_json,
+            )
 
         return self._process_response(r, action_result)
 
     def _make_rest_call(self, endpoint, action_result, headers=None, params=None, data=None, method="get", verify=True):
-        """ This function is used to make the REST call.
+        """This function is used to make the REST call.
 
         :param endpoint: REST URL that needs to be called
         :param action_result: Object of ActionResult class
@@ -486,20 +487,19 @@ class MicrosoftOnedriveConnector(BaseConnector):
             return RetVal(action_result.set_status(phantom.APP_ERROR, "Invalid method: {0}".format(method)), resp_json)
 
         try:
-            r = request_func(
-                            endpoint,
-                            data=data,
-                            headers=headers,
-                            verify=verify,
-                            params=params)
+            r = request_func(endpoint, data=data, headers=headers, verify=verify, params=params)
         except Exception as e:
-            return RetVal(action_result.set_status(phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(
-                self._get_error_message_from_exception(e))), resp_json)
+            return RetVal(
+                action_result.set_status(
+                    phantom.APP_ERROR, "Error Connecting to server. Details: {0}".format(self._get_error_message_from_exception(e))
+                ),
+                resp_json,
+            )
 
         return self._process_response(r, action_result)
 
     def _get_asset_name(self, action_result):
-        """ Get name of the asset using Phantom URL.
+        """Get name of the asset using Phantom URL.
 
         :param action_result: object of ActionResult class
         :return: status phantom.APP_ERROR/phantom.APP_SUCCESS(along with appropriate message), asset name
@@ -507,21 +507,20 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         asset_id = self.get_asset_id()
         rest_endpoint = MSONEDRIVE_PHANTOM_ASSET_INFO_URL.format(asset_id=asset_id)
-        url = '{0}{1}{2}'.format(BaseConnector._get_phantom_base_url(), 'rest', rest_endpoint)
+        url = "{0}{1}{2}".format(BaseConnector._get_phantom_base_url(), "rest", rest_endpoint)
         ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=url, verify=False)
 
         if phantom.is_fail(ret_val):
             return ret_val, None
 
-        asset_name = resp_json.get('name')
+        asset_name = resp_json.get("name")
         if not asset_name:
-            return action_result.set_status(phantom.APP_ERROR, 'Asset Name for id: {0} not found.'.format(asset_id),
-                                            None)
+            return action_result.set_status(phantom.APP_ERROR, "Asset Name for id: {0} not found.".format(asset_id), None)
 
         return phantom.APP_SUCCESS, asset_name
 
     def _wait(self, action_result):
-        """ This function is used to hold the action till user login.
+        """This function is used to hold the action till user login.
 
         :param action_result: Object of ActionResult class
         :return: status (success/failed)
@@ -529,12 +528,12 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         app_dir = os.path.dirname(os.path.abspath(__file__))
         # file to check whether the request has been granted or not
-        auth_status_file_path = '{0}/{1}_{2}'.format(app_dir, self.get_asset_id(), MSONEDRIVE_TC_FILE)
+        auth_status_file_path = "{0}/{1}_{2}".format(app_dir, self.get_asset_id(), MSONEDRIVE_TC_FILE)
         time_out = False
 
         # wait-time while request is being granted
         for _ in range(0, 35):
-            self.send_progress('Waiting...')
+            self.send_progress("Waiting...")
             if os.path.isfile(auth_status_file_path):
                 time_out = True
                 os.unlink(auth_status_file_path)
@@ -542,30 +541,30 @@ class MicrosoftOnedriveConnector(BaseConnector):
             time.sleep(MSONEDRIVE_TC_STATUS_SLEEP)
 
         if not time_out:
-            return action_result.set_status(phantom.APP_ERROR, status_message='Timeout. Please try again later.')
-        self.send_progress('Authenticated')
+            return action_result.set_status(phantom.APP_ERROR, status_message="Timeout. Please try again later.")
+        self.send_progress("Authenticated")
         return phantom.APP_SUCCESS
 
     def _get_phantom_base_url(self, action_result):
-        """ Get base url of phantom.
+        """Get base url of phantom.
 
         :param action_result: object of ActionResult class
         :return: status phantom.APP_ERROR/phantom.APP_SUCCESS(along with appropriate message),
         base url of phantom
         """
 
-        url = '{0}{1}{2}'.format(BaseConnector._get_phantom_base_url(), 'rest', MSONEDRIVE_PHANTOM_SYS_INFO_URL)
+        url = "{0}{1}{2}".format(BaseConnector._get_phantom_base_url(), "rest", MSONEDRIVE_PHANTOM_SYS_INFO_URL)
         ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=url, verify=False)
         if phantom.is_fail(ret_val):
             return ret_val, None
 
-        phantom_base_url = resp_json.get('base_url')
+        phantom_base_url = resp_json.get("base_url")
         if not phantom_base_url:
             return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_BASE_URL_NOT_FOUND_MSG), None
-        return phantom.APP_SUCCESS, phantom_base_url.rstrip('/')
+        return phantom.APP_SUCCESS, phantom_base_url.rstrip("/")
 
     def _get_app_rest_url(self, action_result):
-        """ Get URL for making rest calls.
+        """Get URL for making rest calls.
 
         :param action_result: object of ActionResult class
         :return: status phantom.APP_ERROR/phantom.APP_SUCCESS(along with appropriate message),
@@ -580,26 +579,24 @@ class MicrosoftOnedriveConnector(BaseConnector):
         if phantom.is_fail(ret_val):
             return action_result.get_status(), None
 
-        self.save_progress('Using Phantom base URL as: {0}'.format(phantom_base_url))
+        self.save_progress("Using Phantom base URL as: {0}".format(phantom_base_url))
         app_json = self.get_app_json()
-        app_name = app_json['name']
+        app_name = app_json["name"]
 
         app_dir_name = _get_dir_name_from_app_name(app_name)
-        url_to_app_rest = '{0}/rest/handler/{1}_{2}/{3}'.format(phantom_base_url, app_dir_name, app_json['appid'],
-                                                                asset_name)
+        url_to_app_rest = "{0}/rest/handler/{1}_{2}/{3}".format(phantom_base_url, app_dir_name, app_json["appid"], asset_name)
         return phantom.APP_SUCCESS, url_to_app_rest
 
     def _generate_new_access_token(self, action_result, data):
-        """ This function is used to generate new access token using the code obtained on authorization.
+        """This function is used to generate new access token using the code obtained on authorization.
 
         :param action_result: object of ActionResult class
         :param data: Data to send in REST call
         :return: status phantom.APP_ERROR/phantom.APP_SUCCESS
         """
 
-        req_url = '{}{}'.format(MSONEDRIVE_LOGIN_BASE_URL, MSONEDRIVE_SERVER_TOKEN_URL.format(tenant_id=self._tenant))
-        ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=req_url,
-                                                  data=data, method=MSONEDRIVE_METHOD_POST)
+        req_url = "{}{}".format(MSONEDRIVE_LOGIN_BASE_URL, MSONEDRIVE_SERVER_TOKEN_URL.format(tenant_id=self._tenant))
+        ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=req_url, data=data, method=MSONEDRIVE_METHOD_POST)
         if phantom.is_fail(ret_val):
             return action_result.get_status()
 
@@ -608,7 +605,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
             if resp_json.get(MSONEDRIVE_JSON_ERROR_DESCRIPTION):
                 return action_result.set_status(phantom.APP_ERROR, status_message=resp_json[MSONEDRIVE_JSON_ERROR_DESCRIPTION])
 
-            return action_result.set_status(phantom.APP_ERROR, status_message='Error while generating access_token')
+            return action_result.set_status(phantom.APP_ERROR, status_message="Error while generating access_token")
 
         self._state[MSONEDRIVE_TOKEN_STRING] = resp_json
         self.save_state(self._state)
@@ -634,8 +631,8 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         return phantom.APP_SUCCESS
 
-    def _update_request(self, action_result, endpoint, headers=None, params=None, data=None, method='get'):
-        """ This function is used to update the headers with access_token before making REST call.
+    def _update_request(self, action_result, endpoint, headers=None, params=None, data=None, method="get"):
+        """This function is used to update the headers with access_token before making REST call.
 
         :param endpoint: REST endpoint that needs to appended to the service address
         :param action_result: object of ActionResult class
@@ -650,7 +647,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         # In pagination, URL of next page contains complete URL
         # So no need to modify them
         if not endpoint.startswith(MSONEDRIVE_MSGRAPH_API_BASE_URL):
-            endpoint = '{0}{1}'.format(MSONEDRIVE_MSGRAPH_API_BASE_URL, endpoint)
+            endpoint = "{0}{1}".format(MSONEDRIVE_MSGRAPH_API_BASE_URL, endpoint)
 
         if headers is None:
             headers = {}
@@ -660,7 +657,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
             MSONEDRIVE_JSON_SCOPE: MSONEDRIVE_REST_REQUEST_SCOPE,
             MSONEDRIVE_CONFIG_CLIENT_SECRET: self._client_secret,
             MSONEDRIVE_JSON_GRANT_TYPE: MSONEDRIVE_REFRESH_TOKEN_STRING,
-            MSONEDRIVE_REFRESH_TOKEN_STRING: self._refresh_token
+            MSONEDRIVE_REFRESH_TOKEN_STRING: self._refresh_token,
         }
 
         if not self._access_token:
@@ -674,32 +671,34 @@ class MicrosoftOnedriveConnector(BaseConnector):
             if phantom.is_fail(status):
                 return action_result.get_status(), None
 
-        headers.update({'Authorization': 'Bearer {0}'.format(self._access_token)})
-        if not headers.get('Content-Type'):
-            headers.update({'Content-Type': 'application/json'})
+        headers.update({"Authorization": "Bearer {0}".format(self._access_token)})
+        if not headers.get("Content-Type"):
+            headers.update({"Content-Type": "application/json"})
 
-        ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=endpoint, headers=headers,
-                                                  params=params, data=data, method=method)
+        ret_val, resp_json = self._make_rest_call(
+            action_result=action_result, endpoint=endpoint, headers=headers, params=params, data=data, method=method
+        )
 
         message = action_result.get_message()
         self.debug_print(f"message: {message}")
         # If token is expired, generate new token
-        if message and ('token' in message and 'expired' in message):
+        if message and ("token" in message and "expired" in message):
             self.save_progress(f"Error message '{message}' found in API response. Requesting new access token using refresh token")
             status = self._generate_new_access_token(action_result=action_result, data=token_data)
             if phantom.is_fail(status):
                 return action_result.get_status(), None
 
-            headers.update({'Authorization': 'Bearer {0}'.format(self._access_token)})
-            ret_val, resp_json = self._make_rest_call(action_result=action_result, endpoint=endpoint, headers=headers,
-                                                    params=params, data=data, method=method)
+            headers.update({"Authorization": "Bearer {0}".format(self._access_token)})
+            ret_val, resp_json = self._make_rest_call(
+                action_result=action_result, endpoint=endpoint, headers=headers, params=params, data=data, method=method
+            )
         if phantom.is_fail(ret_val):
             return action_result.get_status(), None
 
         return phantom.APP_SUCCESS, resp_json
 
     def _handle_test_connectivity(self, param):
-        """ This function is used to handle the test connectivity action.
+        """This function is used to handle the test connectivity action.
 
         :param param: Dictionary of input parameters
         :return: Status(phantom.APP_SUCCESS/phantom.APP_ERROR)
@@ -717,25 +716,27 @@ class MicrosoftOnedriveConnector(BaseConnector):
             return action_result.get_status()
 
         # Append /result to create redirect_uri
-        redirect_uri = '{0}/result'.format(app_rest_url)
+        redirect_uri = "{0}/result".format(app_rest_url)
         app_state[MSONEDRIVE_JSON_REDIRECT_URI] = redirect_uri
 
         self.save_progress(MSONEDRIVE_OAUTH_URL_MSG)
         self.save_progress(redirect_uri)
 
         # Authorization URL used to make request for getting code which is used to generate access token
-        authorization_url = MSONEDRIVE_AUTHORIZE_URL.format(tenant_id=self._tenant,
-                                                            client_id=self._client_id,
-                                                            redirect_uri=redirect_uri,
-                                                            response_type=MSONEDRIVE_JSON_CODE,
-                                                            state=self.get_asset_id(),
-                                                            scope=MSONEDRIVE_REST_REQUEST_SCOPE)
+        authorization_url = MSONEDRIVE_AUTHORIZE_URL.format(
+            tenant_id=self._tenant,
+            client_id=self._client_id,
+            redirect_uri=redirect_uri,
+            response_type=MSONEDRIVE_JSON_CODE,
+            state=self.get_asset_id(),
+            scope=MSONEDRIVE_REST_REQUEST_SCOPE,
+        )
 
-        authorization_url = '{}{}'.format(MSONEDRIVE_LOGIN_BASE_URL, authorization_url)
+        authorization_url = "{}{}".format(MSONEDRIVE_LOGIN_BASE_URL, authorization_url)
         app_state[MSONEDRIVE_JSON_AUTHORIZATION_URL] = authorization_url
 
         # URL which would be shown to the user
-        url_for_authorize_request = '{0}/start_oauth?asset_id={1}&'.format(app_rest_url, self.get_asset_id())
+        url_for_authorize_request = "{0}/start_oauth?asset_id={1}&".format(app_rest_url, self.get_asset_id())
         _save_app_state(app_state, self.get_asset_id(), self)
 
         self.save_progress(MSONEDRIVE_AUTHORIZE_USER_MSG)
@@ -748,7 +749,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         status = self._wait(action_result=action_result)
 
         # Empty message to override last message of waiting
-        self.send_progress('')
+        self.send_progress("")
         if phantom.is_fail(status):
             return action_result.get_status()
 
@@ -769,22 +770,22 @@ class MicrosoftOnedriveConnector(BaseConnector):
             MSONEDRIVE_CONFIG_CLIENT_ID: self._client_id,
             MSONEDRIVE_JSON_SCOPE: MSONEDRIVE_REST_REQUEST_SCOPE,
             MSONEDRIVE_CONFIG_CLIENT_SECRET: self._client_secret,
-            MSONEDRIVE_JSON_GRANT_TYPE: 'authorization_code',
+            MSONEDRIVE_JSON_GRANT_TYPE: "authorization_code",
             MSONEDRIVE_JSON_REDIRECT_URI: redirect_uri,
-            MSONEDRIVE_JSON_CODE: current_code
+            MSONEDRIVE_JSON_CODE: current_code,
         }
 
         # For first time access, new access token is generated
         ret_val = self._generate_new_access_token(action_result=action_result, data=data)
 
         if phantom.is_fail(ret_val):
-            self.send_progress('')
+            self.send_progress("")
             self.save_progress(MSONEDRIVE_TEST_CONNECTIVITY_FAILED_MSG)
             return action_result.get_status()
 
         self.save_progress(MSONEDRIVE_CURRENT_USER_INFO_MSG)
 
-        url = '{}{}'.format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_USER_INFO_ENDPOINT)
+        url = "{}{}".format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_USER_INFO_ENDPOINT)
         ret_val, response = self._update_request(action_result=action_result, endpoint=url)
 
         if phantom.is_fail(ret_val):
@@ -796,7 +797,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _handle_get_file(self, param):
-        """ This function is used to get a file and store it into vault.
+        """This function is used to get a file and store it into vault.
 
         :param param: Dictionary of input parameters
         :return: status success/failure
@@ -814,8 +815,8 @@ class MicrosoftOnedriveConnector(BaseConnector):
             return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_MANDATORY_FILE_ID_OR_PATH_MSG)
         # Strip the folder path for leading and trailing forward and backward slashes if any present
         if file_path:
-            file_path = file_path.strip('/\\')
-        endpoint = ''
+            file_path = file_path.strip("/\\")
+        endpoint = ""
         if drive_id:
             if file_id:
                 # Create url with folder_id
@@ -830,7 +831,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
                 endpoint = MSONEDRIVE_GET_FILE_FILE_PATH.format(file_path=file_path)
 
         # make rest call
-        ret_val, response = self._update_request(action_result=action_result, endpoint=endpoint, method='get')
+        ret_val, response = self._update_request(action_result=action_result, endpoint=endpoint, method="get")
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
@@ -842,13 +843,12 @@ class MicrosoftOnedriveConnector(BaseConnector):
         if not filename or not download_url:
             return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_ERROR_FILE_NOT_EXIST_MSG)
 
-        ret_val, response = self._make_rest_call_for_get_file(action_result=action_result, endpoint=download_url, method='get')
+        ret_val, response = self._make_rest_call_for_get_file(action_result=action_result, endpoint=download_url, method="get")
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
 
-        temp_file_path = '{dir}{asset}_temp_get_file'.format(dir=self.get_state_dir(),
-                                                             asset=self.get_asset_id())
+        temp_file_path = "{dir}{asset}_temp_get_file".format(dir=self.get_state_dir(), asset=self.get_asset_id())
 
         # If file size is zero then delete it and send a message : File has no content
         if not os.path.getsize(temp_file_path):
@@ -866,26 +866,27 @@ class MicrosoftOnedriveConnector(BaseConnector):
         try:
             success, message, vault_meta_info = ph_rules.vault_info(container_id=self.get_container_id())
             vault_meta_info = list(vault_meta_info)
-            if not success or not vault_meta_info:
-                error_msg = " Error Details: {}".format(unquote(message)) if message else ''
-                return action_result.set_status(phantom.APP_ERROR,
-                                        "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg))
+
+            # removing this condition as it fails even in a valid case when container has no attachments
+            # if not success or not vault_meta_info:
+            #     error_msg = " Error Details: {}".format(unquote(message)) if message else ''
+            #     return action_result.set_status(phantom.APP_ERROR,
+            #                             "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg))
         except Exception as e:
             err = self._get_error_message_from_exception(e)
-            return action_result.set_status(phantom.APP_ERROR,
-                                        "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, err))
+            return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, err))
 
         # Iterate through files of Vault
         for file in vault_meta_info:
             # If file name and file size are same file is duplicate
-            if self._handle_py_ver_compat_for_input_str(file.get('name')) == filename and file.get('size') == os.path.getsize(temp_file_path):
+            if self._handle_py_ver_compat_for_input_str(file.get("name")) == filename and file.get("size") == os.path.getsize(temp_file_path):
                 self.debug_print(MSONEDRIVE_FILE_ALREADY_AVAILABLE)
                 vault_file_details = {
-                    phantom.APP_JSON_SIZE: file.get('size'),
-                    phantom.APP_JSON_VAULT_ID: file.get('vault_id'),
-                    'file_name': filename
+                    phantom.APP_JSON_SIZE: file.get("size"),
+                    phantom.APP_JSON_VAULT_ID: file.get("vault_id"),
+                    "file_name": filename,
                 }
-                summary['vault_id'] = file.get('vault_id')
+                summary["vault_id"] = file.get("vault_id")
                 # Delete temp file
                 os.unlink(temp_file_path)
                 action_result.add_data(vault_file_details)
@@ -894,22 +895,23 @@ class MicrosoftOnedriveConnector(BaseConnector):
         vault_file_details = {phantom.APP_JSON_SIZE: os.path.getsize(temp_file_path)}
 
         # Adding file to vault
-        vault_ret_dict = Vault.add_attachment(temp_file_path, container_id=self.get_container_id(),
-            file_name=filename, metadata=vault_file_details)
+        vault_ret_dict = Vault.add_attachment(
+            temp_file_path, container_id=self.get_container_id(), file_name=filename, metadata=vault_file_details
+        )
 
-        if not vault_ret_dict['succeeded']:
+        if not vault_ret_dict["succeeded"]:
             self.debug_print(MSONEDRIVE_ADD_FILE_TO_VAULT_ERROR)
             return action_result.set_status(phantom.APP_ERROR, status_message=MSONEDRIVE_ADD_FILE_TO_VAULT_ERROR)
 
         vault_file_details[phantom.APP_JSON_VAULT_ID] = vault_ret_dict[phantom.APP_JSON_HASH]
-        vault_file_details['file_name'] = filename
+        vault_file_details["file_name"] = filename
         action_result.add_data(vault_file_details)
 
-        summary['vault_id'] = vault_file_details['vault_id']
+        summary["vault_id"] = vault_file_details["vault_id"]
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _handle_list_items(self, param):
-        """ This function is used to handle list items action.
+        """This function is used to handle list items action.
 
         :param param: Dictionary of input parameters
         :return: status(phantom.APP_SUCCESS/phantom.APP_ERROR)
@@ -927,7 +929,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         # Strip the folder path for leading and trailing forward and backward slashes if any present
         if folder_path:
-            folder_path = folder_path.strip('/\\')
+            folder_path = folder_path.strip("/\\")
 
         # 1. Default URL for fetching all items starting from the root folder of the default drive
         endpoint = MSONEDRIVE_LIST_ITEMS_DEFAULT_ENDPOINT
@@ -959,8 +961,8 @@ class MicrosoftOnedriveConnector(BaseConnector):
                 full_path = path_reference_body.get(MSONEDRIVE_JSON_PATH)
                 path_elements = full_path.split(MSONEDRIVE_JSON_ROOT_SPLIT)
                 if len(path_elements) > 1:
-                    path_reference_body[MSONEDRIVE_JSON_DRIVE_PATH] = '{}{}'.format(path_elements[0], MSONEDRIVE_JSON_ROOT_SPLIT)
-                    path_reference_body[MSONEDRIVE_JSON_FOLDER_PATH] = path_elements[1].strip('/\\')
+                    path_reference_body[MSONEDRIVE_JSON_DRIVE_PATH] = "{}{}".format(path_elements[0], MSONEDRIVE_JSON_ROOT_SPLIT)
+                    path_reference_body[MSONEDRIVE_JSON_FOLDER_PATH] = path_elements[1].strip("/\\")
                 else:
                     path_reference_body[MSONEDRIVE_JSON_DRIVE_PATH] = path_elements[0]
                     path_reference_body[MSONEDRIVE_JSON_FOLDER_PATH] = ""
@@ -970,12 +972,12 @@ class MicrosoftOnedriveConnector(BaseConnector):
             action_result.add_data(item)
 
         summary = action_result.update_summary({})
-        summary['total_items'] = action_result.get_data_size()
+        summary["total_items"] = action_result.get_data_size()
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _get_list_items(self, endpoint, drive_id, action_result, list_files, list_folders, list_items):
-        """ This function is used to update global variables representing list of files, folders, and items
+        """This function is used to update global variables representing list of files, folders, and items
         based on given initial endpoint
 
         :param endpoint: Endpoint for initial item whose all children items are to be fetched
@@ -1021,7 +1023,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return phantom.APP_SUCCESS
 
     def _get_list_response(self, url, action_result):
-        """ This function is used to fetch list response based on API URL to be fetched,
+        """This function is used to fetch list response based on API URL to be fetched,
         pagination and additional params.
 
         :rtype: list
@@ -1049,7 +1051,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return response_items_list
 
     def _handle_list_drive(self, param):
-        """ This function is used to handle list dives action.
+        """This function is used to handle list dives action.
 
         :param param: No input parameter required
         :return: status(phantom.APP_SUCCESS/phantom.APP_ERROR)
@@ -1062,7 +1064,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         # Add an action result object to self (BaseConnector) to represent the action for this param
         action_result = self.add_action_result(ActionResult(dict(param)))
 
-        endpoint = '{}{}'.format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_LIST_DRIVES_ENDPOINT)
+        endpoint = "{}{}".format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_LIST_DRIVES_ENDPOINT)
 
         list_drive = self._get_list_response(action_result=action_result, url=endpoint)
 
@@ -1076,12 +1078,12 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         # Add a dictionary that is made up of the most important values from data into the summary
         summary = action_result.update_summary({})
-        summary['total_drives'] = action_result.get_data_size()
+        summary["total_drives"] = action_result.get_data_size()
 
         return action_result.set_status(phantom.APP_SUCCESS)
 
     def _handle_upload_file(self, param):
-        """ This function is used to handle upload file action.
+        """This function is used to handle upload file action.
 
         :param param: Dictionary of input parameters
         :return: status(phantom.APP_SUCCESS/phantom.APP_ERROR)
@@ -1097,7 +1099,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         # Strip the file path for leading and trailing forward and backward slashes if any present
         if file_path:
-            file_path = file_path.strip('/\\')
+            file_path = file_path.strip("/\\")
 
         # The phantom.get_file_info API is defunct. Using the vault_info API instead.
 
@@ -1105,16 +1107,16 @@ class MicrosoftOnedriveConnector(BaseConnector):
             success, message, vault_meta_info = ph_rules.vault_info(vault_id=vault_id)
             vault_meta_info = list(vault_meta_info)
             if not success or not vault_meta_info:
-                error_msg = " Error Details: {}".format(unquote(message)) if message else ''
-                return action_result.set_status(phantom.APP_ERROR,
-                                    "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg))
+                error_msg = " Error Details: {}".format(unquote(message)) if message else ""
+                return action_result.set_status(
+                    phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg)
+                )
         except Exception as e:
             err = self._get_error_message_from_exception(e)
-            return action_result.set_status(phantom.APP_ERROR,
-                                    "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, err))
+            return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, err))
 
         # Find vault path and file size for given vault ID
-        vault_path = vault_meta_info[0].get('path')
+        vault_path = vault_meta_info[0].get("path")
         file_size = vault_meta_info[0].get(MSONEDRIVE_JSON_SIZE)
 
         # check if vault path is accessible
@@ -1128,7 +1130,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         # Read the content of the file
         file_data = None
         try:
-            with open(vault_path, 'rb') as fin:
+            with open(vault_path, "rb") as fin:
                 file_data = fin.read()
         except:
             return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_ERROR_READING_VAULT_FILE_MSG)
@@ -1149,7 +1151,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
             inner_data[MSONEDRIVE_JSON_CONFLICT_BEHAVIOR] = MSONEDRIVE_JSON_FAILED
         data[MSONEDRIVE_JSON_ITEM] = inner_data
 
-        ret_val, session_response = self._update_request(action_result=action_result, endpoint=endpoint, data=json.dumps(data), method='post')
+        ret_val, session_response = self._update_request(action_result=action_result, endpoint=endpoint, data=json.dumps(data), method="post")
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
@@ -1165,17 +1167,18 @@ class MicrosoftOnedriveConnector(BaseConnector):
         elif file_size > chunk_size:
             content_length = chunk_size
         chunk_start = 0
-        content_range = 'bytes {}-{}/{}'.format(chunk_start,
-                                                chunk_start + content_length - 1, file_size)
+        content_range = "bytes {}-{}/{}".format(chunk_start, chunk_start + content_length - 1, file_size)
         chunk_cnt = 1
 
         while True:
-            headers = {
-                'Content-Length': str(content_length),
-                'Content-Range': content_range
-            }
-            ret_val, resp_status = self._make_rest_call(action_result=action_result, endpoint=upload_url,
-                headers=headers, data=file_data[chunk_start:(chunk_start + content_length)], method='put')
+            headers = {"Content-Length": str(content_length), "Content-Range": content_range}
+            ret_val, resp_status = self._make_rest_call(
+                action_result=action_result,
+                endpoint=upload_url,
+                headers=headers,
+                data=file_data[chunk_start : (chunk_start + content_length)],
+                method="put",
+            )
 
             if phantom.is_fail(ret_val):
                 return action_result.get_status()
@@ -1186,14 +1189,15 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
             if resp_status_code == 201:
                 # Split the parentReference data path to extract folder_path from it for contextual actions
-                if resp_status.get(MSONEDRIVE_JSON_PARENT_REFERENCE) and resp_status.get(
-                        MSONEDRIVE_JSON_PARENT_REFERENCE).get(MSONEDRIVE_JSON_PATH):
+                if resp_status.get(MSONEDRIVE_JSON_PARENT_REFERENCE) and resp_status.get(MSONEDRIVE_JSON_PARENT_REFERENCE).get(
+                    MSONEDRIVE_JSON_PATH
+                ):
                     path_reference_body = resp_status.get(MSONEDRIVE_JSON_PARENT_REFERENCE)
                     full_path = path_reference_body.get(MSONEDRIVE_JSON_PATH)
                     path_elements = full_path.split(MSONEDRIVE_JSON_ROOT_SPLIT)
                     if len(path_elements) > 1:
-                        path_reference_body[MSONEDRIVE_JSON_DRIVE_PATH] = '{}{}'.format(path_elements[0], MSONEDRIVE_JSON_ROOT_SPLIT)
-                        path_reference_body[MSONEDRIVE_JSON_FOLDER_PATH] = path_elements[1].strip('/\\')
+                        path_reference_body[MSONEDRIVE_JSON_DRIVE_PATH] = "{}{}".format(path_elements[0], MSONEDRIVE_JSON_ROOT_SPLIT)
+                        path_reference_body[MSONEDRIVE_JSON_FOLDER_PATH] = path_elements[1].strip("/\\")
                     else:
                         path_reference_body[MSONEDRIVE_JSON_DRIVE_PATH] = path_elements[0]
                         path_reference_body[MSONEDRIVE_JSON_FOLDER_PATH] = ""
@@ -1207,14 +1211,12 @@ class MicrosoftOnedriveConnector(BaseConnector):
                 if remaining_chunk <= chunk_size:
                     content_length = file_size - (chunk_cnt * chunk_size)
                     chunk_start = chunk_cnt * chunk_size
-                    content_range = 'bytes {}-{}/{}'.format(
-                        chunk_start, file_size - 1, file_size)
+                    content_range = "bytes {}-{}/{}".format(chunk_start, file_size - 1, file_size)
                     chunk_cnt = chunk_cnt + 1
                 elif remaining_chunk > chunk_size:
                     content_length = chunk_size
                     chunk_start = chunk_cnt * chunk_size
-                    content_range = 'bytes {}-{}/{}'.format(
-                        chunk_start, chunk_start + content_length - 1, file_size)
+                    content_range = "bytes {}-{}/{}".format(chunk_start, chunk_start + content_length - 1, file_size)
                     chunk_cnt = chunk_cnt + 1
                 continue
             else:
@@ -1223,7 +1225,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_UPLOAD_FILE_FAILED_MSG)
 
     def _handle_delete_file(self, param):
-        """ This function is used to handle delete file action.
+        """This function is used to handle delete file action.
 
         :param param: Dictionary of input parameters
         :return: status(phantom.APP_SUCCESS/phantom.APP_ERROR)
@@ -1235,28 +1237,30 @@ class MicrosoftOnedriveConnector(BaseConnector):
         action_result = self.add_action_result(ActionResult(dict(param)))
 
         # Access action parameters passed in the 'param' dictionary
-        id = self._handle_py_ver_compat_for_input_str(param.get('file_id', ''))
-        drive_id = self._handle_py_ver_compat_for_input_str(param.get('drive_id', ''))
-        path = self._handle_py_ver_compat_for_input_str(param.get('file_path', ''))
+        id = self._handle_py_ver_compat_for_input_str(param.get("file_id", ""))
+        drive_id = self._handle_py_ver_compat_for_input_str(param.get("drive_id", ""))
+        path = self._handle_py_ver_compat_for_input_str(param.get("file_path", ""))
 
         if not id and not path:
             self.save_progress(MSONEDRIVE_MANDATORY_FILE_ID_OR_PATH_MSG)
             return action_result.set_status(phantom.APP_ERROR, MSONEDRIVE_MANDATORY_FILE_ID_OR_PATH_MSG)
-        endpoint = ''
+        endpoint = ""
 
         if id and drive_id:
-            endpoint = '{}{}'.format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_DELETE_FILE_ID_DRIVE_ID_ENDPOINT.format(
-                drive_id=drive_id, file_id=id))
+            endpoint = "{}{}".format(
+                MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_DELETE_FILE_ID_DRIVE_ID_ENDPOINT.format(drive_id=drive_id, file_id=id)
+            )
         elif id:
-            endpoint = '{}{}'.format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_DELETE_FILE_ID_ENDPOINT.format(file_id=id))
+            endpoint = "{}{}".format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_DELETE_FILE_ID_ENDPOINT.format(file_id=id))
         elif drive_id and path:
-            endpoint = '{}{}'.format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_DELETE_FILE_DRIVE_ID_PATH_ENDPOINT.format(
-                drive_id=drive_id, file_path=path))
+            endpoint = "{}{}".format(
+                MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_DELETE_FILE_DRIVE_ID_PATH_ENDPOINT.format(drive_id=drive_id, file_path=path)
+            )
         elif path:
-            endpoint = '{}{}'.format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_DELETE_FILE_PATH_ENDPOINT.format(file_path=path))
+            endpoint = "{}{}".format(MSONEDRIVE_MSGRAPH_API_BASE_URL, MSONEDRIVE_DELETE_FILE_PATH_ENDPOINT.format(file_path=path))
 
         # make rest call
-        ret_val, response = self._update_request(endpoint=endpoint, action_result=action_result, method='delete', headers=None)
+        ret_val, response = self._update_request(endpoint=endpoint, action_result=action_result, method="delete", headers=None)
 
         if phantom.is_fail(ret_val):
             # the call to the 3rd party device or service failed, action result should contain all the error details
@@ -1270,7 +1274,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, MSONEDRIVE_DELETE_FILE_SUCCESS)
 
     def _handle_delete_folder(self, param):
-        """ This function is used to handle delete folder action.
+        """This function is used to handle delete folder action.
 
         :param param: Dictionary of input parameters
         :return: status(phantom.APP_SUCCESS/phantom.APP_ERROR)
@@ -1289,9 +1293,9 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         # Strip the folder path for leading and trailing forward and backward slashes if any present
         if folder_path:
-            folder_path = folder_path.strip('/\\')
+            folder_path = folder_path.strip("/\\")
 
-        endpoint = ''
+        endpoint = ""
         if drive_id:
             if folder_id:
                 endpoint = MSONEDRIVE_DELETE_FOLDER_DRIVE_FOLDER_ID.format(drive_id=drive_id, folder_id=folder_id)
@@ -1303,7 +1307,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
             elif folder_path:
                 endpoint = MSONEDRIVE_DELETE_FOLDER_FOLDER_PATH.format(folder_path=folder_path)
 
-        ret_val, response = self._update_request(action_result=action_result, endpoint=endpoint, method='delete')
+        ret_val, response = self._update_request(action_result=action_result, endpoint=endpoint, method="delete")
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
@@ -1311,7 +1315,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return action_result.set_status(phantom.APP_SUCCESS, MSONEDRIVE_DELETE_FOLDER_SUCCESSFUL_MSG)
 
     def _handle_create_folder(self, param):
-        """ This function is used to handle create folder action.
+        """This function is used to handle create folder action.
 
         :param param: Dictionary of input parameters
         :return: status(phantom.APP_SUCCESS/phantom.APP_ERROR)
@@ -1328,7 +1332,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         # Strip the folder path for leading and trailing forward and backward slashes if any present
         if folder_path:
-            folder_path = folder_path.strip('/\\')
+            folder_path = folder_path.strip("/\\")
 
         # 1. Default URL for creating folder starting from root folder of default drive
         endpoint = MSONEDRIVE_LIST_ITEMS_DEFAULT_ENDPOINT
@@ -1353,7 +1357,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         if auto_rename:
             data.update({MSONEDRIVE_JSON_CONFLICT_BEHAVIOR: MSONEDRIVE_JSON_RENAME})
 
-        ret_val, response = self._update_request(action_result=action_result, endpoint=endpoint, data=json.dumps(data), method='post')
+        ret_val, response = self._update_request(action_result=action_result, endpoint=endpoint, data=json.dumps(data), method="post")
 
         if phantom.is_fail(ret_val):
             return action_result.get_status()
@@ -1364,8 +1368,8 @@ class MicrosoftOnedriveConnector(BaseConnector):
             full_path = path_reference_body.get(MSONEDRIVE_JSON_PATH)
             path_elements = full_path.split(MSONEDRIVE_JSON_ROOT_SPLIT)
             if len(path_elements) > 1:
-                path_reference_body[MSONEDRIVE_JSON_DRIVE_PATH] = '{}{}'.format(path_elements[0], MSONEDRIVE_JSON_ROOT_SPLIT)
-                path_reference_body[MSONEDRIVE_JSON_FOLDER_PATH] = path_elements[1].strip('/\\')
+                path_reference_body[MSONEDRIVE_JSON_DRIVE_PATH] = "{}{}".format(path_elements[0], MSONEDRIVE_JSON_ROOT_SPLIT)
+                path_reference_body[MSONEDRIVE_JSON_FOLDER_PATH] = path_elements[1].strip("/\\")
             else:
                 path_reference_body[MSONEDRIVE_JSON_DRIVE_PATH] = path_elements[0]
                 path_reference_body[MSONEDRIVE_JSON_FOLDER_PATH] = ""
@@ -1378,11 +1382,13 @@ class MicrosoftOnedriveConnector(BaseConnector):
         if response.get(MSONEDRIVE_JSON_NAME):
             folder_created = response.get(MSONEDRIVE_JSON_NAME)
 
-        return action_result.set_status(phantom.APP_SUCCESS, MSONEDRIVE_CREATE_FOLDER_SUCCESSFUL_MSG.format(
-            folder_name=self._handle_py_ver_compat_for_input_str(folder_created)))
+        return action_result.set_status(
+            phantom.APP_SUCCESS,
+            MSONEDRIVE_CREATE_FOLDER_SUCCESSFUL_MSG.format(folder_name=self._handle_py_ver_compat_for_input_str(folder_created)),
+        )
 
     def handle_action(self, param):
-        """ This function gets current action identifier and calls member function of its own to handle the action.
+        """This function gets current action identifier and calls member function of its own to handle the action.
 
         :param param: dictionary which contains information about the actions to be executed
         :return: status success/failure
@@ -1392,14 +1398,14 @@ class MicrosoftOnedriveConnector(BaseConnector):
 
         # Mapping each action with its corresponding method in Dictionary
         action_mapping = {
-            'test_connectivity': self._handle_test_connectivity,
-            'get_file': self._handle_get_file,
-            'list_items': self._handle_list_items,
-            'list_drive': self._handle_list_drive,
-            'upload_file': self._handle_upload_file,
-            'delete_file': self._handle_delete_file,
-            'delete_folder': self._handle_delete_folder,
-            'create_folder': self._handle_create_folder
+            "test_connectivity": self._handle_test_connectivity,
+            "get_file": self._handle_get_file,
+            "list_items": self._handle_list_items,
+            "list_drive": self._handle_list_drive,
+            "upload_file": self._handle_upload_file,
+            "delete_file": self._handle_delete_file,
+            "delete_folder": self._handle_delete_folder,
+            "create_folder": self._handle_create_folder,
         }
 
         action = self.get_action_identifier()
@@ -1412,7 +1418,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return action_execution_status
 
     def initialize(self):
-        """ This is an optional function that can be implemented by the AppConnector derived class. Since the
+        """This is an optional function that can be implemented by the AppConnector derived class. Since the
         configuration dictionary is already validated by the time this function is called, it's a good place to do any
         extra initialization of any internal modules. This function MUST return a value of either phantom.APP_SUCCESS or
         phantom.APP_ERROR. If this function returns phantom.APP_ERROR, then AppConnector::handle_action will not get
@@ -1437,7 +1443,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return phantom.APP_SUCCESS
 
     def finalize(self):
-        """ This function gets called once all the param dictionary elements are looped over and no more handle_action
+        """This function gets called once all the param dictionary elements are looped over and no more handle_action
         calls are left to be made. It gives the AppConnector a chance to loop through all the results that were
         accumulated by multiple handle_action function calls and create any summary if required. Another usage is
         cleanup, disconnect from remote devices, etc.
@@ -1451,7 +1457,7 @@ class MicrosoftOnedriveConnector(BaseConnector):
         return phantom.APP_SUCCESS
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import argparse
 
@@ -1461,10 +1467,10 @@ if __name__ == '__main__':
 
     argparser = argparse.ArgumentParser()
 
-    argparser.add_argument('input_test_json', help='Input Test JSON file')
-    argparser.add_argument('-u', '--username', help='username', required=False)
-    argparser.add_argument('-p', '--password', help='password', required=False)
-    argparser.add_argument('-v', '--verify', action='store_true', help='verify', required=False, default=False)
+    argparser.add_argument("input_test_json", help="Input Test JSON file")
+    argparser.add_argument("-u", "--username", help="username", required=False)
+    argparser.add_argument("-p", "--password", help="password", required=False)
+    argparser.add_argument("-v", "--verify", action="store_true", help="verify", required=False, default=False)
 
     args = argparser.parse_args()
     session_id = None
@@ -1477,6 +1483,7 @@ if __name__ == '__main__':
 
         # User specified a username but not a password, so ask
         import getpass
+
         password = getpass.getpass("Password: ")
 
     if username and password:
@@ -1484,20 +1491,20 @@ if __name__ == '__main__':
         try:
             print("Accessing the Login page")
             r = requests.get(login_url, verify=verify, timeout=DEFAULT_TIMEOUT)
-            csrftoken = r.cookies['csrftoken']
+            csrftoken = r.cookies["csrftoken"]
 
             data = dict()
-            data['username'] = username
-            data['password'] = password
-            data['csrfmiddlewaretoken'] = csrftoken
+            data["username"] = username
+            data["password"] = password
+            data["csrfmiddlewaretoken"] = csrftoken
 
             headers = dict()
-            headers['Cookie'] = 'csrftoken={0}'.format(csrftoken)
-            headers['Referer'] = login_url
+            headers["Cookie"] = "csrftoken={0}".format(csrftoken)
+            headers["Referer"] = login_url
 
             print("Logging into Platform to get the session id")
             r2 = requests.post(login_url, verify=verify, timeout=DEFAULT_TIMEOUT, data=data, headers=headers)
-            session_id = r2.cookies['sessionid']
+            session_id = r2.cookies["sessionid"]
         except Exception as e:
             print("Unable to get session id from the platform. Error: {0}".format(str(e)))
             sys.exit(1)
@@ -1511,8 +1518,8 @@ if __name__ == '__main__':
         connector.print_progress_message = True
 
         if session_id is not None:
-            in_json['user_session_token'] = session_id
-            connector._set_csrf_info(csrftoken, headers['Referer'])
+            in_json["user_session_token"] = session_id
+            connector._set_csrf_info(csrftoken, headers["Referer"])
 
         ret_val = connector._handle_action(json.dumps(in_json), None)
         print(json.dumps(json.loads(ret_val), indent=4))

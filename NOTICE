@@ -12,15 +12,3 @@ License: BSD 3
 Copyright 1991-1995 Stichting Mathematisch Centrum Amsterdam
 Copyright 2001 Python Software Foundation; All Rights Reserved
 Copyright Django Software Foundation and individual contributors
-
-Library: beautifulsoup4
-Version: 4.9.1
-License: MIT
-Copyright 2004-2017 Leonard Richardson
-Copyright 2004-2019 Leonard Richardson
-Copyright 2018 Isaac Muse
-
-Library: requests
-Version: 2.25.0
-License: Apache 2.0
-Kenneth Reitz
