@@ -2,7 +2,7 @@
 # Microsoft OneDrive
 
 Publisher: Splunk  
-Connector Version: 2.3.1  
+Connector Version: 2.4.0  
 Product Vendor: Microsoft  
 Product Name: Microsoft OneDrive  
 Product Version Supported (regex): ".\*"  
