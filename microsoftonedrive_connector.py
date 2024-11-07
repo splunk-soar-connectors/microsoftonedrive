@@ -867,11 +867,11 @@ class MicrosoftOnedriveConnector(BaseConnector):
             success, message, vault_meta_info = ph_rules.vault_info(container_id=self.get_container_id())
             vault_meta_info = list(vault_meta_info)
 
-            # removing this condition as it fails even in a valid case when container has no attachments
-            # if not success or not vault_meta_info:
-            #     error_msg = " Error Details: {}".format(unquote(message)) if message else ''
-            #     return action_result.set_status(phantom.APP_ERROR,
-            #                             "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg))
+            if vault_meta_info is None:
+                error_msg = " Error Details: {}".format(unquote(message)) if message else ""
+                return action_result.set_status(
+                    phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, error_msg)
+                )
         except Exception as e:
             err = self._get_error_message_from_exception(e)
             return action_result.set_status(phantom.APP_ERROR, "{0},{1}".format(MSONEDRIVE_UNABLE_TO_RETRIEVE_VAULT_ITEM_ERROR_MSG, err))
