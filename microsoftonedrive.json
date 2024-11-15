@@ -17,8 +17,8 @@
             "name": "Mhike Funderburk"
         }
     ],
-    "license": "Copyright (c) 2019-2023 Splunk Inc.",
-    "app_version": "2.3.0",
+    "license": "Copyright (c) 2019-2024 Splunk Inc.",
+    "app_version": "2.4.0",
     "python_version": "3",
     "fips_compliant": true,
     "latest_tested_versions": [
@@ -27,7 +27,7 @@
     "utctime_updated": "2023-06-07T22:55:56.000000Z",
     "package_name": "phantom_microsoftonedrive",
     "main_module": "microsoftonedrive_connector.py",
-    "min_phantom_version": "6.1.0",
+    "min_phantom_version": "6.2.2",
     "app_wizard_version": "1.0.0",
     "rest_handler": "microsoftonedrive_connector._handle_rest_request",
     "configuration": {
@@ -46,7 +46,6 @@
         "tenant_id": {
             "description": "Tenant ID",
             "data_type": "string",
-            "required": false,
             "order": 2,
             "default": "common"
         }
@@ -276,7 +275,7 @@
                     "data_path": "action_result.parameter.folder_id",
                     "data_type": "string",
                     "example_values": [
-                        "01FMEDUQY3MRPCRFEYX5FJPU3KT7J24LJB"
+                        "01TEST123TEST123TEST123U3KTTEST123"
                     ],
                     "contains": [
                         "msonedrive folder id"
@@ -286,7 +285,6 @@
                     "data_path": "action_result.parameter.folder_path",
                     "data_type": "string",
                     "example_values": [
-                        "Test",
                         "Test/child_1/child_1_1"
                     ],
                     "contains": [
@@ -297,8 +295,7 @@
                     "data_path": "action_result.data.*.@microsoft.graph.downloadUrl",
                     "data_type": "string",
                     "example_values": [
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_layouts/15/download.aspx?UniqueId=deb45252-ede0-4437-b497-7eff590ffb8c&Translate=false&tempauth=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvdGVzdHBoYW50b20tbXukc2hhcmVwb2ludC5jb21AMWUzMDlhYmYtZGI2Yy00ZmNiLWExZDItMDdiZjY4MjRkNThkIiwiaXNzIjoiMDAwMDAwMDMtMDAwMC0wZmYxLWNlMDAtMDAwMDAwMDAwMDAwIiwibmJmIjoiMTUzNzM1NDc5NCIsImV4cCI6IjE1MzczNTgzOTQiLCJlbmRwb2ludHVybCI6InpZSkgzbWhYamcySnJZM0QxT1RDeUIrSGV0YWtWS2RTbDNCc2dMMW5Mc1U9IiwiZW5kcG9pbnR1cmxMZW5ndGgiOiIxNjciLCJpc2xvb3BiYWNrIjoiVHJ1ZSIsImNpZCI6Ik1HSXlPR1JtWkRndE5qTTRNQzAwTmpVMUxUZ3pabVF0TW1NNE16SXdOVGxoWldObSIsInZlciI6Imhhc2hlZHByb29mdG9rZW4iLCJzaXRlaWQiOiJZall6TVRKbU9ETXRabVpsWkMwME1UQTVMVGcyWTJRdE1qTTBaV0kxTkRCbFl6ZGsiLCJhcHBfZGlzcGxheW5hbWUiOiJQaGFudG9tX09uZS1kcml2ZSIsInNpZ25pbl9zdGF0ZSI6IltcImttc2lcIl0iLCJhcHBpZCI6ImJhNTYxMjJjLTg1NmMtNDY5Zi1iNmEwLWE0MzM1NjE0YzUwMiIsInRpZCI6IjFlMzA5YWJmLWRiNmMtNGZjYi1hMWQyLTA3YmY2ODI0ZDU4ZCIsInVwbiI6Im1hdHRAdGVzdHBoYW50b20ub25taWNyb3NvZnQuY29tIiwicHVpZCI6IjEwMDNCRkZEQURCQjYzNEIiLCJzY3AiOiJhbGxmaWxlcy53cml0ZSBhbGxwcm9maWxlcy53cml0ZSIsInR0IjoiMiIsInVzZVBlcnNpc3RlbnRDb29raWUiOm51bGx9.Q0VLMFIrYWNDR2NvVVp1bURsRlY5N0U1dXVzYmJrT092Rkx6UDlqVTlaRT0&ApiVersion=2.0",
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_layouts/15/download.aspx?UniqueId=deb45252-ede0-4437-b497-7eff590ffb8c&Translate=false&tempauth=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvdGVzdHBoYW50b20tbXukc2hhcmVwb2ludC5jb21AMWUzMDlhYmYtZGI2Yy00ZmNiLWExZDItMDdiZjY4MjRkNThkIiwiaXNzIjoiMDAwMDAwMDMtMDAwMC0wZmYxLWNlMDAtMDAwMDAwMDAwMDAwIiwibmJmIjoiMTUzNzM1MjY1MyIsImV4cCI6IjE1MzczNTYyNTMiLCJlbmRwb2ludHVybCI6InpZSkgzbWhYamcySnJZM0QxT1RDeUIrSGV0YWtWS2RTbDNCc2dMMW5Mc1U9IiwiZW5kcG9pbnR1cmxMZW5ndGgiOiIxNjciLCJpc2xvb3BiYWNrIjoiVHJ1ZSIsImNpZCI6Ik1UYzRZek15WmpndFlqa3hPQzAwTkdNNExXSXhaV0l0TWpGak9UUXlOV0l4T0dJeSIsInZlciI6Imhhc2hlZHByb29mdG9rZW4iLCJzaXRlaWQiOiJZall6TVRKbU9ETXRabVpsWkMwME1UQTVMVGcyWTJRdE1qTTBaV0kxTkRCbFl6ZGsiLCJhcHBfZGlzcGxheW5hbWUiOiJQaGFudG9tX09uZS1kcml2ZSIsInNpZ25pbl9zdGF0ZSI6IltcImttc2lcIl0iLCJhcHBpZCI6ImJhNTYxMjJjLTg1NmMtNDY5Zi1iNmEwLWE0MzM1NjE0YzUwMiIsInRpZCI6IjFlMzA5YWJmLWRiNmMtNGZjYi1hMWQyLTA3YmY2ODI0ZDU4ZCIsInVwbiI6Im1hdHRAdGVzdHBoYW50b20ub25taWNyb3NvZnQuY29tIiwicHVpZCI6IjEwMDNCRkZEQURCQjYzNEIiLCJzY3AiOiJhbGxmaWxlcy53cml0ZSBhbGxwcm9maWxlcy53cml0ZSIsInR0IjoiMiIsInVzZVBlcnNpc3RlbnRDb29raWUiOm51bGx9.cUdVdzc5am9HRlJRS3BPa01VU0NYWGRaeGV2ZDVuMng1MUhxVkxRSE1uZz0&ApiVersion=2.0"
+                        "https://test-my.abc.com/test/test_xyz_com/_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0"
                     ],
                     "contains": [
                         "url"
@@ -308,8 +305,7 @@
                     "data_path": "action_result.data.*.cTag",
                     "data_type": "string",
                     "example_values": [
-                        "\"c:{609AC0D8-C27A-479A-A966-1624388FE512},0\"",
-                        "\"c:{28E5641B-9894-4ABF-97D3-6A9FD3AE2D21},0\""
+                        "\"c:{2test123-1234-1234-1234-test123test1},0\""
                     ]
                 },
                 {
@@ -340,7 +336,7 @@
                     "data_path": "action_result.data.*.createdBy.user.email",
                     "data_type": "string",
                     "example_values": [
-                        "test@test.onmicrosoft.com"
+                        "test@test.test.com"
                     ],
                     "contains": [
                         "email"
@@ -357,7 +353,6 @@
                     "data_path": "action_result.data.*.createdDateTime",
                     "data_type": "string",
                     "example_values": [
-                        "2018-09-01T10:37:09Z",
                         "2018-09-01T09:21:24Z"
                     ]
                 },
@@ -381,8 +376,7 @@
                     "data_path": "action_result.data.*.eTag",
                     "data_type": "string",
                     "example_values": [
-                        "\"{60A90CD8-C27A-479A-A966-1624388FE512},1\"",
-                        "\"{2856E41B-9894-4ABF-97D3-6A9FD3AE2D21},1\""
+                        "\"{2test123-1234-1234-1234-test123test1},1\""
                     ]
                 },
                 {
@@ -403,7 +397,6 @@
                     "data_path": "action_result.data.*.fileSystemInfo.createdDateTime",
                     "data_type": "string",
                     "example_values": [
-                        "2018-09-01T10:37:09Z",
                         "2018-09-01T09:21:24Z"
                     ]
                 },
@@ -411,7 +404,6 @@
                     "data_path": "action_result.data.*.fileSystemInfo.lastModifiedDateTime",
                     "data_type": "string",
                     "example_values": [
-                        "2018-09-01T10:37:09Z",
                         "2018-09-01T09:21:24Z"
                     ]
                 },
@@ -419,7 +411,6 @@
                     "data_path": "action_result.data.*.folder.childCount",
                     "data_type": "numeric",
                     "example_values": [
-                        3,
                         17
                     ]
                 },
@@ -427,8 +418,7 @@
                     "data_path": "action_result.data.*.id",
                     "data_type": "string",
                     "example_values": [
-                        "01FMDUEQ6YYCUWA6WCTJD2SZQWEQ4I7ZIS",
-                        "01FMDUEQY3MRPCRFEYX5FJPU3KT7J24LJB"
+                        "01TEST123TEST123TEST123U3KTTEST123"
                     ],
                     "contains": [
                         "msonedrive file id",
@@ -477,7 +467,7 @@
                     "data_path": "action_result.data.*.lastModifiedBy.user.email",
                     "data_type": "string",
                     "example_values": [
-                        "test@test.onmicrosoft.com"
+                        "test@test.xyz.com"
                     ],
                     "contains": [
                         "email"
@@ -525,7 +515,6 @@
                     "data_path": "action_result.data.*.parentReference.drivePath",
                     "data_type": "string",
                     "example_values": [
-                        "/drives/b!gy8txu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/root:/",
                         "/drive/root:/"
                     ]
                 },
@@ -540,8 +529,7 @@
                     "data_path": "action_result.data.*.parentReference.folderPath",
                     "data_type": "string",
                     "example_values": [
-                        "Test/child",
-                        "Test"
+                        "Test/child"
                     ],
                     "contains": [
                         "msonedrive folder path"
@@ -562,7 +550,6 @@
                     "data_path": "action_result.data.*.size",
                     "data_type": "numeric",
                     "example_values": [
-                        97701,
                         359666
                     ],
                     "contains": [
@@ -573,8 +560,7 @@
                     "data_path": "action_result.data.*.webUrl",
                     "data_type": "string",
                     "example_values": [
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test/child",
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test"
+                        "https://test-my.test.com/personal/test_abc_com/Documents/Test"
                     ],
                     "contains": [
                         "url"
@@ -673,7 +659,7 @@
                     "column_name": "Drive ID",
                     "column_order": 3,
                     "example_values": [
-                        "b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q"
+                        "b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123"
                     ],
                     "contains": [
                         "msonedrive drive id"
@@ -695,7 +681,7 @@
                     "data_path": "action_result.data.*.lastModifiedBy.user.email",
                     "data_type": "string",
                     "example_values": [
-                        "test@test.onmicrosoft.com"
+                        "test@test.xyz.com"
                     ],
                     "contains": [
                         "email"
@@ -742,7 +728,7 @@
                     "data_path": "action_result.data.*.owner.user.email",
                     "data_type": "string",
                     "example_values": [
-                        "test@test.onmicrosoft.com"
+                        "test@test.abc.com"
                     ],
                     "contains": [
                         "email"
@@ -796,7 +782,7 @@
                     "column_name": "Web URL",
                     "column_order": 9,
                     "example_values": [
-                        "https://test-my.sharepoint.com/personal/test_test_onmicrosoft_com/Documents"
+                        "https://test-my.abc.com/personal/test_test_xyz_com/Documents"
                     ],
                     "contains": [
                         "url"
@@ -913,8 +899,7 @@
                     "data_path": "action_result.parameter.file_path",
                     "data_type": "string",
                     "example_values": [
-                        "Test/test135.txt",
-                        "test135.png"
+                        "Test/test135.txt"
                     ],
                     "contains": [
                         "file path"
@@ -935,7 +920,7 @@
                     "data_path": "action_result.data.*.@content.downloadUrl",
                     "data_type": "string",
                     "example_values": [
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_layouts/15/download.aspx?UniqueId=0781d3bb-1400-442d-bf30-78f9f62a114d&Translate=false&tempauth=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhdWQiOiIwMDAwMDAwMy0wMDAwLTBmZjEtY2UwMC0wMDAwMDAwMDAwMDAvdGVzdHBoYW50b20tbXkuc2hhcmVwb2ludC5jb21AMWUzMDlhYmYtZGI2Yy00ZmNiLWExZDItMDdiZjY4MjRkNThkIiwiaXNzIjoiMDAwMDAwMDMtMDAwMC0wZmYxLWNlMDAtMDAwMDAwMDAwMDAwIiwibmJmIjoiMTUzNzUzMjU4MyIsImV4cCI6IjE1Mzc1MzYxODMiLCJlbmRwb2ludHVybCI6Im5OVUxONHlpTXUyWDY2SWxqUllPaERUSmYzMlRIaDZBRFQ3WUNsRVRJNVU9IiwiZW5kcG9pbnR1cmxMZW5ndGgiOiIxNjciLCJpc2xvb3BiYWNrIjoiVHJ1ZSIsImNpZCI6Ik1qQmxORGt3T1dVdFl6QTROUzB3TURBd0xURmlZVEl0WmpWak5XUXpabVl5TWprNCIsInZlciI6Imhhc2hlZHByb29mdG9rZW4iLCJzaXRlaWQiOiJZall6TVRKbU9ETXRabVpsWkMwME1UQTVMVGcyWTJRdE1qTTBaV0kxTkRCbFl6ZGsiLCJhcHBfZGlzcGxheW5hbWUiOiJQaGFudG9tX09uZS1kcml2ZSIsInNpZ25pbl9zdGF0ZSI6IltcImttc2lcIl0iLCJhcHBpZCI6ImJhNTYxMjJjLTg1NmMtNDY5Zi1iNmEwLWE0MzM1NjE0YzUwMiIsInRpZCI6IjFlMzA5YWJmLWRiNmMtNGZjYi1hMWQyLTA3YmY2ODI0ZDU4ZCIsInVwbiI6Im1hdHRAdGVzdHBoYW50b20ub25taWNyb3NvZnQuY29tIiwicHVpZCI6IjEwMDNCRkZEQURCQjYzNEIiLCJzY3AiOiJhbGxmaWxlcy53cml0ZSBhbGxwcm9maWxlcy53cml0ZSIsInR0IjoiMiIsInVzZVBlcnNpc3RlbnRDb29raWUiOm51bGx9.d1NQWmR6TnIxaHdkazYrMEZrSHJ4ZjhmQ0dHKzVBZUZySzczMzZycHluVT0&ApiVersion=2.0"
+                        "https://test-my.abc.com/test/test_xyz_com/_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0"
                     ],
                     "contains": [
                         "url"
@@ -953,7 +938,7 @@
                     "data_path": "action_result.data.*.@odata.context",
                     "data_type": "string",
                     "example_values": [
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_api/v2.0/$metadata#items/$entity"
+                        "https://test-my.abc.com/personal/test_abc_com/_api/v2.0/$metadata#items/$entity"
                     ],
                     "contains": [
                         "url"
@@ -970,7 +955,7 @@
                     "data_path": "action_result.data.*.@odata.id",
                     "data_type": "string",
                     "example_values": [
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/_api/v2.0/drives/b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/items/01FMDEUQ532OAQOAAUFVCL6MDY7H3CUEKN"
+                        "https://test-my.abc.com/personal/test_abc_com/_api/v2.0/drives/b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123/items/01TEST123TEST123TEST123U3KTTEST123"
                     ],
                     "contains": [
                         "url"
@@ -987,7 +972,7 @@
                     "data_path": "action_result.data.*.cTag",
                     "data_type": "string",
                     "example_values": [
-                        "\"c:{0781D3BB-1400-442D-BF30-78F9F62A114D},2\""
+                        "\"c:{2test123-1234-1234-1234-test123test1},2\""
                     ]
                 },
                 {
@@ -1018,7 +1003,7 @@
                     "data_path": "action_result.data.*.createdBy.user.email",
                     "data_type": "string",
                     "example_values": [
-                        "test@test.onmicrosoft.com"
+                        "test@test.test.com"
                     ],
                     "contains": [
                         "email"
@@ -1046,7 +1031,7 @@
                     "data_path": "action_result.data.*.eTag",
                     "data_type": "string",
                     "example_values": [
-                        "\"{0781D3BB-1400-442D-BF30-78F9F62A114D},3\""
+                        "\"{2test123-1234-1234-1234-test123test1},3\""
                     ]
                 },
                 {
@@ -1081,7 +1066,7 @@
                     "data_path": "action_result.data.*.id",
                     "data_type": "string",
                     "example_values": [
-                        "01FMDEUQ532OAQOAAUFVCL6MDY7H3CUEKN"
+                        "01TEST123TEST123TEST123U3KTTEST123"
                     ],
                     "contains": [
                         "msonedrive file id"
@@ -1117,7 +1102,7 @@
                     "data_path": "action_result.data.*.lastModifiedBy.user.email",
                     "data_type": "string",
                     "example_values": [
-                        "test@test.onmicrosoft.com"
+                        "test@test.xyz.com"
                     ],
                     "contains": [
                         "email"
@@ -1160,7 +1145,7 @@
                     "data_path": "action_result.data.*.parentReference.drivePath",
                     "data_type": "string",
                     "example_values": [
-                        "/drives/b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/root:/"
+                        "/drives/b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123/root:/"
                     ]
                 },
                 {
@@ -1174,7 +1159,6 @@
                     "data_path": "action_result.data.*.parentReference.folderPath",
                     "data_type": "string",
                     "example_values": [
-                        "Test",
                         "TestParent/child"
                     ],
                     "contains": [
@@ -1210,7 +1194,7 @@
                     "data_path": "action_result.data.*.webUrl",
                     "data_type": "string",
                     "example_values": [
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test/abc135%203.txt"
+                        "https://test-my.TEST.com/personal/test_xyz_com/Documents/Test/abc135%203.txt"
                     ],
                     "contains": [
                         "url"
@@ -1343,8 +1327,7 @@
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
-                        "File is deleted successfully",
-                        "Either File ID or File Path is mandatory"
+                        "File is deleted successfully"
                     ]
                 },
                 {
@@ -1435,8 +1418,7 @@
                     "data_path": "action_result.parameter.folder_id",
                     "data_type": "string",
                     "example_values": [
-                        "01FMDUEQUZHRA4VF6BJBDYUI6OWI4SERVD",
-                        "01FMDUEQ3KNL7RSCKRLZCJEHH6PPDLMSKW"
+                        "01TEST123TEST123TEST123U3KTTEST123"
                     ],
                     "contains": [
                         "msonedrive folder id"
@@ -1448,9 +1430,7 @@
                     "data_path": "action_result.parameter.folder_path",
                     "data_type": "string",
                     "example_values": [
-                        "Test/child/Test_2 3",
-                        "Test/child/test1234567",
-                        "Test"
+                        "Test/child/test1234567"
                     ],
                     "contains": [
                         "msonedrive folder path"
@@ -1470,7 +1450,6 @@
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
-                        "The folder is deleted successfully",
                         "Either Folder ID or Folder Path is mandatory"
                     ]
                 },
@@ -1577,7 +1556,7 @@
                     "data_path": "action_result.parameter.folder_id",
                     "data_type": "string",
                     "example_values": [
-                        "01FMDUEQ3YMRPCRFEYX5FJPU3KT7J24LJB"
+                        "01TEST123TEST123TEST123U3KTTEST123"
                     ],
                     "contains": [
                         "msonedrive folder id"
@@ -1607,8 +1586,7 @@
                     "data_path": "action_result.data.*.@odata.context",
                     "data_type": "string",
                     "example_values": [
-                        "https://graph.microsoft.com/v1.0/$metadata#users('17be76d0-00ed-4881-ab62-d2eb73c2ebe3')/drives('b%21gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q')/items('01FMDEUQY3MRPCRFEYX5FJPU3KT7J24LJB')/children/$entity",
-                        "https://graph.microsoft.com/v1.0/$metadata#users('17be76d0-00ed-4881-ab62-d2eb73c2ebe3')/drive/items('01FMDEUQY3MRPCRFEYX5FJPU3KT7J24LJB')/children/$entity"
+                        "https://abc.test.com/v1.0/$metadata#users(01TEST123TEST123TEST123U3KTTEST123)/drive/items(01TEST123TEST123TEST123U3KTTEST123)/children/$entity"
                     ],
                     "contains": [
                         "url"
@@ -1618,8 +1596,7 @@
                     "data_path": "action_result.data.*.cTag",
                     "data_type": "string",
                     "example_values": [
-                        "\"c:{63A758BF-9E00-473B-891B-096B3CAFA041},0\"",
-                        "\"c:{4C780F33-4300-4608-9CD5-290D23DD630A},0\""
+                        "\"c:{2test123-1234-1234-1234-test123test1},0\""
                     ]
                 },
                 {
@@ -1650,7 +1627,7 @@
                     "data_path": "action_result.data.*.createdBy.user.email",
                     "data_type": "string",
                     "example_values": [
-                        "test@test.onmicrosoft.com"
+                        "test@test.test.com"
                     ],
                     "contains": [
                         "email"
@@ -1669,7 +1646,6 @@
                     "data_path": "action_result.data.*.createdDateTime",
                     "data_type": "string",
                     "example_values": [
-                        "2018-09-01T08:50:43Z",
                         "2018-09-01T08:49:18Z"
                     ],
                     "column_name": "Created At",
@@ -1679,15 +1655,13 @@
                     "data_path": "action_result.data.*.eTag",
                     "data_type": "string",
                     "example_values": [
-                        "\"{63A700BF-9E63-473B-891B-096B3CAFA041},1\"",
-                        "\"{4C700F33-4318-4608-9CD5-290D23DD630A},1\""
+                        "\"{2test123-1234-1234-1234-test123test1},1\""
                     ]
                 },
                 {
                     "data_path": "action_result.data.*.fileSystemInfo.createdDateTime",
                     "data_type": "string",
                     "example_values": [
-                        "2018-09-01T08:50:43Z",
                         "2018-09-01T08:49:18Z"
                     ]
                 },
@@ -1695,7 +1669,6 @@
                     "data_path": "action_result.data.*.fileSystemInfo.lastModifiedDateTime",
                     "data_type": "string",
                     "example_values": [
-                        "2018-09-01T08:50:43Z",
                         "2018-09-01T08:49:18Z"
                     ]
                 },
@@ -1710,8 +1683,7 @@
                     "data_path": "action_result.data.*.id",
                     "data_type": "string",
                     "example_values": [
-                        "01FMDUEQ57LCTWGY46HNDYSGYJNM6K7ICB",
-                        "01FMDUEQZTB54EYGCDBBDJZVJJBUR52YYK"
+                        "01TEST123TEST123TEST123U3KTTEST123"
                     ],
                     "contains": [
                         "msonedrive folder id"
@@ -1747,7 +1719,7 @@
                     "data_path": "action_result.data.*.lastModifiedBy.user.email",
                     "data_type": "string",
                     "example_values": [
-                        "test@test.onmicrosoft.com"
+                        "test@test.xyz.com"
                     ],
                     "contains": [
                         "email"
@@ -1764,7 +1736,6 @@
                     "data_path": "action_result.data.*.lastModifiedDateTime",
                     "data_type": "string",
                     "example_values": [
-                        "2018-09-01T08:50:43Z",
                         "2018-09-01T08:49:18Z"
                     ]
                 },
@@ -1772,8 +1743,7 @@
                     "data_path": "action_result.data.*.name",
                     "data_type": "string",
                     "example_values": [
-                        "Test_1 1",
-                        "Test_1"
+                        "Test_1 1"
                     ],
                     "contains": [
                         "msonedrive folder name"
@@ -1797,8 +1767,7 @@
                     "data_path": "action_result.data.*.parentReference.drivePath",
                     "data_type": "string",
                     "example_values": [
-                        "/drives/b!gy8txu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/root:/",
-                        "/drive/root:/"
+                        "/drives/b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123/root:/"
                     ]
                 },
                 {
@@ -1812,7 +1781,6 @@
                     "data_path": "action_result.data.*.parentReference.folderPath",
                     "data_type": "string",
                     "example_values": [
-                        "Test/child",
                         "Test"
                     ],
                     "contains": [
@@ -1848,8 +1816,7 @@
                     "data_path": "action_result.data.*.webUrl",
                     "data_type": "string",
                     "example_values": [
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test/Test_1%201",
-                        "https://test-my.sharepoint.com/personal/test_onmicrosoft_com/Documents/Test/Test_1"
+                        "https://test-my.test.com/personal/test_xyz_com/Documents/Test/Test_1%201"
                     ],
                     "contains": [
                         "url"
@@ -1865,7 +1832,6 @@
                     "data_path": "action_result.message",
                     "data_type": "string",
                     "example_values": [
-                        "The folder: Test_1 1 is created successfully",
                         "The folder: Test_1 is created successfully"
                     ]
                 },
@@ -1891,27 +1857,9 @@
         }
     ],
     "pip_dependencies": {
-        "wheel": [
-            {
-                "module": "beautifulsoup4",
-                "input_file": "wheels/py3/beautifulsoup4-4.9.1-py3-none-any.whl"
-            },
-            {
-                "module": "soupsieve",
-                "input_file": "wheels/py3/soupsieve-2.3.2.post1-py3-none-any.whl"
-            }
-        ]
+        "wheel": []
     },
     "pip39_dependencies": {
-        "wheel": [
-            {
-                "module": "beautifulsoup4",
-                "input_file": "wheels/py3/beautifulsoup4-4.9.1-py3-none-any.whl"
-            },
-            {
-                "module": "soupsieve",
-                "input_file": "wheels/py3/soupsieve-2.5-py3-none-any.whl"
-            }
-        ]
+        "wheel": []
     }
 }
