@@ -17,7 +17,7 @@
             "name": "Mhike Funderburk"
         }
     ],
-    "license": "Copyright (c) 2019-2024 Splunk Inc.",
+    "license": "Copyright (c) 2019-2025 Splunk Inc.",
     "app_version": "2.4.0",
     "python_version": "3",
     "fips_compliant": true,
@@ -593,6 +593,10 @@
                     "example_values": [
                         1
                     ]
+                },
+                {
+                    "data_path": "action_result.parameter.ph_0",
+                    "data_type": "ph"
                 }
             ],
             "render": {
@@ -1466,6 +1470,10 @@
                     "example_values": [
                         1
                     ]
+                },
+                {
+                    "data_path": "action_result.parameter.ph_0",
+                    "data_type": "ph"
                 }
             ],
             "render": {

@@ -1,6 +1,6 @@
 # File: microsoftonedrive_consts.py
 #
-# Copyright (c) 2019-2024 Splunk Inc.
+# Copyright (c) 2019-2025 Splunk Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ MSONEDRIVE_GENERATING_ACCESS_TOKEN_MSG = "Generating access token"
 MSONEDRIVE_TOKEN_NOT_AVAILABLE_MSG = "Token not available. Please run Test Connectivity first."
 MSONEDRIVE_CURRENT_USER_INFO_MSG = "Getting info about the current user to verify token"
 MSONEDRIVE_GOT_CURRENT_USER_INFO_MSG = "Got current user info successfully"
-MSONEDRIVE_BASE_URL_NOT_FOUND_MSG = "Phantom Base URL not found in System Settings. " "Please specify this value in System Settings."
+MSONEDRIVE_BASE_URL_NOT_FOUND_MSG = "Phantom Base URL not found in System Settings. Please specify this value in System Settings."
 MSONEDRIVE_LIST_ITEMS_FAILED_MSG = "List items action failed"
 MSONEDRIVE_CREATE_FOLDER_SUCCESSFUL_MSG = "The folder: {folder_name} is created successfully"
 MSONEDRIVE_DELETE_FOLDER_SUCCESSFUL_MSG = "The folder is deleted successfully"
