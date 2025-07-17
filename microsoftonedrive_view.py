@@ -59,6 +59,7 @@ def display_view(provides, all_app_runs, context):
                 continue
             results.append(ctx_result)
 
+    return_page = None
     if provides == "list items":
         return_page = "microsoftonedrive_list_items.html"
     return return_page

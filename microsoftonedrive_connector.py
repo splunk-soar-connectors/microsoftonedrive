@@ -19,6 +19,15 @@ import os
 import sys
 import time
 
+
+try:
+    import grp
+    import pwd
+except ImportError:
+    # pwd and grp modules are not available on Windows
+    pwd = None
+    grp = None
+
 import phantom.app as phantom
 import phantom.rules as ph_rules
 import requests
@@ -196,10 +205,11 @@ def _handle_rest_request(request, path_parts):
                 return HttpResponse("Error: Invalid asset_id", content_type="text/plain", status=400)
             open(real_auth_status_file_path, "w").close()
             try:
-                uid = pwd.getpwnam("apache").pw_uid
-                gid = grp.getgrnam("phantom").gr_gid
-                os.chown(real_auth_status_file_path, uid, gid)
-                os.chmod(real_auth_status_file_path, "0664")
+                if pwd and grp:
+                    uid = pwd.getpwnam("apache").pw_uid
+                    gid = grp.getgrnam("phantom").gr_gid
+                    os.chown(real_auth_status_file_path, uid, gid)
+                    os.chmod(real_auth_status_file_path, 0o664)
             except:
                 pass
 
