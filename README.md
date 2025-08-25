@@ -1,9 +1,9 @@
 # Microsoft OneDrive
 
-Publisher: Splunk \
-Connector Version: 2.4.0 \
-Product Vendor: Microsoft \
-Product Name: Microsoft OneDrive \
+Publisher: Splunk <br>
+Connector Version: 2.4.0 <br>
+Product Vendor: Microsoft <br>
+Product Name: Microsoft OneDrive <br>
 Minimum Product Version: 6.2.2
 
 This app integrates with Microsoft OneDrive to execute various generic actions
@@ -86,20 +86,20 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 
 ### Supported Actions
 
-[test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity using supplied configuration \
-[get file](#action-get-file) - Download a file from server and add it to the vault \
-[list items](#action-list-items) - List of items \
-[list drive](#action-list-drive) - List of Drives \
-[upload file](#action-upload-file) - Upload file \
-[delete file](#action-delete-file) - Delete file \
-[delete folder](#action-delete-folder) - Delete a folder \
+[test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity using supplied configuration <br>
+[get file](#action-get-file) - Download a file from server and add it to the vault <br>
+[list items](#action-list-items) - List of items <br>
+[list drive](#action-list-drive) - List of Drives <br>
+[upload file](#action-upload-file) - Upload file <br>
+[delete file](#action-delete-file) - Delete file <br>
+[delete folder](#action-delete-folder) - Delete a folder <br>
 [create folder](#action-create-folder) - Create a folder
 
 ## action: 'test connectivity'
 
 Validate the asset configuration for connectivity using supplied configuration
 
-Type: **test** \
+Type: **test** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -114,7 +114,7 @@ No Output
 
 Download a file from server and add it to the vault
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -146,7 +146,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 List of items
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -209,7 +209,7 @@ action_result.parameter.ph_0 | ph | | |
 
 List of Drives
 
-Type: **investigate** \
+Type: **investigate** <br>
 Read only: **True**
 
 #### Action Parameters
@@ -249,7 +249,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Upload file
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -312,7 +312,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Delete file
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -341,7 +341,7 @@ summary.total_objects_successful | numeric | | 1 |
 
 Delete a folder
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
@@ -371,7 +371,7 @@ action_result.parameter.ph_0 | ph | | |
 
 Create a folder
 
-Type: **generic** \
+Type: **generic** <br>
 Read only: **False**
 
 #### Action Parameters
