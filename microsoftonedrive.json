@@ -18,13 +18,13 @@
         }
     ],
     "license": "Copyright (c) 2019-2025 Splunk Inc.",
-    "app_version": "2.4.0",
+    "app_version": "2.4.1",
     "python_version": "3.9, 3.13",
     "fips_compliant": true,
     "latest_tested_versions": [
         "Cloud v19.192.0926.0012"
     ],
-    "utctime_updated": "2023-06-07T22:55:56.000000Z",
+    "utctime_updated": "2025-09-05T16:18:29.711820Z",
     "package_name": "phantom_microsoftonedrive",
     "main_module": "microsoftonedrive_connector.py",
     "min_phantom_version": "6.2.2",
