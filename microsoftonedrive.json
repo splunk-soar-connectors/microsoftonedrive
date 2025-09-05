@@ -19,7 +19,7 @@
     ],
     "license": "Copyright (c) 2019-2025 Splunk Inc.",
     "app_version": "2.4.0",
-    "python_version": "3",
+    "python_version": "3.9, 3.13",
     "fips_compliant": true,
     "latest_tested_versions": [
         "Cloud v19.192.0926.0012"
@@ -1863,5 +1863,11 @@
             },
             "versions": "EQ(*)"
         }
-    ]
+    ],
+    "pip39_dependencies": {
+        "wheel": []
+    },
+    "pip313_dependencies": {
+        "wheel": []
+    }
 }
