@@ -11,3 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from soar_sdk.app import App
+from .get_file import get_file
+
+
+def register_app(app: App) -> App:
+    """
+    Resgisters all defined actions on to the provided app.
+
+    Args:
+        app(App): The app object to register actions on.
+
+    Returns:
+        App: The app object with actions registered.
+    """
+
+    app.register_action(
+        action=get_file,
+        description="Download a file from server and add it to the vault",
+        action_type="investigate",
+    )
+    return app

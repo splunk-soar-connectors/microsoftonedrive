@@ -18,6 +18,7 @@ from soar_sdk.action_results import ActionOutput, OutputField
 from soar_sdk.logging import getLogger, PhantomLogger
 
 from .asset import Asset
+from .actions import register_app
 
 logger: PhantomLogger = getLogger()
 
@@ -40,39 +41,12 @@ def create_ms_onedrive_soar_connector_app() -> App:
     def test_connectivity(soar: SOARClient, asset: Asset) -> None:
         raise NotImplementedError()
 
+    app: App = register_app(app)
+
     return app
 
 
 app: App = create_ms_onedrive_soar_connector_app()
-
-
-class GetFileParams(Params):
-    file_id: str | None = Param(
-        description="ID of file", primary=True, cef_types=["msonedrive file id"]
-    )
-    drive_id: str | None = Param(
-        description="Drive ID", primary=True, cef_types=["msonedrive drive id"]
-    )
-    file_path: str | None = Param(
-        description="Path of file", primary=True, cef_types=["file path"]
-    )
-
-
-class GetFileOutput(ActionOutput):
-    file_name: str = OutputField(example_values=["filetxt.txt"])
-    size: float = OutputField(cef_types=["file size"], example_values=[4])
-    vault_id: str = OutputField(
-        cef_types=["vault id"],
-        example_values=["example-vault-id"],
-    )
-
-
-@app.action(
-    description="Download a file from server and add it to the vault",
-    action_type="investigate",
-)
-def get_file(params: GetFileParams, soar: SOARClient, asset: Asset) -> GetFileOutput:
-    raise NotImplementedError()
 
 
 class ListItemsParams(Params):
