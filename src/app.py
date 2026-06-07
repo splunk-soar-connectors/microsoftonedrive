@@ -15,35 +15,35 @@ from soar_sdk.abstract import SOARClient
 from soar_sdk.app import App
 from soar_sdk.params import Param, Params
 from soar_sdk.action_results import ActionOutput, OutputField
-from soar_sdk.asset import BaseAsset, AssetField
-from soar_sdk.logging import getLogger
+from soar_sdk.logging import getLogger, PhantomLogger
 
-logger = getLogger()
+from .asset import Asset
 
-
-class Asset(BaseAsset):
-    client_id: str = AssetField(description="Client ID")
-    client_secret: str = AssetField(description="Client secret", sensitive=True)
-    tenant_id: str | None = AssetField(description="Tenant ID", default="common")
+logger: PhantomLogger = getLogger()
 
 
-app = App(
-    name="Microsoft OneDrive",
-    app_type="sandbox",
-    logo="logo_microsoftonedrive.svg",
-    logo_dark="logo_microsoftonedrive_dark.svg",
-    product_vendor="Microsoft",
-    product_name="Microsoft OneDrive",
-    publisher="Splunk",
-    appid="564fe3f1-b1bb-4196-ba52-9422d0e4d430",
-    fips_compliant=True,
-    asset_cls=Asset,
-)
+def create_ms_onedrive_soar_connector_app() -> App:
+    app = App(
+        name="Microsoft OneDrive",
+        app_type="sandbox",
+        logo="logo_microsoftonedrive.svg",
+        logo_dark="logo_microsoftonedrive_dark.svg",
+        product_vendor="Microsoft",
+        product_name="Microsoft OneDrive",
+        publisher="Splunk",
+        appid="564fe3f1-b1bb-4196-ba52-9422d0e4d430",
+        fips_compliant=True,
+        asset_cls=Asset,
+    )
+
+    @app.test_connectivity()
+    def test_connectivity(soar: SOARClient, asset: Asset) -> None:
+        raise NotImplementedError()
+
+    return app
 
 
-@app.test_connectivity()
-def test_connectivity(soar: SOARClient, asset: Asset) -> None:
-    raise NotImplementedError()
+app: App = create_ms_onedrive_soar_connector_app()
 
 
 class GetFileParams(Params):
