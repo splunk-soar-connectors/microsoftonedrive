@@ -19,7 +19,6 @@ from .delete_folder import delete_folder
 from .get_file import get_file
 from .list_drive import list_drive
 from .list_items import list_items
-from .test_connectivity import test_connectivity
 from .upload_file import upload_file
 
 
@@ -33,8 +32,6 @@ def register_app(app: App) -> App:
     Returns:
         App: The app object with actions registered.
     """
-
-    app.test_connectivity()(test_connectivity)
 
     app.register_action(
         action=get_file,

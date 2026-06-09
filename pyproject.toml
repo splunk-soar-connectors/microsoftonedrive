@@ -1,6 +1,6 @@
 [project]
 name = "microsoftonedrive"
-version = "2.4.1"
+version = "2.4.1-beta"
 description = "This app integrates with Microsoft OneDrive to execute various generic actions"
 license = "Copyright (c) 2019-2025 Splunk Inc."
 requires-python = ">=3.13, <3.15"
