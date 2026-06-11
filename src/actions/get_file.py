@@ -19,7 +19,7 @@ from soar_sdk.abstract import SOARClient
 from soar_sdk.params import Param, Params
 from soar_sdk.action_results import ActionOutput, OutputField
 from soar_sdk.auth.client import OAuthClientError
-from soar_sdk.exceptions import ActionFailure
+from soar_sdk.exceptions import ActionFailure, SoarAPIError
 
 from ..asset import Asset
 from ..graph import get_graph_client
@@ -32,6 +32,7 @@ MANDATORY_FILE_ID_OR_PATH_MESSAGE = "Either File ID or File Path is mandatory"
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
 )
+VAULT_ATTACHMENT_LOOKUP_ERROR = "Could not retrieve attachment information"
 
 
 def _log_legacy_vault_lookup(container_id: int) -> None:
@@ -119,7 +120,17 @@ def _get_existing_vault_id(
     _log_legacy_vault_lookup(container_id)
     _log_sdk_vault_lookup(container_id)
 
-    attachments = soar.vault.get_attachment(container_id=container_id)
+    try:
+        attachments = soar.vault.get_attachment(container_id=container_id)
+    except SoarAPIError as e:
+        if e.message == VAULT_ATTACHMENT_LOOKUP_ERROR:
+            logging.info(
+                "Could not retrieve existing vault attachments; "
+                "skipping duplicate check"
+            )
+            return None
+        raise
+
     logging.info(f"Retrieved {len(attachments)} vault attachment(s)")
 
     for attachment in attachments:
