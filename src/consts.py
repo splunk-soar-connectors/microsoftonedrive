@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Used by src/test_connectivity.py to verify the OAuth token and by
+# src/graph.py to create authenticated Microsoft Graph clients.
+MICROSOFT_GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0"
+
 # Used by src/app.py to pass the user-facing authorization route into test
 # connectivity and by src/webhooks/oauth.py to register the redirect route.
 OAUTH_START_ROUTE = "oauth/start"

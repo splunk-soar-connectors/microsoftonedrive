@@ -11,11 +11,62 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import importlib
+
+import httpx
+from soar_sdk import logging
 from soar_sdk.abstract import SOARClient
 from soar_sdk.params import Param, Params
 from soar_sdk.action_results import ActionOutput, OutputField
+from soar_sdk.auth.client import OAuthClientError
+from soar_sdk.exceptions import ActionFailure
 
 from ..asset import Asset
+from ..graph import get_graph_client
+
+
+DOWNLOAD_URL_FIELD = "@microsoft.graph.downloadUrl"
+FILE_HAS_NO_CONTENT_MESSAGE = "File has no content"
+FILE_NOT_FOUND_MESSAGE = "The requested file does not exist on OneDrive"
+MANDATORY_FILE_ID_OR_PATH_MESSAGE = "Either File ID or File Path is mandatory"
+AUTHORIZATION_REQUIRED_MESSAGE = (
+    "Token not available. Please run Test Connectivity first."
+)
+
+
+def _log_legacy_vault_lookup(container_id: int) -> None:
+    try:
+        ph_rules = importlib.import_module("phantom.rules")
+    except ModuleNotFoundError:
+        logging.info("phantom.rules unavailable; skipping legacy vault_info diagnostic")
+        return
+
+    success, message, vault_meta_info = ph_rules.vault_info(container_id=container_id)
+    vault_meta_info = list(vault_meta_info)
+    logging.info(
+        "legacy phantom.rules.vault_info result: "
+        f"success={success}, message={message!r}, item_count={len(vault_meta_info)}"
+    )
+
+
+def _log_sdk_vault_lookup(container_id: int) -> None:
+    try:
+        phantom_vault = importlib.import_module("phantom.vault")
+    except ModuleNotFoundError:
+        logging.info("phantom.vault unavailable; skipping SDK vault_info diagnostic")
+        return
+
+    success, message, vault_meta_info = phantom_vault.vault_info(
+        None,
+        None,
+        container_id,
+        download_file=True,
+    )
+    vault_meta_info = list(vault_meta_info)
+    logging.info(
+        "SDK phantom.vault.vault_info result: "
+        f"success={success}, message={message!r}, item_count={len(vault_meta_info)}"
+    )
 
 
 class GetFileParams(Params):
@@ -39,5 +90,92 @@ class GetFileOutput(ActionOutput):
     )
 
 
+def _get_file_endpoint(params: GetFileParams) -> str:
+    file_id = params.file_id or ""
+    drive_id = params.drive_id or ""
+    file_path = (params.file_path or "").strip("/\\")
+
+    if not file_id and not file_path:
+        raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
+
+    if drive_id:
+        if file_id:
+            return f"/me/drives/{drive_id}/items/{file_id}"
+        return f"/me/drives/{drive_id}/root:/{file_path}"
+
+    if file_id:
+        return f"/me/drive/items/{file_id}"
+    return f"/me/drive/root:/{file_path}"
+
+
+def _get_existing_vault_id(
+    soar: SOARClient,
+    *,
+    file_name: str,
+    file_size: int,
+) -> str | None:
+    container_id = soar.get_executing_container_id()
+    logging.info(f"Checking existing vault attachments for container_id={container_id}")
+    _log_legacy_vault_lookup(container_id)
+    _log_sdk_vault_lookup(container_id)
+
+    attachments = soar.vault.get_attachment(container_id=container_id)
+    logging.info(f"Retrieved {len(attachments)} vault attachment(s)")
+
+    for attachment in attachments:
+        if attachment.name == file_name and attachment.size == file_size:
+            logging.info(
+                f"Found existing vault attachment for file_name={file_name} "
+                f"size={file_size}"
+            )
+            return attachment.vault_id
+    logging.info("No matching vault attachment found")
+    return None
+
+
 def get_file(params: GetFileParams, soar: SOARClient, asset: Asset) -> GetFileOutput:
-    raise NotImplementedError()
+    logging.info("In action handler for: get_file")
+    endpoint = _get_file_endpoint(params)
+    logging.info(f"Using Microsoft Graph metadata endpoint: {endpoint}")
+
+    try:
+        with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
+            metadata_response = graph_client.get(endpoint)
+            metadata_response.raise_for_status()
+            metadata = metadata_response.json()
+    except OAuthClientError as e:
+        raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e
+
+    file_name = metadata.get("name")
+    download_url = metadata.get(DOWNLOAD_URL_FIELD)
+    if not file_name or not download_url:
+        raise ActionFailure(FILE_NOT_FOUND_MESSAGE)
+    logging.info(f"Resolved OneDrive file metadata for file_name={file_name}")
+
+    file_response = httpx.get(download_url, timeout=30.0)
+    file_response.raise_for_status()
+    file_content = file_response.content
+    file_size = len(file_content)
+    if not file_size:
+        raise ActionFailure(FILE_HAS_NO_CONTENT_MESSAGE)
+    logging.info(f"Downloaded file content size={file_size}")
+
+    vault_id = _get_existing_vault_id(
+        soar,
+        file_name=file_name,
+        file_size=file_size,
+    )
+    if vault_id is None:
+        vault_id = soar.vault.create_attachment(
+            soar.get_executing_container_id(),
+            file_content,
+            file_name,
+            metadata={"size": str(file_size)},
+        )
+        logging.info(f"Created vault attachment for file_name={file_name}")
+
+    return GetFileOutput(
+        file_name=file_name,
+        size=file_size,
+        vault_id=vault_id,
+    )
