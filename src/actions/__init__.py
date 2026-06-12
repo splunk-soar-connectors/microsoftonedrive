@@ -71,6 +71,7 @@ def register_app(app: App) -> App:
         description="Delete a folder",
         action_type="generic",
         read_only=False,
+        render_as="table",
     )
     app.register_action(
         action=create_folder,
