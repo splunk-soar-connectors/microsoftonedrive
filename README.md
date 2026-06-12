@@ -105,7 +105,7 @@ action_result.message | string | | |
 action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.folder_id | string | `msonedrive folder id` | |
 action_result.parameter.folder_path | string | `msonedrive folder path` | |
-action_result.data.\*.microsoft.graph.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
+action_result.data.\*.@microsoft.graph.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
 action_result.data.\*.cTag | string | | "c:{2test123-1234-1234-1234-test123test1},0" |
 action_result.data.\*.createdBy.application.displayName | string | | Test_One-drive |
 action_result.data.\*.createdBy.application.id | string | | ba56002c-856c-469f-b6a0-a4335614c502 |
@@ -139,6 +139,7 @@ action_result.data.\*.parentReference.folderPath | string | `msonedrive folder p
 action_result.data.\*.parentReference.id | string | `msonedrive drive id` `msonedrive folder id` | example-parent-reference-id |
 action_result.data.\*.size | numeric | `file size` | 359666 |
 action_result.data.\*.webUrl | string | `url` | https://test-my.test.com/personal/test_abc_com/Documents/Test |
+action_result.summary.total_items | numeric | | |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 

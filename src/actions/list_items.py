@@ -11,11 +11,39 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Any
+
+from soar_sdk import logging
 from soar_sdk.abstract import SOARClient
-from soar_sdk.action_results import ActionOutput, OutputField
+from soar_sdk.action_results import ActionOutput, OutputField, PermissiveActionOutput
+from soar_sdk.auth.client import OAuthClientError
+from soar_sdk.exceptions import ActionFailure
 from soar_sdk.params import Param, Params
 
 from ..asset import Asset
+from ..graph import get_graph_client
+
+
+AUTHORIZATION_REQUIRED_MESSAGE = (
+    "Token not available. Please run Test Connectivity first."
+)
+GRAPH_VALUE_FIELD = "value"
+GRAPH_NEXT_LINK_FIELD = "@odata.nextLink"
+ITEM_ID_FIELD = "id"
+ITEM_FILE_FIELD = "file"
+PARENT_REFERENCE_FIELD = "parentReference"
+PARENT_PATH_FIELD = "path"
+PARENT_DRIVE_PATH_FIELD = "drivePath"
+PARENT_FOLDER_PATH_FIELD = "folderPath"
+ROOT_PATH_SPLIT = "root:/"
+LIST_ITEMS_DEFAULT_ENDPOINT = "/me/drive/root/children"
+LIST_ITEMS_DRIVE_ID_ENDPOINT = "/me/drives/{drive_id}/root/children"
+LIST_ITEMS_DRIVE_FOLDER_ID_ENDPOINT = "/me/drives/{drive_id}/items/{folder_id}/children"
+LIST_ITEMS_DRIVE_FOLDER_PATH_ENDPOINT = (
+    "/me/drives/{drive_id}/root:/{folder_path}:/children"
+)
+LIST_ITEMS_FOLDER_ID_ENDPOINT = "/me/drive/items/{folder_id}/children"
+LIST_ITEMS_FOLDER_PATH_ENDPOINT = "/me/drive/root:/{folder_path}:/children"
 
 
 class ListItemsParams(Params):
@@ -30,19 +58,6 @@ class ListItemsParams(Params):
         primary=True,
         cef_types=["msonedrive folder path"],
     )
-
-
-class GraphOutput(ActionOutput):
-    downloadUrl: str = OutputField(
-        cef_types=["url"],
-        example_values=[
-            "https://test-my.abc.com/test/test_xyz_com/_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0"
-        ],
-    )
-
-
-class MicrosoftOutput(ActionOutput):
-    graph: GraphOutput
 
 
 class ApplicationOutput(ActionOutput):
@@ -116,8 +131,14 @@ class ParentreferenceOutput(ActionOutput):
     )
 
 
-class ListItemsOutput(ActionOutput):
-    microsoft: MicrosoftOutput
+class ListItemsOutput(PermissiveActionOutput):
+    microsoft_graph_download_url: str = OutputField(
+        alias="@microsoft.graph.downloadUrl",
+        cef_types=["url"],
+        example_values=[
+            "https://test-my.abc.com/test/test_xyz_com/_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0"
+        ],
+    )
     cTag: str = OutputField(
         example_values=['"c:{2test123-1234-1234-1234-test123test1},0"']
     )
@@ -149,7 +170,116 @@ class ListItemsOutput(ActionOutput):
     )
 
 
+class ListItemsSummary(ActionOutput):
+    total_items: int
+
+
+def _get_list_items_endpoint(params: ListItemsParams) -> str:
+    drive_id: str = params.drive_id or ""
+    folder_id: str = params.folder_id or ""
+    folder_path: str = (params.folder_path or "").strip("/\\")
+
+    if drive_id:
+        if folder_id:
+            return LIST_ITEMS_DRIVE_FOLDER_ID_ENDPOINT.format(
+                drive_id=drive_id,
+                folder_id=folder_id,
+            )
+        if folder_path:
+            return LIST_ITEMS_DRIVE_FOLDER_PATH_ENDPOINT.format(
+                drive_id=drive_id,
+                folder_path=folder_path,
+            )
+        return LIST_ITEMS_DRIVE_ID_ENDPOINT.format(drive_id=drive_id)
+
+    if folder_id:
+        return LIST_ITEMS_FOLDER_ID_ENDPOINT.format(folder_id=folder_id)
+    if folder_path:
+        return LIST_ITEMS_FOLDER_PATH_ENDPOINT.format(folder_path=folder_path)
+    return LIST_ITEMS_DEFAULT_ENDPOINT
+
+
+def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]:
+    """Return every item from a paginated Microsoft Graph list response.
+
+    Microsoft Graph paginates list responses by returning a page of items in
+    "value" and, when more pages exist, an "@odata.nextLink" URL for the next
+    page. This follows that next-link chain until Graph stops returning one.
+    """
+    items: list[dict[str, Any]] = []
+    next_endpoint: str | None = endpoint
+
+    while next_endpoint:
+        response = graph_client.get(next_endpoint)
+        response.raise_for_status()
+        response_json = response.json()
+        items.extend(response_json.get(GRAPH_VALUE_FIELD, []))
+        next_endpoint = response_json.get(GRAPH_NEXT_LINK_FIELD)
+
+    return items
+
+
+def _normalize_parent_reference(item: dict[str, Any]) -> None:
+    parent_reference = item.get(PARENT_REFERENCE_FIELD)
+    if not parent_reference:
+        return
+
+    full_path = parent_reference.get(PARENT_PATH_FIELD)
+    if not full_path:
+        return
+
+    path_elements = full_path.split(ROOT_PATH_SPLIT)
+    if len(path_elements) > 1:
+        parent_reference[PARENT_DRIVE_PATH_FIELD] = (
+            f"{path_elements[0]}{ROOT_PATH_SPLIT}"
+        )
+        parent_reference[PARENT_FOLDER_PATH_FIELD] = path_elements[1].strip("/\\")
+    else:
+        parent_reference[PARENT_DRIVE_PATH_FIELD] = path_elements[0]
+        parent_reference[PARENT_FOLDER_PATH_FIELD] = ""
+    parent_reference.pop(PARENT_PATH_FIELD, None)
+
+
 def list_items(
     params: ListItemsParams, soar: SOARClient, asset: Asset
-) -> ListItemsOutput:
-    raise NotImplementedError()
+) -> list[ListItemsOutput]:
+    logging.info("In action handler for: list_items")
+    endpoint = _get_list_items_endpoint(params)
+    logging.info(f"Using Microsoft Graph list items endpoint: {endpoint}")
+
+    try:
+        with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
+            items: list[dict[str, Any]] = []
+            pending_endpoints: list[str] = [endpoint]
+
+            while pending_endpoints:
+                current_endpoint: str = pending_endpoints.pop()
+                children: list[dict[str, Any]] = _get_list_response(
+                    graph_client, current_endpoint
+                )
+
+                for child in children:
+                    items.append(child)
+                    if not child.get(ITEM_FILE_FIELD):
+                        child_id: str | None = child.get(ITEM_ID_FIELD)
+                        if params.drive_id:
+                            pending_endpoint = (
+                                LIST_ITEMS_DRIVE_FOLDER_ID_ENDPOINT.format(
+                                    drive_id=params.drive_id,
+                                    folder_id=child_id,
+                                )
+                            )
+                        else:
+                            pending_endpoint = LIST_ITEMS_FOLDER_ID_ENDPOINT.format(
+                                folder_id=child_id
+                            )
+                        pending_endpoints.append(pending_endpoint)
+
+    except OAuthClientError as e:
+        raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e
+
+    for item in items:
+        _normalize_parent_reference(item)
+
+    soar.set_summary(ListItemsSummary(total_items=len(items)))
+    return [ListItemsOutput(**item) for item in items]

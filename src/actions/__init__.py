@@ -18,7 +18,7 @@ from .delete_file import delete_file
 from .delete_folder import delete_folder
 from .get_file import get_file
 from .list_drive import list_drive
-from .list_items import list_items
+from .list_items import ListItemsSummary, list_items
 from .upload_file import upload_file
 
 
@@ -42,6 +42,7 @@ def register_app(app: App) -> App:
         action=list_items,
         description="List of items",
         action_type="investigate",
+        summary_type=ListItemsSummary,
     )
     app.register_action(
         action=list_drive,
