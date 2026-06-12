@@ -20,6 +20,7 @@ from .get_file import GetFileSummary, get_file
 from .list_drive import list_drive
 from .list_items import ListItemsSummary, list_items
 from .upload_file import upload_file
+from ..views.list_items import display_view as display_list_items_view
 
 
 def register_app(app: App) -> App:
@@ -40,12 +41,12 @@ def register_app(app: App) -> App:
         render_as="table",
         summary_type=GetFileSummary,
     )
-    app.register_action(
-        action=list_items,
+    app.action(
         description="List of items",
         action_type="investigate",
+        view_handler=display_list_items_view,
         summary_type=ListItemsSummary,
-    )
+    )(list_items)
     app.register_action(
         action=list_drive,
         description="List of Drives",
