@@ -17,7 +17,7 @@ from .create_folder import create_folder
 from .delete_file import delete_file
 from .delete_folder import delete_folder
 from .get_file import GetFileSummary, get_file
-from .list_drive import list_drive
+from .list_drive import ListDriveSummary, list_drive
 from .list_items import ListItemsSummary, list_items
 from .upload_file import upload_file
 from ..views.list_items import display_view as display_list_items_view
@@ -51,6 +51,8 @@ def register_app(app: App) -> App:
         action=list_drive,
         description="List of Drives",
         action_type="investigate",
+        render_as="table",
+        summary_type=ListDriveSummary,
     )
     app.register_action(
         action=upload_file,
