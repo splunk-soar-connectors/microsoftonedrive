@@ -72,19 +72,43 @@ def _log_sdk_vault_lookup(container_id: int) -> None:
 
 class GetFileParams(Params):
     file_id: str | None = Param(
-        description="ID of file", primary=True, cef_types=["msonedrive file id"]
+        description="ID of file",
+        primary=True,
+        cef_types=["msonedrive file id"],
+        column_name="File ID",
     )
     drive_id: str | None = Param(
-        description="Drive ID", primary=True, cef_types=["msonedrive drive id"]
+        description="Drive ID",
+        primary=True,
+        cef_types=["msonedrive drive id"],
+        column_name="Drive ID",
     )
     file_path: str | None = Param(
-        description="Path of file", primary=True, cef_types=["file path"]
+        description="Path of file",
+        primary=True,
+        cef_types=["file path"],
+        column_name="File Path",
     )
 
 
 class GetFileOutput(ActionOutput):
-    file_name: str = OutputField(example_values=["filetxt.txt"])
-    size: float = OutputField(cef_types=["file size"], example_values=[4])
+    file_name: str = OutputField(
+        column_name="File Name",
+        example_values=["filetxt.txt"],
+    )
+    vault_id: str = OutputField(
+        column_name="Vault ID",
+        cef_types=["vault id"],
+        example_values=["example-vault-id"],
+    )
+    size: float = OutputField(
+        column_name="Size (Bytes)",
+        cef_types=["file size"],
+        example_values=[4],
+    )
+
+
+class GetFileSummary(ActionOutput):
     vault_id: str = OutputField(
         cef_types=["vault id"],
         example_values=["example-vault-id"],
@@ -185,8 +209,9 @@ def get_file(params: GetFileParams, soar: SOARClient, asset: Asset) -> GetFileOu
         )
         logging.info(f"Created vault attachment for file_name={file_name}")
 
+    soar.set_summary(GetFileSummary(vault_id=vault_id))
     return GetFileOutput(
         file_name=file_name,
-        size=file_size,
         vault_id=vault_id,
+        size=file_size,
     )

@@ -76,8 +76,9 @@ action_result.parameter.file_id | string | `msonedrive file id` | |
 action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.file_path | string | `file path` | |
 action_result.data.\*.file_name | string | | filetxt.txt |
-action_result.data.\*.size | numeric | `file size` | 4 |
 action_result.data.\*.vault_id | string | `vault id` | example-vault-id |
+action_result.data.\*.size | numeric | `file size` | 4 |
+action_result.summary.vault_id | string | `vault id` | example-vault-id |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 

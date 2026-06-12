@@ -16,7 +16,7 @@ from soar_sdk.app import App
 from .create_folder import create_folder
 from .delete_file import delete_file
 from .delete_folder import delete_folder
-from .get_file import get_file
+from .get_file import GetFileSummary, get_file
 from .list_drive import list_drive
 from .list_items import ListItemsSummary, list_items
 from .upload_file import upload_file
@@ -37,6 +37,8 @@ def register_app(app: App) -> App:
         action=get_file,
         description="Download a file from server and add it to the vault",
         action_type="investigate",
+        render_as="table",
+        summary_type=GetFileSummary,
     )
     app.register_action(
         action=list_items,
