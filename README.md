@@ -212,14 +212,14 @@ action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.vault_id | string | `vault id` `sha1` | |
 action_result.parameter.file_path | string | `file path` | |
 action_result.parameter.auto_rename | boolean | | |
-action_result.data.\*.content.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
+action_result.data.\*.@content.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
+action_result.data.\*.@odata.context | string | `url` | https://test-my.abc.com/personal/test_abc_com/\_api/v2.0/$metadata#items/$entity |
+action_result.data.\*.@odata.editLink | string | | drives/b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/items/01FMDEUQ532OAQOAAUFVCL6MDY7H3CUEKN |
+action_result.data.\*.@odata.id | string | `url` | https://test-my.abc.com/personal/test_abc_com/\_api/v2.0/drives/b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123/items/01TEST123TEST123TEST123U3KTTEST123 |
+action_result.data.\*.@odata.type | string | | #oneDrive.item |
 action_result.data.\*.file.irmEnabled | boolean | | True False |
 action_result.data.\*.file.hashes.quickXorHash | string | | AAAAAAAAAAAAAAAAAIwPCgAAAAA= |
 action_result.data.\*.file.mimeType | string | | text/plain |
-action_result.data.\*.odata.context | string | `url` | https://test-my.abc.com/personal/test_abc_com/\_api/v2.0/$metadata#items/$entity |
-action_result.data.\*.odata.editLink | string | | drives/b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/items/01FMDEUQ532OAQOAAUFVCL6MDY7H3CUEKN |
-action_result.data.\*.odata.id | string | `url` | https://test-my.abc.com/personal/test_abc_com/\_api/v2.0/drives/b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123/items/01TEST123TEST123TEST123U3KTTEST123 |
-action_result.data.\*.odata.type | string | | #oneDrive.item |
 action_result.data.\*.cTag | string | | "c:{2test123-1234-1234-1234-test123test1},2" |
 action_result.data.\*.createdBy.application.displayName | string | | Test_One-drive |
 action_result.data.\*.createdBy.application.id | string | | ba56122c-856c-469f-b6a0-a4335614c502 |

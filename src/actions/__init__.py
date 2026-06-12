@@ -59,6 +59,7 @@ def register_app(app: App) -> App:
         description="Upload file",
         action_type="generic",
         read_only=False,
+        render_as="table",
     )
     app.register_action(
         action=delete_file,
