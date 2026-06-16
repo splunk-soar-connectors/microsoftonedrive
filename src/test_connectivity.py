@@ -19,7 +19,11 @@ from soar_sdk.abstract import SOARClient
 from soar_sdk.auth import StaticTokenAuth
 
 from .asset import Asset
-from .auth import get_auth_code_flow
+from .auth import (
+    get_auth_code_flow,
+    get_client_credentials_flow,
+    is_client_credentials_auth,
+)
 from .consts import (
     AUTHORIZATION_ERROR_STATE_KEY,
     AUTHORIZATION_URL_STATE_KEY,
@@ -31,6 +35,9 @@ from .consts import (
 AUTHORIZE_WAIT_TIME = 15
 AUTHORIZATION_POLL_ATTEMPTS = 35
 AUTHORIZATION_POLL_INTERVAL = 3
+TARGET_USER_ID_REQUIRED_MESSAGE = (
+    "Target User ID is required for Client Credentials authentication"
+)
 
 
 def run_test_connectivity(
@@ -41,6 +48,24 @@ def run_test_connectivity(
     oauth_start_url: str,
 ) -> None:
     """test connectivity"""
+    if is_client_credentials_auth(asset):
+        run_client_credentials_test_connectivity(asset)
+    else:
+        run_delegated_test_connectivity(
+            soar,
+            asset,
+            oauth_callback_url=oauth_callback_url,
+            oauth_start_url=oauth_start_url,
+        )
+
+
+def run_delegated_test_connectivity(
+    soar: SOARClient,
+    asset: Asset,
+    *,
+    oauth_callback_url: str,
+    oauth_start_url: str,
+) -> None:
     asset.auth_state.pop(AUTHORIZATION_ERROR_STATE_KEY, None)
     flow = get_auth_code_flow(
         asset,
@@ -92,4 +117,27 @@ def run_test_connectivity(
         response.raise_for_status()
 
     logging.info("Got current user info successfully")
+    logging.info("Test Connectivity Passed")
+
+
+def run_client_credentials_test_connectivity(asset: Asset) -> None:
+    target_user_id = (asset.target_user_id or "").strip()
+    if not target_user_id:
+        raise ValueError(TARGET_USER_ID_REQUIRED_MESSAGE)
+
+    logging.info("Testing connectivity. Connecting...")
+    logging.info("Using Client Credentials authentication")
+    logging.info("Generating access token")
+    token = get_client_credentials_flow(asset).authenticate()
+
+    logging.info("Getting root drive item for configured target user to verify token")
+    with httpx.Client(
+        base_url=MICROSOFT_GRAPH_BASE_URL,
+        auth=StaticTokenAuth(token),
+        timeout=30.0,
+    ) as graph_client:
+        response = graph_client.get(f"/users/{target_user_id}/drive/root")
+        response.raise_for_status()
+
+    logging.info("Got target user root drive item successfully")
     logging.info("Test Connectivity Passed")

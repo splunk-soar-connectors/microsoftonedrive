@@ -35,3 +35,8 @@ AUTHORIZATION_ERROR_STATE_KEY = "authorization_error"
 # Used by src/test_connectivity.py to store the callback URL generated in action
 # context and by src/webhooks/oauth.py to rebuild the callback flow.
 REDIRECT_URI_STATE_KEY = "redirect_uri"
+
+# Used by src/asset.py for the authentication mode asset field and by
+# src/auth.py and src/test_connectivity.py to select the authentication flow.
+AUTH_METHOD_DELEGATED = "Delegated"
+AUTH_METHOD_CLIENT_CREDENTIALS = "Client Credentials"

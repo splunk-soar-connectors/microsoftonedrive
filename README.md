@@ -17,6 +17,8 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **client_id** | required | string | Client ID |
 **client_secret** | required | password | Client secret |
 **tenant_id** | optional | string | Tenant ID |
+**auth_method** | optional | string | Authentication method |
+**target_user_id** | optional | string | User ID or user principal name for client credentials mode |
 
 ### Supported Actions
 

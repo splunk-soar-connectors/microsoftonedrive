@@ -11,13 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from soar_sdk.auth import AuthorizationCodeFlow
+from soar_sdk.auth import AuthorizationCodeFlow, ClientCredentialsFlow
 
 from .asset import Asset
+from .consts import AUTH_METHOD_CLIENT_CREDENTIALS
 
 
 MICROSOFT_LOGIN_BASE_URL = "https://login.microsoftonline.com"
 MICROSOFT_GRAPH_SCOPE = "files.readwrite.all"
+MICROSOFT_GRAPH_APPLICATION_SCOPE = "https://graph.microsoft.com/.default"
+CLIENT_CREDENTIALS_TENANT_ERROR = (
+    "Tenant ID is required for Client Credentials authentication"
+)
+
+
+def is_client_credentials_auth(asset: Asset) -> bool:
+    return (asset.auth_method or "").strip().lower() == (
+        AUTH_METHOD_CLIENT_CREDENTIALS.lower()
+    )
 
 
 def get_auth_code_flow(
@@ -39,4 +50,18 @@ def get_auth_code_flow(
         extra_auth_params={"state": asset_id},
         extra_token_params={"scope": MICROSOFT_GRAPH_SCOPE},
         use_pkce=False,
+    )
+
+
+def get_client_credentials_flow(asset: Asset) -> ClientCredentialsFlow:
+    tenant = (asset.tenant_id or "").strip()
+    if not tenant or tenant.lower() == "common":
+        raise ValueError(CLIENT_CREDENTIALS_TENANT_ERROR)
+
+    return ClientCredentialsFlow(
+        asset.auth_state,
+        client_id=asset.client_id,
+        client_secret=asset.client_secret,
+        token_endpoint=f"{MICROSOFT_LOGIN_BASE_URL}/{tenant}/oauth2/v2.0/token",
+        scope=MICROSOFT_GRAPH_APPLICATION_SCOPE,
     )

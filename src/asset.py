@@ -13,8 +13,19 @@
 # limitations under the License.
 from soar_sdk.asset import BaseAsset, AssetField
 
+from .consts import AUTH_METHOD_CLIENT_CREDENTIALS, AUTH_METHOD_DELEGATED
+
 
 class Asset(BaseAsset):
     client_id: str = AssetField(description="Client ID")
     client_secret: str = AssetField(description="Client secret", sensitive=True)
     tenant_id: str | None = AssetField(description="Tenant ID", default="common")
+    auth_method: str | None = AssetField(
+        description="Authentication method",
+        default=AUTH_METHOD_DELEGATED,
+        value_list=[AUTH_METHOD_DELEGATED, AUTH_METHOD_CLIENT_CREDENTIALS],
+    )
+    target_user_id: str | None = AssetField(
+        description="User ID or user principal name for client credentials mode",
+        required=False,
+    )

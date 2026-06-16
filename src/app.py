@@ -16,6 +16,7 @@ from soar_sdk.app import App
 
 from .actions import register_app
 from .asset import Asset
+from .auth import is_client_credentials_auth
 from .consts import OAUTH_CALLBACK_ROUTE, OAUTH_START_ROUTE
 from .test_connectivity import run_test_connectivity
 from .webhooks import register_webhooks
@@ -39,6 +40,15 @@ def create_ms_onedrive_soar_connector_app() -> App:
 
     @app.test_connectivity()
     def test_connectivity(soar: SOARClient, asset: Asset) -> None:
+        if is_client_credentials_auth(asset):
+            run_test_connectivity(
+                soar,
+                asset,
+                oauth_callback_url="",
+                oauth_start_url="",
+            )
+            return
+
         run_test_connectivity(
             soar,
             asset,
