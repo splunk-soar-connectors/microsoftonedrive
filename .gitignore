@@ -118,6 +118,9 @@ __pypackages__/
 
 # Celery stuff
 celerybeat-schedule
+
+# Local live-test credentials
+credentials.ini
 celerybeat.pid
 
 # SageMath parsed files

@@ -21,6 +21,7 @@ from soar_sdk.exceptions import ActionFailure
 from soar_sdk.params import Param, Params
 
 from ..asset import Asset
+from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
 
 
@@ -44,6 +45,23 @@ LIST_ITEMS_DRIVE_FOLDER_PATH_ENDPOINT = (
 )
 LIST_ITEMS_FOLDER_ID_ENDPOINT = "/me/drive/items/{folder_id}/children"
 LIST_ITEMS_FOLDER_PATH_ENDPOINT = "/me/drive/root:/{folder_path}:/children"
+LIST_ITEMS_APPLICATION_DEFAULT_ENDPOINT = "/users/{target_user_id}/drive/root/children"
+LIST_ITEMS_APPLICATION_DRIVE_ID_ENDPOINT = "/drives/{drive_id}/root/children"
+LIST_ITEMS_APPLICATION_DRIVE_FOLDER_ID_ENDPOINT = (
+    "/drives/{drive_id}/items/{folder_id}/children"
+)
+LIST_ITEMS_APPLICATION_DRIVE_FOLDER_PATH_ENDPOINT = (
+    "/drives/{drive_id}/root:/{folder_path}:/children"
+)
+LIST_ITEMS_APPLICATION_FOLDER_ID_ENDPOINT = (
+    "/users/{target_user_id}/drive/items/{folder_id}/children"
+)
+LIST_ITEMS_APPLICATION_FOLDER_PATH_ENDPOINT = (
+    "/users/{target_user_id}/drive/root:/{folder_path}:/children"
+)
+TARGET_USER_ID_REQUIRED_MESSAGE = (
+    "Target User ID is required for Client Credentials authentication"
+)
 
 
 class ListItemsParams(Params):
@@ -74,8 +92,8 @@ class UserOutput(ActionOutput):
 
 
 class CreatedbyOutput(ActionOutput):
-    application: ApplicationOutput
-    user: UserOutput
+    application: ApplicationOutput | None = None
+    user: UserOutput | None = None
 
 
 class CurrentuserroleOutput(ActionOutput):
@@ -88,7 +106,7 @@ class HashesOutput(ActionOutput):
 
 
 class FileOutput(ActionOutput):
-    hashes: HashesOutput
+    hashes: HashesOutput | None = None
     mimeType: str = OutputField(example_values=["image/png"])
 
 
@@ -107,8 +125,8 @@ class ImageOutput(ActionOutput):
 
 
 class LastmodifiedbyOutput(ActionOutput):
-    application: ApplicationOutput
-    user: UserOutput
+    application: ApplicationOutput | None = None
+    user: UserOutput | None = None
 
 
 class PackageOutput(ActionOutput):
@@ -142,25 +160,25 @@ class ListItemsOutput(PermissiveActionOutput):
     cTag: str = OutputField(
         example_values=['"c:{2test123-1234-1234-1234-test123test1},0"']
     )
-    createdBy: CreatedbyOutput
+    createdBy: CreatedbyOutput | None = None
     createdDateTime: str = OutputField(example_values=["2018-09-01T09:21:24Z"])
-    currentUserRole: CurrentuserroleOutput
+    currentUserRole: CurrentuserroleOutput | None = None
     eTag: str = OutputField(
         example_values=['"{2test123-1234-1234-1234-test123test1},1"']
     )
-    file: FileOutput
-    fileSystemInfo: FilesysteminfoOutput
-    folder: FolderOutput
+    file: FileOutput | None = None
+    fileSystemInfo: FilesysteminfoOutput | None = None
+    folder: FolderOutput | None = None
     id: str = OutputField(
         cef_types=["msonedrive file id", "msonedrive folder id"],
         example_values=["01TEST123TEST123TEST123U3KTTEST123"],
     )
-    image: ImageOutput
-    lastModifiedBy: LastmodifiedbyOutput
+    image: ImageOutput | None = None
+    lastModifiedBy: LastmodifiedbyOutput | None = None
     lastModifiedDateTime: str = OutputField(example_values=["2018-09-01T10:37:09Z"])
     name: str = OutputField(example_values=["test file"])
-    package: PackageOutput
-    parentReference: ParentreferenceOutput
+    package: PackageOutput | None = None
+    parentReference: ParentreferenceOutput | None = None
     size: float = OutputField(cef_types=["file size"], example_values=[359666])
     webUrl: str = OutputField(
         cef_types=["url"],
@@ -174,7 +192,15 @@ class ListItemsSummary(ActionOutput):
     total_items: int
 
 
-def _get_list_items_endpoint(params: ListItemsParams) -> str:
+def _get_target_user_id(asset: Asset) -> str:
+    target_user_id = (asset.target_user_id or "").strip()
+    if not target_user_id:
+        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
+
+    return target_user_id
+
+
+def _get_delegated_list_items_endpoint(params: ListItemsParams) -> str:
     drive_id: str = params.drive_id or ""
     folder_id: str = params.folder_id or ""
     folder_path: str = (params.folder_path or "").strip("/\\")
@@ -197,6 +223,47 @@ def _get_list_items_endpoint(params: ListItemsParams) -> str:
     if folder_path:
         return LIST_ITEMS_FOLDER_PATH_ENDPOINT.format(folder_path=folder_path)
     return LIST_ITEMS_DEFAULT_ENDPOINT
+
+
+def _get_client_credentials_list_items_endpoint(
+    params: ListItemsParams, asset: Asset
+) -> str:
+    drive_id: str = params.drive_id or ""
+    folder_id: str = params.folder_id or ""
+    folder_path: str = (params.folder_path or "").strip("/\\")
+
+    if drive_id:
+        if folder_id:
+            return LIST_ITEMS_APPLICATION_DRIVE_FOLDER_ID_ENDPOINT.format(
+                drive_id=drive_id,
+                folder_id=folder_id,
+            )
+        if folder_path:
+            return LIST_ITEMS_APPLICATION_DRIVE_FOLDER_PATH_ENDPOINT.format(
+                drive_id=drive_id,
+                folder_path=folder_path,
+            )
+        return LIST_ITEMS_APPLICATION_DRIVE_ID_ENDPOINT.format(drive_id=drive_id)
+
+    target_user_id = _get_target_user_id(asset)
+    if folder_id:
+        return LIST_ITEMS_APPLICATION_FOLDER_ID_ENDPOINT.format(
+            target_user_id=target_user_id,
+            folder_id=folder_id,
+        )
+    if folder_path:
+        return LIST_ITEMS_APPLICATION_FOLDER_PATH_ENDPOINT.format(
+            target_user_id=target_user_id,
+            folder_path=folder_path,
+        )
+    return LIST_ITEMS_APPLICATION_DEFAULT_ENDPOINT.format(target_user_id=target_user_id)
+
+
+def _get_list_items_endpoint(params: ListItemsParams, asset: Asset) -> str:
+    if is_client_credentials_auth(asset):
+        return _get_client_credentials_list_items_endpoint(params, asset)
+
+    return _get_delegated_list_items_endpoint(params)
 
 
 def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]:
@@ -244,13 +311,17 @@ def list_items(
     params: ListItemsParams, soar: SOARClient, asset: Asset
 ) -> list[ListItemsOutput]:
     logging.info("In action handler for: list_items")
-    endpoint = _get_list_items_endpoint(params)
+    client_credentials_auth = is_client_credentials_auth(asset)
+    endpoint = _get_list_items_endpoint(params, asset)
     logging.info(f"Using Microsoft Graph list items endpoint: {endpoint}")
 
     try:
         with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
             items: list[dict[str, Any]] = []
             pending_endpoints: list[str] = [endpoint]
+            target_user_id = (
+                _get_target_user_id(asset) if client_credentials_auth else ""
+            )
 
             while pending_endpoints:
                 current_endpoint: str = pending_endpoints.pop()
@@ -263,9 +334,19 @@ def list_items(
                     if not child.get(ITEM_FILE_FIELD):
                         child_id: str | None = child.get(ITEM_ID_FIELD)
                         if params.drive_id:
+                            folder_endpoint = (
+                                LIST_ITEMS_APPLICATION_DRIVE_FOLDER_ID_ENDPOINT
+                                if client_credentials_auth
+                                else LIST_ITEMS_DRIVE_FOLDER_ID_ENDPOINT
+                            )
+                            pending_endpoint = folder_endpoint.format(
+                                drive_id=params.drive_id,
+                                folder_id=child_id,
+                            )
+                        elif client_credentials_auth:
                             pending_endpoint = (
-                                LIST_ITEMS_DRIVE_FOLDER_ID_ENDPOINT.format(
-                                    drive_id=params.drive_id,
+                                LIST_ITEMS_APPLICATION_FOLDER_ID_ENDPOINT.format(
+                                    target_user_id=target_user_id,
                                     folder_id=child_id,
                                 )
                             )

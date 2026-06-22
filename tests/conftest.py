@@ -12,54 +12,75 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
-from collections.abc import Callable
-from pathlib import Path
+from collections.abc import Callable, Generator
 from typing import Any
 
+import httpx
 import pytest
 from soar_sdk.app import App
 from soar_sdk.shims.phantom.encryption_helper import encryption_helper
 
 from src.app import create_ms_onedrive_soar_connector_app
 
+from . import config as test_config
 
-ENV_FILE = Path(__file__).resolve().parents[1] / ".env"
-REQUIRED_ASSET_CONFIG_KEYS = (
-    "tenant_id",
-    "client_id",
-    "client_secret",
-    "target_user_id",
-)
+MICROSOFT_GRAPH_BASE_URL = "https://graph.microsoft.com/v1.0"
+MICROSOFT_GRAPH_SCOPE = "https://graph.microsoft.com/.default"
+MICROSOFT_LOGIN_BASE_URL = "https://login.microsoftonline.com"
 
 
 @pytest.fixture(scope="session", autouse=True)
 def load_dotenv() -> None:
-    if not ENV_FILE.exists():
-        return
-
-    for raw_line in ENV_FILE.read_text().splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-
-        key, value = line.split("=", 1)
-        os.environ.setdefault(key.strip(), value.strip().strip("'\""))
+    test_config.load_dotenv_file()
 
 
 @pytest.fixture(scope="session")
 def live_asset_config(load_dotenv: None) -> dict[str, str]:
-    missing = [name for name in REQUIRED_ASSET_CONFIG_KEYS if not os.environ.get(name)]
+    config: dict[str, str] = {}
+    missing: list[str] = []
+    for name in test_config.ASSET_CONFIG_ENV_KEYS:
+        value = test_config.get_asset_config_value(name)
+        if not value:
+            missing.append(name)
+        else:
+            config[name] = value
+
     if missing:
         raise AssertionError(
             "Missing required live test environment variables: " + ", ".join(missing)
         )
 
-    return {name: os.environ[name] for name in REQUIRED_ASSET_CONFIG_KEYS}
+    return config
 
 
 @pytest.fixture
 def connector_app() -> App:
     return create_ms_onedrive_soar_connector_app()
+
+
+@pytest.fixture
+def microsoft_graph_client(
+    live_asset_config: dict[str, str],
+) -> Generator[httpx.Client]:
+    response = httpx.post(
+        f"{MICROSOFT_LOGIN_BASE_URL}/{live_asset_config['tenant_id']}/oauth2/v2.0/token",
+        data={
+            "client_id": live_asset_config["client_id"],
+            "client_secret": live_asset_config["client_secret"],
+            "grant_type": "client_credentials",
+            "scope": MICROSOFT_GRAPH_SCOPE,
+        },
+        timeout=30.0,
+    )
+    response.raise_for_status()
+    token = response.json()["access_token"]
+
+    with httpx.Client(
+        base_url=MICROSOFT_GRAPH_BASE_URL,
+        headers={"Authorization": f"Bearer {token}"},
+        timeout=30.0,
+    ) as client:
+        yield client
 
 
 @pytest.fixture
