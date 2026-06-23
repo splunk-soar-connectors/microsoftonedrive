@@ -48,7 +48,7 @@ class CreatedByUserOutput(ActionOutput):
 
 
 class CreatedbyOutput(ActionOutput):
-    user: CreatedByUserOutput | None = None
+    user: CreatedByUserOutput | None
 
 
 class LastModifiedByUserOutput(ActionOutput):
@@ -62,7 +62,7 @@ class LastModifiedByUserOutput(ActionOutput):
 
 
 class LastmodifiedbyOutput(ActionOutput):
-    user: LastModifiedByUserOutput | None = None
+    user: LastModifiedByUserOutput | None
 
 
 class OwnerUserOutput(ActionOutput):
@@ -76,7 +76,7 @@ class OwnerUserOutput(ActionOutput):
 
 
 class OwnerOutput(ActionOutput):
-    user: OwnerUserOutput | None = None
+    user: OwnerUserOutput | None
 
 
 class QuotaOutput(ActionOutput):
@@ -100,24 +100,24 @@ class ListDriveOutput(ActionOutput):
             "b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123"
         ],
     )
-    owner: OwnerOutput | None = None
+    owner: OwnerOutput | None
     lastModifiedDateTime: str = OutputField(
         column_name="Last Modified Date Time",
         example_values=["2018-09-21T05:40:10Z"],
     )
-    lastModifiedBy: LastmodifiedbyOutput | None = None
+    lastModifiedBy: LastmodifiedbyOutput | None
     createdDateTime: str = OutputField(
         column_name="Created Date Time",
         example_values=["2018-09-04T01:34:10Z"],
     )
-    createdBy: CreatedbyOutput | None = None
+    createdBy: CreatedbyOutput | None
     webUrl: str = OutputField(
         column_name="Web URL",
         cef_types=["url"],
         example_values=["https://test-my.abc.com/personal/test_test_xyz_com/Documents"],
     )
-    description: str | None = None
-    quota: QuotaOutput | None = None
+    description: str | None
+    quota: QuotaOutput | None
 
 
 class ListDriveSummary(ActionOutput):

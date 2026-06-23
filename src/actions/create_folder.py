@@ -124,8 +124,8 @@ class LastModifiedByUserOutput(ActionOutput):
 
 
 class CreatedbyOutput(ActionOutput):
-    application: ApplicationOutput | None = None
-    user: CreatedByUserOutput | None = None
+    application: ApplicationOutput | None
+    user: CreatedByUserOutput | None
 
 
 class FilesysteminfoOutput(ActionOutput):
@@ -140,8 +140,8 @@ class FolderOutput(ActionOutput):
 
 
 class LastmodifiedbyOutput(ActionOutput):
-    application: ApplicationOutput | None = None
-    user: LastModifiedByUserOutput | None = None
+    application: ApplicationOutput | None
+    user: LastModifiedByUserOutput | None
 
 
 class ParentreferenceOutput(ActionOutput):
@@ -191,7 +191,7 @@ class CreateFolderOutput(ActionOutput):
     size: float | None = OutputField(
         column_name="Size (Bytes)", cef_types=["file size"], example_values=[0]
     )
-    createdBy: CreatedbyOutput | None = None
+    createdBy: CreatedbyOutput | None
     createdDateTime: str | None = OutputField(
         column_name="Created At",
         example_values=["2018-09-01T08:49:18Z"],
@@ -209,9 +209,9 @@ class CreateFolderOutput(ActionOutput):
     eTag: str | None = OutputField(
         example_values=['"{2test123-1234-1234-1234-test123test1},1"']
     )
-    fileSystemInfo: FilesysteminfoOutput | None = None
+    fileSystemInfo: FilesysteminfoOutput | None
     folder: FolderOutput
-    lastModifiedBy: LastmodifiedbyOutput | None = None
+    lastModifiedBy: LastmodifiedbyOutput | None
     lastModifiedDateTime: str | None = OutputField(
         example_values=["2018-09-01T08:49:18Z"]
     )

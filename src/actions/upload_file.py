@@ -27,11 +27,15 @@ from soar_sdk.exceptions import ActionFailure, SoarAPIError
 from soar_sdk.params import Param, Params
 
 from ..asset import Asset
+from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
+)
+TARGET_USER_ID_REQUIRED_MESSAGE = (
+    "Target User ID is required for Client Credentials authentication"
 )
 UNABLE_TO_RETRIEVE_VAULT_ITEM_MESSAGE = "Unable to retrieve vault item details"
 VAULT_PATH_ABSENT_MESSAGE = "Vault path not accessible for provided Vault ID"
@@ -47,6 +51,12 @@ CREATE_UPLOAD_SESSION_IF_DRIVE_ENDPOINT = (
 )
 CREATE_UPLOAD_SESSION_NO_DRIVE_ENDPOINT = (
     "/me/drive/root:/{file_path}:/createUploadSession"
+)
+CREATE_UPLOAD_SESSION_CLIENT_CREDENTIALS_DRIVE_ENDPOINT = (
+    "/drives/{drive_id}/root:/{file_path}:/createUploadSession"
+)
+CREATE_UPLOAD_SESSION_CLIENT_CREDENTIALS_NO_DRIVE_ENDPOINT = (
+    "/users/{target_user_id}/drive/root:/{file_path}:/createUploadSession"
 )
 GRAPH_CONFLICT_BEHAVIOR_FIELD = "@microsoft.graph.conflictBehavior"
 GRAPH_RENAME_VALUE = "rename"
@@ -257,7 +267,15 @@ class UploadFileOutput(ActionOutput):
             yield field
 
 
-def _get_upload_session_endpoint(params: UploadFileParams) -> str:
+def _get_target_user_id(asset: Asset) -> str:
+    target_user_id = (asset.target_user_id or "").strip()
+    if not target_user_id:
+        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
+
+    return target_user_id
+
+
+def _get_delegated_upload_session_endpoint(params: UploadFileParams) -> str:
     drive_id = params.drive_id or ""
     file_path = params.file_path.strip("/\\")
 
@@ -267,6 +285,31 @@ def _get_upload_session_endpoint(params: UploadFileParams) -> str:
             file_path=file_path,
         )
     return CREATE_UPLOAD_SESSION_NO_DRIVE_ENDPOINT.format(file_path=file_path)
+
+
+def _get_client_credentials_upload_session_endpoint(
+    params: UploadFileParams, asset: Asset
+) -> str:
+    drive_id = params.drive_id or ""
+    file_path = params.file_path.strip("/\\")
+
+    if drive_id:
+        return CREATE_UPLOAD_SESSION_CLIENT_CREDENTIALS_DRIVE_ENDPOINT.format(
+            drive_id=drive_id,
+            file_path=file_path,
+        )
+
+    return CREATE_UPLOAD_SESSION_CLIENT_CREDENTIALS_NO_DRIVE_ENDPOINT.format(
+        target_user_id=_get_target_user_id(asset),
+        file_path=file_path,
+    )
+
+
+def _get_upload_session_endpoint(params: UploadFileParams, asset: Asset) -> str:
+    if is_client_credentials_auth(asset):
+        return _get_client_credentials_upload_session_endpoint(params, asset)
+
+    return _get_delegated_upload_session_endpoint(params)
 
 
 def _get_upload_session_body(params: UploadFileParams) -> dict[str, dict[str, str]]:
@@ -301,7 +344,7 @@ def _get_vault_attachment(soar: SOARClient, vault_id: str) -> tuple[bytes, int]:
     except OSError as e:
         raise ActionFailure(ERROR_READING_VAULT_FILE_MESSAGE) from e
 
-    return file_data, attachment.size
+    return file_data, len(file_data)
 
 
 def _normalize_parent_reference(item: dict[str, Any]) -> None:
@@ -361,7 +404,7 @@ def upload_file(
     params: UploadFileParams, soar: SOARClient, asset: Asset
 ) -> UploadFileOutput:
     logging.info("In action handler for: upload_file")
-    endpoint = _get_upload_session_endpoint(params)
+    endpoint = _get_upload_session_endpoint(params, asset)
     logging.info(f"Using Microsoft Graph upload session endpoint: {endpoint}")
 
     file_data, file_size = _get_vault_attachment(soar, params.vault_id)

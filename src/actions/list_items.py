@@ -92,8 +92,8 @@ class UserOutput(ActionOutput):
 
 
 class CreatedbyOutput(ActionOutput):
-    application: ApplicationOutput | None = None
-    user: UserOutput | None = None
+    application: ApplicationOutput | None
+    user: UserOutput | None
 
 
 class CurrentuserroleOutput(ActionOutput):
@@ -106,7 +106,7 @@ class HashesOutput(ActionOutput):
 
 
 class FileOutput(ActionOutput):
-    hashes: HashesOutput | None = None
+    hashes: HashesOutput | None
     mimeType: str = OutputField(example_values=["image/png"])
 
 
@@ -125,8 +125,8 @@ class ImageOutput(ActionOutput):
 
 
 class LastmodifiedbyOutput(ActionOutput):
-    application: ApplicationOutput | None = None
-    user: UserOutput | None = None
+    application: ApplicationOutput | None
+    user: UserOutput | None
 
 
 class PackageOutput(ActionOutput):
@@ -160,25 +160,25 @@ class ListItemsOutput(PermissiveActionOutput):
     cTag: str = OutputField(
         example_values=['"c:{2test123-1234-1234-1234-test123test1},0"']
     )
-    createdBy: CreatedbyOutput | None = None
+    createdBy: CreatedbyOutput | None
     createdDateTime: str = OutputField(example_values=["2018-09-01T09:21:24Z"])
-    currentUserRole: CurrentuserroleOutput | None = None
+    currentUserRole: CurrentuserroleOutput | None
     eTag: str = OutputField(
         example_values=['"{2test123-1234-1234-1234-test123test1},1"']
     )
-    file: FileOutput | None = None
-    fileSystemInfo: FilesysteminfoOutput | None = None
-    folder: FolderOutput | None = None
+    file: FileOutput | None
+    fileSystemInfo: FilesysteminfoOutput | None
+    folder: FolderOutput | None
     id: str = OutputField(
         cef_types=["msonedrive file id", "msonedrive folder id"],
         example_values=["01TEST123TEST123TEST123U3KTTEST123"],
     )
-    image: ImageOutput | None = None
-    lastModifiedBy: LastmodifiedbyOutput | None = None
+    image: ImageOutput | None
+    lastModifiedBy: LastmodifiedbyOutput | None
     lastModifiedDateTime: str = OutputField(example_values=["2018-09-01T10:37:09Z"])
     name: str = OutputField(example_values=["test file"])
-    package: PackageOutput | None = None
-    parentReference: ParentreferenceOutput | None = None
+    package: PackageOutput | None
+    parentReference: ParentreferenceOutput | None
     size: float = OutputField(cef_types=["file size"], example_values=[359666])
     webUrl: str = OutputField(
         cef_types=["url"],
