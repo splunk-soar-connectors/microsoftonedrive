@@ -19,11 +19,15 @@ from soar_sdk.exceptions import ActionFailure
 from soar_sdk.params import Param, Params
 
 from ..asset import Asset
+from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
+)
+TARGET_USER_ID_REQUIRED_MESSAGE = (
+    "Target User ID is required for Client Credentials authentication"
 )
 DELETE_FOLDER_SUCCESS_MESSAGE = "The folder is deleted successfully"
 MANDATORY_FOLDER_ID_OR_PATH_MESSAGE = "Either Folder ID or Folder Path is mandatory"
@@ -31,6 +35,18 @@ DELETE_FOLDER_DRIVE_FOLDER_ID_ENDPOINT = "/me/drives/{drive_id}/items/{folder_id
 DELETE_FOLDER_DRIVE_FOLDER_PATH_ENDPOINT = "/me/drives/{drive_id}/root:/{folder_path}"
 DELETE_FOLDER_FOLDER_ID_ENDPOINT = "/me/drive/items/{folder_id}"
 DELETE_FOLDER_FOLDER_PATH_ENDPOINT = "/me/drive/root:/{folder_path}"
+DELETE_FOLDER_CLIENT_CREDENTIALS_DRIVE_FOLDER_ID_ENDPOINT = (
+    "/drives/{drive_id}/items/{folder_id}"
+)
+DELETE_FOLDER_CLIENT_CREDENTIALS_DRIVE_FOLDER_PATH_ENDPOINT = (
+    "/drives/{drive_id}/root:/{folder_path}"
+)
+DELETE_FOLDER_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT = (
+    "/users/{target_user_id}/drive/items/{folder_id}"
+)
+DELETE_FOLDER_CLIENT_CREDENTIALS_FOLDER_PATH_ENDPOINT = (
+    "/users/{target_user_id}/drive/root:/{folder_path}"
+)
 
 
 class DeleteFolderParams(Params):
@@ -58,7 +74,15 @@ class DeleteFolderOutput(ActionOutput):
     pass
 
 
-def _get_delete_folder_endpoint(params: DeleteFolderParams) -> str:
+def _get_target_user_id(asset: Asset) -> str:
+    target_user_id = (asset.target_user_id or "").strip()
+    if not target_user_id:
+        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
+
+    return target_user_id
+
+
+def _get_delegated_delete_folder_endpoint(params: DeleteFolderParams) -> str:
     drive_id = params.drive_id or ""
     folder_id = params.folder_id or ""
     folder_path = (params.folder_path or "").strip("/\\")
@@ -82,11 +106,51 @@ def _get_delete_folder_endpoint(params: DeleteFolderParams) -> str:
     return DELETE_FOLDER_FOLDER_PATH_ENDPOINT.format(folder_path=folder_path)
 
 
+def _get_client_credentials_delete_folder_endpoint(
+    params: DeleteFolderParams, asset: Asset
+) -> str:
+    drive_id = params.drive_id or ""
+    folder_id = params.folder_id or ""
+    folder_path = (params.folder_path or "").strip("/\\")
+
+    if not folder_id and not folder_path:
+        raise ActionFailure(MANDATORY_FOLDER_ID_OR_PATH_MESSAGE)
+
+    if drive_id:
+        if folder_id:
+            return DELETE_FOLDER_CLIENT_CREDENTIALS_DRIVE_FOLDER_ID_ENDPOINT.format(
+                drive_id=drive_id,
+                folder_id=folder_id,
+            )
+        return DELETE_FOLDER_CLIENT_CREDENTIALS_DRIVE_FOLDER_PATH_ENDPOINT.format(
+            drive_id=drive_id,
+            folder_path=folder_path,
+        )
+
+    target_user_id = _get_target_user_id(asset)
+    if folder_id:
+        return DELETE_FOLDER_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT.format(
+            target_user_id=target_user_id,
+            folder_id=folder_id,
+        )
+    return DELETE_FOLDER_CLIENT_CREDENTIALS_FOLDER_PATH_ENDPOINT.format(
+        target_user_id=target_user_id,
+        folder_path=folder_path,
+    )
+
+
+def _get_delete_folder_endpoint(params: DeleteFolderParams, asset: Asset) -> str:
+    if is_client_credentials_auth(asset):
+        return _get_client_credentials_delete_folder_endpoint(params, asset)
+
+    return _get_delegated_delete_folder_endpoint(params)
+
+
 def delete_folder(
     params: DeleteFolderParams, soar: SOARClient, asset: Asset
 ) -> DeleteFolderOutput:
     logging.info("In action handler for: delete_folder")
-    endpoint = _get_delete_folder_endpoint(params)
+    endpoint = _get_delete_folder_endpoint(params, asset)
     logging.info(f"Using Microsoft Graph delete folder endpoint: {endpoint}")
 
     try:
