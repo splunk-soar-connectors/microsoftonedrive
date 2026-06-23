@@ -19,6 +19,7 @@ from soar_sdk.exceptions import ActionFailure
 from soar_sdk.params import Param, Params
 
 from ..asset import Asset
+from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
 
 
@@ -27,10 +28,27 @@ AUTHORIZATION_REQUIRED_MESSAGE = (
 )
 DELETE_FILE_SUCCESS_MESSAGE = "File was deleted successfully"
 MANDATORY_FILE_ID_OR_PATH_MESSAGE = "Either File ID or File Path is mandatory"
-DELETE_FILE_DRIVE_FILE_ID_ENDPOINT = "/me/drives/{drive_id}/items/{file_id}"
-DELETE_FILE_DRIVE_FILE_PATH_ENDPOINT = "/me/drives/{drive_id}/root:/{file_path}"
-DELETE_FILE_FILE_ID_ENDPOINT = "/me/drive/items/{file_id}"
-DELETE_FILE_FILE_PATH_ENDPOINT = "/me/drive/root:/{file_path}"
+TARGET_USER_ID_REQUIRED_MESSAGE = (
+    "Target User ID is required for Client Credentials authentication"
+)
+DELETE_FILE_DELEGATED_DRIVE_FILE_ID_ENDPOINT = "/me/drives/{drive_id}/items/{file_id}"
+DELETE_FILE_DELEGATED_DRIVE_FILE_PATH_ENDPOINT = (
+    "/me/drives/{drive_id}/root:/{file_path}"
+)
+DELETE_FILE_DELEGATED_FILE_ID_ENDPOINT = "/me/drive/items/{file_id}"
+DELETE_FILE_DELEGATED_FILE_PATH_ENDPOINT = "/me/drive/root:/{file_path}"
+DELETE_FILE_CLIENT_CREDENTIALS_DRIVE_FILE_ID_ENDPOINT = (
+    "/drives/{drive_id}/items/{file_id}"
+)
+DELETE_FILE_CLIENT_CREDENTIALS_DRIVE_FILE_PATH_ENDPOINT = (
+    "/drives/{drive_id}/root:/{file_path}"
+)
+DELETE_FILE_CLIENT_CREDENTIALS_FILE_ID_ENDPOINT = (
+    "/users/{target_user_id}/drive/items/{file_id}"
+)
+DELETE_FILE_CLIENT_CREDENTIALS_FILE_PATH_ENDPOINT = (
+    "/users/{target_user_id}/drive/root:/{file_path}"
+)
 
 
 class DeleteFileParams(Params):
@@ -58,7 +76,15 @@ class DeleteFileOutput(ActionOutput):
     pass
 
 
-def _get_delete_file_endpoint(params: DeleteFileParams) -> str:
+def _get_target_user_id(asset: Asset) -> str:
+    target_user_id = (asset.target_user_id or "").strip()
+    if not target_user_id:
+        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
+
+    return target_user_id
+
+
+def _get_delegated_delete_file_endpoint(params: DeleteFileParams) -> str:
     drive_id = params.drive_id or ""
     file_id = params.file_id or ""
     file_path = (params.file_path or "").strip("/\\")
@@ -68,25 +94,65 @@ def _get_delete_file_endpoint(params: DeleteFileParams) -> str:
 
     if drive_id:
         if file_id:
-            return DELETE_FILE_DRIVE_FILE_ID_ENDPOINT.format(
+            return DELETE_FILE_DELEGATED_DRIVE_FILE_ID_ENDPOINT.format(
                 drive_id=drive_id,
                 file_id=file_id,
             )
-        return DELETE_FILE_DRIVE_FILE_PATH_ENDPOINT.format(
+        return DELETE_FILE_DELEGATED_DRIVE_FILE_PATH_ENDPOINT.format(
             drive_id=drive_id,
             file_path=file_path,
         )
 
     if file_id:
-        return DELETE_FILE_FILE_ID_ENDPOINT.format(file_id=file_id)
-    return DELETE_FILE_FILE_PATH_ENDPOINT.format(file_path=file_path)
+        return DELETE_FILE_DELEGATED_FILE_ID_ENDPOINT.format(file_id=file_id)
+    return DELETE_FILE_DELEGATED_FILE_PATH_ENDPOINT.format(file_path=file_path)
+
+
+def _get_client_credentials_delete_file_endpoint(
+    params: DeleteFileParams, asset: Asset
+) -> str:
+    drive_id = params.drive_id or ""
+    file_id = params.file_id or ""
+    file_path = (params.file_path or "").strip("/\\")
+
+    if not file_id and not file_path:
+        raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
+
+    if drive_id:
+        if file_id:
+            return DELETE_FILE_CLIENT_CREDENTIALS_DRIVE_FILE_ID_ENDPOINT.format(
+                drive_id=drive_id,
+                file_id=file_id,
+            )
+        return DELETE_FILE_CLIENT_CREDENTIALS_DRIVE_FILE_PATH_ENDPOINT.format(
+            drive_id=drive_id,
+            file_path=file_path,
+        )
+
+    target_user_id = _get_target_user_id(asset)
+    if file_id:
+        return DELETE_FILE_CLIENT_CREDENTIALS_FILE_ID_ENDPOINT.format(
+            target_user_id=target_user_id,
+            file_id=file_id,
+        )
+    return DELETE_FILE_CLIENT_CREDENTIALS_FILE_PATH_ENDPOINT.format(
+        target_user_id=target_user_id,
+        file_path=file_path,
+    )
+
+
+def _get_delete_file_endpoint(params: DeleteFileParams, asset: Asset) -> str:
+    if is_client_credentials_auth(asset):
+        return _get_client_credentials_delete_file_endpoint(params, asset)
+
+    return _get_delegated_delete_file_endpoint(params)
 
 
 def delete_file(
     params: DeleteFileParams, soar: SOARClient, asset: Asset
 ) -> DeleteFileOutput:
     logging.info("In action handler for: delete_file")
-    endpoint = _get_delete_file_endpoint(params)
+    endpoint = _get_delete_file_endpoint(params, asset)
     logging.info(f"Using Microsoft Graph delete file endpoint: {endpoint}")
 
     try:
