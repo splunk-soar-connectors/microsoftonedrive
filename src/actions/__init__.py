@@ -19,6 +19,7 @@ from .delete_folder import delete_folder
 from .get_file import GetFileSummary, get_file
 from .list_drive import ListDriveSummary, list_drive
 from .list_items import ListItemsSummary, list_items
+from .make_request import make_request
 from .upload_file import upload_file
 from ..views.list_items import display_view as display_list_items_view
 
@@ -34,6 +35,7 @@ def register_app(app: App) -> App:
         App: The app object with actions registered.
     """
 
+    app.make_request()(make_request)
     app.register_action(
         action=get_file,
         description="Download a file from server and add it to the vault",

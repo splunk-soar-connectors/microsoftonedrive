@@ -24,13 +24,20 @@ from .auth import (
 from .consts import MICROSOFT_GRAPH_BASE_URL, REDIRECT_URI_STATE_KEY
 
 
-def get_graph_client(asset: Asset, asset_id: str) -> httpx.Client:
+def get_graph_client(
+    asset: Asset,
+    asset_id: str,
+    *,
+    base_url: str = MICROSOFT_GRAPH_BASE_URL,
+    verify: bool = True,
+) -> httpx.Client:
     if is_client_credentials_auth(asset):
         token = get_client_credentials_flow(asset).get_token()
         return httpx.Client(
-            base_url=MICROSOFT_GRAPH_BASE_URL,
+            base_url=base_url,
             headers={"Authorization": f"Bearer {token.access_token}"},
             timeout=30.0,
+            verify=verify,
         )
 
     flow: AuthorizationCodeFlow = get_auth_code_flow(
@@ -39,7 +46,8 @@ def get_graph_client(asset: Asset, asset_id: str) -> httpx.Client:
         redirect_uri=asset.auth_state.get(REDIRECT_URI_STATE_KEY, ""),
     )
     return httpx.Client(
-        base_url=MICROSOFT_GRAPH_BASE_URL,
+        base_url=base_url,
         auth=OAuthBearerAuth(oauth_client=flow.client),
         timeout=30.0,
+        verify=verify,
     )
