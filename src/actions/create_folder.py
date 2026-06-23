@@ -26,11 +26,15 @@ from soar_sdk.exceptions import ActionFailure
 from soar_sdk.params import Param, Params
 
 from ..asset import Asset
+from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
+)
+TARGET_USER_ID_REQUIRED_MESSAGE = (
+    "Target User ID is required for Client Credentials authentication"
 )
 CREATE_FOLDER_SUCCESS_MESSAGE = "The folder: {folder_name} is created successfully"
 GRAPH_CONFLICT_BEHAVIOR_FIELD = "@microsoft.graph.conflictBehavior"
@@ -50,6 +54,22 @@ LIST_ITEMS_DRIVE_FOLDER_PATH_ENDPOINT = (
 )
 LIST_ITEMS_FOLDER_ID_ENDPOINT = "/me/drive/items/{folder_id}/children"
 LIST_ITEMS_FOLDER_PATH_ENDPOINT = "/me/drive/root:/{folder_path}:/children"
+LIST_ITEMS_CLIENT_CREDENTIALS_DEFAULT_ENDPOINT = (
+    "/users/{target_user_id}/drive/root/children"
+)
+LIST_ITEMS_CLIENT_CREDENTIALS_DRIVE_ID_ENDPOINT = "/drives/{drive_id}/root/children"
+LIST_ITEMS_CLIENT_CREDENTIALS_DRIVE_FOLDER_ID_ENDPOINT = (
+    "/drives/{drive_id}/items/{folder_id}/children"
+)
+LIST_ITEMS_CLIENT_CREDENTIALS_DRIVE_FOLDER_PATH_ENDPOINT = (
+    "/drives/{drive_id}/root:/{folder_path}:/children"
+)
+LIST_ITEMS_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT = (
+    "/users/{target_user_id}/drive/items/{folder_id}/children"
+)
+LIST_ITEMS_CLIENT_CREDENTIALS_FOLDER_PATH_ENDPOINT = (
+    "/users/{target_user_id}/drive/root:/{folder_path}:/children"
+)
 
 
 class CreateFolderParams(Params):
@@ -104,8 +124,8 @@ class LastModifiedByUserOutput(ActionOutput):
 
 
 class CreatedbyOutput(ActionOutput):
-    application: ApplicationOutput | None
-    user: CreatedByUserOutput | None
+    application: ApplicationOutput | None = None
+    user: CreatedByUserOutput | None = None
 
 
 class FilesysteminfoOutput(ActionOutput):
@@ -120,8 +140,8 @@ class FolderOutput(ActionOutput):
 
 
 class LastmodifiedbyOutput(ActionOutput):
-    application: ApplicationOutput | None
-    user: LastModifiedByUserOutput | None
+    application: ApplicationOutput | None = None
+    user: LastModifiedByUserOutput | None = None
 
 
 class ParentreferenceOutput(ActionOutput):
@@ -171,7 +191,7 @@ class CreateFolderOutput(ActionOutput):
     size: float | None = OutputField(
         column_name="Size (Bytes)", cef_types=["file size"], example_values=[0]
     )
-    createdBy: CreatedbyOutput | None
+    createdBy: CreatedbyOutput | None = None
     createdDateTime: str | None = OutputField(
         column_name="Created At",
         example_values=["2018-09-01T08:49:18Z"],
@@ -189,9 +209,9 @@ class CreateFolderOutput(ActionOutput):
     eTag: str | None = OutputField(
         example_values=['"{2test123-1234-1234-1234-test123test1},1"']
     )
-    fileSystemInfo: FilesysteminfoOutput | None
+    fileSystemInfo: FilesysteminfoOutput | None = None
     folder: FolderOutput
-    lastModifiedBy: LastmodifiedbyOutput | None
+    lastModifiedBy: LastmodifiedbyOutput | None = None
     lastModifiedDateTime: str | None = OutputField(
         example_values=["2018-09-01T08:49:18Z"]
     )
@@ -221,7 +241,14 @@ class CreateFolderOutput(ActionOutput):
             yield field
 
 
-def _get_create_folder_endpoint(params: CreateFolderParams) -> str:
+def _get_target_user_id(asset: Asset) -> str:
+    if not asset.target_user_id:
+        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
+
+    return asset.target_user_id
+
+
+def _get_delegated_create_folder_endpoint(params: CreateFolderParams) -> str:
     drive_id = params.drive_id or ""
     folder_id = params.folder_id or ""
     folder_path = (params.folder_path or "").strip("/\\")
@@ -244,6 +271,49 @@ def _get_create_folder_endpoint(params: CreateFolderParams) -> str:
     if folder_path:
         return LIST_ITEMS_FOLDER_PATH_ENDPOINT.format(folder_path=folder_path)
     return LIST_ITEMS_DEFAULT_ENDPOINT
+
+
+def _get_client_credentials_create_folder_endpoint(
+    params: CreateFolderParams, asset: Asset
+) -> str:
+    drive_id = params.drive_id or ""
+    folder_id = params.folder_id or ""
+    folder_path = (params.folder_path or "").strip("/\\")
+    target_user_id = _get_target_user_id(asset)
+
+    if drive_id:
+        if folder_id:
+            return LIST_ITEMS_CLIENT_CREDENTIALS_DRIVE_FOLDER_ID_ENDPOINT.format(
+                drive_id=drive_id,
+                folder_id=folder_id,
+            )
+        if folder_path:
+            return LIST_ITEMS_CLIENT_CREDENTIALS_DRIVE_FOLDER_PATH_ENDPOINT.format(
+                drive_id=drive_id,
+                folder_path=folder_path,
+            )
+        return LIST_ITEMS_CLIENT_CREDENTIALS_DRIVE_ID_ENDPOINT.format(drive_id=drive_id)
+
+    if folder_id:
+        return LIST_ITEMS_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT.format(
+            target_user_id=target_user_id,
+            folder_id=folder_id,
+        )
+    if folder_path:
+        return LIST_ITEMS_CLIENT_CREDENTIALS_FOLDER_PATH_ENDPOINT.format(
+            target_user_id=target_user_id,
+            folder_path=folder_path,
+        )
+    return LIST_ITEMS_CLIENT_CREDENTIALS_DEFAULT_ENDPOINT.format(
+        target_user_id=target_user_id
+    )
+
+
+def _get_create_folder_endpoint(params: CreateFolderParams, asset: Asset) -> str:
+    if is_client_credentials_auth(asset):
+        return _get_client_credentials_create_folder_endpoint(params, asset)
+
+    return _get_delegated_create_folder_endpoint(params)
 
 
 def _normalize_parent_reference(item: dict[str, Any]) -> None:
@@ -290,7 +360,7 @@ def create_folder(
     params: CreateFolderParams, soar: SOARClient, asset: Asset
 ) -> CreateFolderOutput:
     logging.info("In action handler for: create_folder")
-    endpoint = _get_create_folder_endpoint(params)
+    endpoint = _get_create_folder_endpoint(params, asset)
     logging.info(f"Using Microsoft Graph create folder endpoint: {endpoint}")
 
     try:
