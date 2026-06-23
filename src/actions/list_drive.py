@@ -21,15 +21,20 @@ from soar_sdk.exceptions import ActionFailure
 from soar_sdk.params import Params
 
 from ..asset import Asset
+from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
 )
+TARGET_USER_ID_REQUIRED_MESSAGE = (
+    "Target User ID is required for Client Credentials authentication"
+)
 GRAPH_VALUE_FIELD = "value"
 GRAPH_NEXT_LINK_FIELD = "@odata.nextLink"
 LIST_DRIVES_ENDPOINT = "/me/drives"
+LIST_DRIVES_CLIENT_CREDENTIALS_ENDPOINT = "/users/{target_user_id}/drives"
 
 
 class CreatedByUserOutput(ActionOutput):
@@ -43,7 +48,7 @@ class CreatedByUserOutput(ActionOutput):
 
 
 class CreatedbyOutput(ActionOutput):
-    user: CreatedByUserOutput
+    user: CreatedByUserOutput | None = None
 
 
 class LastModifiedByUserOutput(ActionOutput):
@@ -57,7 +62,7 @@ class LastModifiedByUserOutput(ActionOutput):
 
 
 class LastmodifiedbyOutput(ActionOutput):
-    user: LastModifiedByUserOutput
+    user: LastModifiedByUserOutput | None = None
 
 
 class OwnerUserOutput(ActionOutput):
@@ -71,7 +76,7 @@ class OwnerUserOutput(ActionOutput):
 
 
 class OwnerOutput(ActionOutput):
-    user: OwnerUserOutput
+    user: OwnerUserOutput | None = None
 
 
 class QuotaOutput(ActionOutput):
@@ -95,24 +100,24 @@ class ListDriveOutput(ActionOutput):
             "b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123"
         ],
     )
-    owner: OwnerOutput
+    owner: OwnerOutput | None = None
     lastModifiedDateTime: str = OutputField(
         column_name="Last Modified Date Time",
         example_values=["2018-09-21T05:40:10Z"],
     )
-    lastModifiedBy: LastmodifiedbyOutput | None
+    lastModifiedBy: LastmodifiedbyOutput | None = None
     createdDateTime: str = OutputField(
         column_name="Created Date Time",
         example_values=["2018-09-04T01:34:10Z"],
     )
-    createdBy: CreatedbyOutput
+    createdBy: CreatedbyOutput | None = None
     webUrl: str = OutputField(
         column_name="Web URL",
         cef_types=["url"],
         example_values=["https://test-my.abc.com/personal/test_test_xyz_com/Documents"],
     )
-    description: str
-    quota: QuotaOutput
+    description: str | None = None
+    quota: QuotaOutput | None = None
 
 
 class ListDriveSummary(ActionOutput):
@@ -142,12 +147,28 @@ def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]
     return drives
 
 
+def _get_target_user_id(asset: Asset) -> str:
+    if not asset.target_user_id:
+        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
+
+    return asset.target_user_id
+
+
+def _get_list_drives_endpoint(asset: Asset) -> str:
+    if is_client_credentials_auth(asset):
+        return LIST_DRIVES_CLIENT_CREDENTIALS_ENDPOINT.format(
+            target_user_id=_get_target_user_id(asset)
+        )
+
+    return LIST_DRIVES_ENDPOINT
+
+
 def list_drive(params: Params, soar: SOARClient, asset: Asset) -> list[ListDriveOutput]:
     logging.info("In action handler for: list_drive")
 
     try:
         with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
-            drives = _get_list_response(graph_client, LIST_DRIVES_ENDPOINT)
+            drives = _get_list_response(graph_client, _get_list_drives_endpoint(asset))
     except OAuthClientError as e:
         raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e
 
