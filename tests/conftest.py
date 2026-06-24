@@ -95,7 +95,7 @@ def build_soar_action_input(
     ) -> dict[str, Any]:
         asset_id = os.environ.get("SOAR_ASSET_ID", "123")
         config = {
-            "app_version": "2.4.1-beta",
+            "app_version": "3.0.0",
             "directory": ".",
             "main_module": "src.app:app",
             "client_id": live_asset_config["client_id"],
