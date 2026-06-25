@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from collections.abc import Iterator
-from typing import Any
+from pathlib import Path
+from typing import Any, BinaryIO
 
 import httpx
 from soar_sdk import logging
@@ -24,6 +25,7 @@ from soar_sdk.action_results import (
 )
 from soar_sdk.auth.client import OAuthClientError
 from soar_sdk.exceptions import ActionFailure, SoarAPIError
+from soar_sdk.models.vault_attachment import VaultAttachment
 from soar_sdk.params import Param, Params
 
 from ..asset import Asset
@@ -321,7 +323,9 @@ def _get_upload_session_body(params: UploadFileParams) -> dict[str, dict[str, st
     }
 
 
-def _get_vault_attachment(soar: SOARClient, vault_id: str) -> tuple[bytes, int]:
+def _get_vault_attachment(
+    soar: SOARClient, vault_id: str
+) -> tuple[VaultAttachment, int]:
     try:
         attachments = soar.vault.get_attachment(vault_id=vault_id)
     except SoarAPIError as e:
@@ -339,12 +343,11 @@ def _get_vault_attachment(soar: SOARClient, vault_id: str) -> tuple[bytes, int]:
         raise ActionFailure(VAULT_INFO_ABSENT_MESSAGE)
 
     try:
-        with attachment.open("rb") as file_obj:
-            file_data = file_obj.read()
+        file_size = Path(attachment.path).stat().st_size
     except OSError as e:
         raise ActionFailure(ERROR_READING_VAULT_FILE_MESSAGE) from e
 
-    return file_data, len(file_data)
+    return attachment, file_size
 
 
 def _normalize_parent_reference(item: dict[str, Any]) -> None:
@@ -370,14 +373,18 @@ def _normalize_parent_reference(item: dict[str, Any]) -> None:
 
 def _upload_file_chunks(
     upload_url: str,
-    file_data: bytes,
+    file_obj: BinaryIO,
     file_size: int,
 ) -> dict[str, Any]:
     chunk_start = 0
 
     while chunk_start < file_size:
         chunk_end = min(chunk_start + CHUNK_SIZE, file_size) - 1
-        content = file_data[chunk_start : chunk_end + 1]
+        file_obj.seek(chunk_start)
+        content = file_obj.read(chunk_end - chunk_start + 1)
+        if not content:
+            raise ActionFailure(ERROR_READING_VAULT_FILE_MESSAGE)
+
         headers = {
             "Content-Length": str(len(content)),
             "Content-Range": f"bytes {chunk_start}-{chunk_end}/{file_size}",
@@ -392,10 +399,11 @@ def _upload_file_chunks(
         response.raise_for_status()
         response_json = response.json()
 
-        if not response_json.get(NEXT_EXPECTED_RANGES_FIELD):
+        next_expected_ranges = response_json.get(NEXT_EXPECTED_RANGES_FIELD)
+        if not next_expected_ranges:
             return response_json
 
-        chunk_start = chunk_end + 1
+        chunk_start = int(next_expected_ranges[0].split("-", 1)[0])
 
     raise ActionFailure(UPLOAD_FILE_FAILED_MESSAGE)
 
@@ -407,21 +415,26 @@ def upload_file(
     endpoint = _get_upload_session_endpoint(params, asset)
     logging.info(f"Using Microsoft Graph upload session endpoint: {endpoint}")
 
-    file_data, file_size = _get_vault_attachment(soar, params.vault_id)
+    attachment, file_size = _get_vault_attachment(soar, params.vault_id)
 
     try:
-        with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
-            response = graph_client.post(
-                endpoint,
-                json=_get_upload_session_body(params),
-            )
-            response.raise_for_status()
-            session_response = response.json()
-    except OAuthClientError as e:
-        raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e
+        with attachment.open("rb") as file_obj:
+            try:
+                with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
+                    response = graph_client.post(
+                        endpoint,
+                        json=_get_upload_session_body(params),
+                    )
+                    response.raise_for_status()
+                    session_response = response.json()
+            except OAuthClientError as e:
+                raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e
 
-    upload_url = session_response[UPLOAD_URL_FIELD]
-    upload_response = _upload_file_chunks(upload_url, file_data, file_size)
+            upload_url = session_response[UPLOAD_URL_FIELD]
+            upload_response = _upload_file_chunks(upload_url, file_obj, file_size)
+    except OSError as e:
+        raise ActionFailure(ERROR_READING_VAULT_FILE_MESSAGE) from e
+
     _normalize_parent_reference(upload_response)
 
     soar.set_message(UPLOAD_FILE_SUCCESS_MESSAGE)
