@@ -113,7 +113,7 @@ class CreatedByUserOutput(ActionOutput):
 
 class LastModifiedByUserOutput(ActionOutput):
     displayName: str | None = OutputField(
-        cef_types=["file path"], example_values=["Test User"]
+        cef_types=["user name"], example_values=["Test User"]
     )
     email: str | None = OutputField(
         cef_types=["email"], example_values=["test@test.xyz.com"]

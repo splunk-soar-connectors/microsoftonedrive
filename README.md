@@ -510,7 +510,7 @@ action_result.data.\*.fileSystemInfo.lastModifiedDateTime | string | | 2018-09-0
 action_result.data.\*.folder.childCount | numeric | | 0 |
 action_result.data.\*.lastModifiedBy.application.displayName | string | | Test_One-drive |
 action_result.data.\*.lastModifiedBy.application.id | string | | ba56002c-856c-469f-b6a0-a4335614c502 |
-action_result.data.\*.lastModifiedBy.user.displayName | string | `file path` | Test User |
+action_result.data.\*.lastModifiedBy.user.displayName | string | `user name` | Test User |
 action_result.data.\*.lastModifiedBy.user.email | string | `email` | test@test.xyz.com |
 action_result.data.\*.lastModifiedBy.user.id | string | | 17be00d0-35ed-4881-ab62-d2eb73c2ebe3 |
 action_result.data.\*.lastModifiedDateTime | string | | 2018-09-01T08:49:18Z |
