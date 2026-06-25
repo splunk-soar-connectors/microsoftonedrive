@@ -228,7 +228,7 @@ class UploadFileOutput(ActionOutput):
         example_values=["2018-09-01T12:23:03Z"]
     )
     name: str = OutputField(column_name="File Name", example_values=["test135 3.txt"])
-    parentReference: ParentreferenceOutput
+    parentReference: ParentreferenceOutput | None
     size: float | None = OutputField(
         column_name="Size (Bytes)",
         cef_types=["file size"],
