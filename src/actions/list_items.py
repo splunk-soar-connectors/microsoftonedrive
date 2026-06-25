@@ -97,8 +97,8 @@ class CreatedbyOutput(ActionOutput):
 
 
 class CurrentuserroleOutput(ActionOutput):
-    blocksDownload: bool
-    readOnly: bool
+    blocksDownload: bool | None
+    readOnly: bool | None
 
 
 class HashesOutput(ActionOutput):
