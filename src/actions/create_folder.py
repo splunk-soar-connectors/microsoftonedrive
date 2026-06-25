@@ -242,10 +242,11 @@ class CreateFolderOutput(ActionOutput):
 
 
 def _get_target_user_id(asset: Asset) -> str:
-    if not asset.target_user_id:
+    target_user_id = (asset.target_user_id or "").strip()
+    if not target_user_id:
         raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
 
-    return asset.target_user_id
+    return target_user_id
 
 
 def _get_delegated_create_folder_endpoint(params: CreateFolderParams) -> str:
