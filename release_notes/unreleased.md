@@ -1,1 +1,9 @@
 **Unreleased**
+
+* Migrated Microsoft OneDrive to the Splunk SOAR SDK app layout
+* Raised the minimum supported Splunk SOAR version to 7.0.0
+* Added Client Credentials authentication for non-interactive Microsoft Graph access
+* Added target user support for Client Credentials assets
+* Added make request action for arbitrary Microsoft Graph API requests
+* Restored custom widgets for get file, list items, and list drive
+* Fixed get file vault duplicate checking when SOAR cannot retrieve existing attachment metadata
