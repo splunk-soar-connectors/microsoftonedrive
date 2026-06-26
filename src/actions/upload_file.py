@@ -13,6 +13,7 @@
 # limitations under the License.
 from collections.abc import Iterator
 from pathlib import Path
+import time
 from typing import Any, BinaryIO
 
 import httpx
@@ -48,6 +49,17 @@ UPLOAD_FILE_FAILED_MESSAGE = "Uploading file failed"
 
 CHUNK_SIZE = 62_914_560
 UPLOAD_TIMEOUT_SECONDS = 300.0
+MAX_UPLOAD_RETRIES = 3
+UPLOAD_RETRY_BACKOFF_SECONDS = 2.0
+RETRY_AFTER_HEADER = "Retry-After"
+RETRYABLE_UPLOAD_STATUS_CODES = {
+    httpx.codes.REQUEST_TIMEOUT,
+    httpx.codes.TOO_MANY_REQUESTS,
+    httpx.codes.INTERNAL_SERVER_ERROR,
+    httpx.codes.BAD_GATEWAY,
+    httpx.codes.SERVICE_UNAVAILABLE,
+    httpx.codes.GATEWAY_TIMEOUT,
+}
 CREATE_UPLOAD_SESSION_IF_DRIVE_ENDPOINT = (
     "/me/drives/{drive_id}/root:/{file_path}:/createUploadSession"
 )
@@ -371,6 +383,47 @@ def _normalize_parent_reference(item: dict[str, Any]) -> None:
     parent_reference.pop(PARENT_PATH_FIELD, None)
 
 
+def _get_upload_retry_delay(response: httpx.Response | None, attempt: int) -> float:
+    if response is not None:
+        retry_after = response.headers.get(RETRY_AFTER_HEADER)
+        if retry_after:
+            try:
+                return float(retry_after)
+            except ValueError:
+                pass
+
+    return UPLOAD_RETRY_BACKOFF_SECONDS * (attempt + 1)
+
+
+def _put_upload_chunk(
+    upload_url: str,
+    headers: dict[str, str],
+    content: bytes,
+) -> httpx.Response:
+    for attempt in range(MAX_UPLOAD_RETRIES + 1):
+        response: httpx.Response | None = None
+        try:
+            response = httpx.put(
+                upload_url,
+                headers=headers,
+                content=content,
+                timeout=UPLOAD_TIMEOUT_SECONDS,
+            )
+            if response.status_code not in RETRYABLE_UPLOAD_STATUS_CODES:
+                response.raise_for_status()
+                return response
+        except httpx.TransportError:
+            if attempt == MAX_UPLOAD_RETRIES:
+                raise
+        else:
+            if attempt == MAX_UPLOAD_RETRIES:
+                response.raise_for_status()
+
+        time.sleep(_get_upload_retry_delay(response, attempt))
+
+    raise ActionFailure(UPLOAD_FILE_FAILED_MESSAGE)
+
+
 def _upload_file_chunks(
     upload_url: str,
     file_obj: BinaryIO,
@@ -390,13 +443,7 @@ def _upload_file_chunks(
             "Content-Range": f"bytes {chunk_start}-{chunk_end}/{file_size}",
         }
 
-        response = httpx.put(
-            upload_url,
-            headers=headers,
-            content=content,
-            timeout=UPLOAD_TIMEOUT_SECONDS,
-        )
-        response.raise_for_status()
+        response = _put_upload_chunk(upload_url, headers, content)
         response_json = response.json()
 
         next_expected_ranges = response_json.get(NEXT_EXPECTED_RANGES_FIELD)
