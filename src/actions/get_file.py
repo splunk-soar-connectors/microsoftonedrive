@@ -12,14 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import importlib
+from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 import httpx
 from soar_sdk import logging
 from soar_sdk.abstract import SOARClient
-from soar_sdk.params import Param, Params
 from soar_sdk.action_results import ActionOutput, OutputField
 from soar_sdk.auth.client import OAuthClientError
 from soar_sdk.exceptions import ActionFailure, SoarAPIError
+from soar_sdk.params import Param, Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
@@ -29,6 +31,7 @@ from ..graph import get_graph_client
 DOWNLOAD_URL_FIELD = "@microsoft.graph.downloadUrl"
 FILE_HAS_NO_CONTENT_MESSAGE = "File has no content"
 FILE_NOT_FOUND_MESSAGE = "The requested file does not exist on OneDrive"
+ERROR_READING_DOWNLOADED_FILE_MESSAGE = "Reading downloaded file data failed"
 MANDATORY_FILE_ID_OR_PATH_MESSAGE = "Either File ID or File Path is mandatory"
 TARGET_USER_ID_REQUIRED_MESSAGE = (
     "Target User ID is required for Client Credentials authentication"
@@ -53,6 +56,8 @@ GET_FILE_CLIENT_CREDENTIALS_FILE_ID_ENDPOINT = (
 GET_FILE_CLIENT_CREDENTIALS_FILE_PATH_ENDPOINT = (
     "/users/{target_user_id}/drive/root:/{file_path}"
 )
+DOWNLOAD_TIMEOUT_SECONDS = 30.0
+DOWNLOAD_CHUNK_SIZE = 1024 * 1024
 
 
 def _log_legacy_vault_lookup(container_id: int) -> None:
@@ -240,6 +245,71 @@ def _get_existing_vault_id(
     return None
 
 
+def _get_download_tmp_dir(soar: SOARClient) -> Path | None:
+    vault_tmp_dir = Path(soar.vault.get_vault_tmp_dir())
+    if vault_tmp_dir.exists():
+        return vault_tmp_dir
+    return None
+
+
+def _download_file_to_tmp(download_url: str, temp_dir: Path | None) -> tuple[Path, int]:
+    temp_path: Path | None = None
+    try:
+        with NamedTemporaryFile(
+            "wb",
+            delete=False,
+            dir=temp_dir,
+        ) as temp_file:
+            temp_path = Path(temp_file.name)
+            file_size = 0
+
+            with httpx.stream(
+                "GET", download_url, timeout=DOWNLOAD_TIMEOUT_SECONDS
+            ) as response:
+                response.raise_for_status()
+                for chunk in response.iter_bytes(chunk_size=DOWNLOAD_CHUNK_SIZE):
+                    if not chunk:
+                        continue
+                    temp_file.write(chunk)
+                    file_size += len(chunk)
+    except Exception:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+        raise
+
+    return temp_path, file_size
+
+
+def _create_downloaded_vault_attachment(
+    soar: SOARClient,
+    *,
+    temp_path: Path,
+    file_name: str,
+    file_size: int,
+) -> str:
+    vault_tmp_dir = _get_download_tmp_dir(soar)
+    metadata = {"size": str(file_size)}
+    if vault_tmp_dir is not None and temp_path.is_relative_to(vault_tmp_dir):
+        return soar.vault.add_attachment(
+            soar.get_executing_container_id(),
+            str(temp_path),
+            file_name,
+            metadata=metadata,
+        )
+
+    try:
+        file_content = temp_path.read_bytes()
+    except OSError as e:
+        raise ActionFailure(ERROR_READING_DOWNLOADED_FILE_MESSAGE) from e
+
+    return soar.vault.create_attachment(
+        soar.get_executing_container_id(),
+        file_content,
+        file_name,
+        metadata=metadata,
+    )
+
+
 def get_file(params: GetFileParams, soar: SOARClient, asset: Asset) -> GetFileOutput:
     logging.info("In action handler for: get_file")
     endpoint = _get_file_endpoint(params, asset)
@@ -259,27 +329,30 @@ def get_file(params: GetFileParams, soar: SOARClient, asset: Asset) -> GetFileOu
         raise ActionFailure(FILE_NOT_FOUND_MESSAGE)
     logging.info(f"Resolved OneDrive file metadata for file_name={file_name}")
 
-    file_response = httpx.get(download_url, timeout=30.0)
-    file_response.raise_for_status()
-    file_content = file_response.content
-    file_size = len(file_content)
-    if not file_size:
-        raise ActionFailure(FILE_HAS_NO_CONTENT_MESSAGE)
-    logging.info(f"Downloaded file content size={file_size}")
-
-    vault_id = _get_existing_vault_id(
-        soar,
-        file_name=file_name,
-        file_size=file_size,
+    temp_path, file_size = _download_file_to_tmp(
+        download_url,
+        _get_download_tmp_dir(soar),
     )
-    if vault_id is None:
-        vault_id = soar.vault.create_attachment(
-            soar.get_executing_container_id(),
-            file_content,
-            file_name,
-            metadata={"size": str(file_size)},
+    try:
+        if not file_size:
+            raise ActionFailure(FILE_HAS_NO_CONTENT_MESSAGE)
+        logging.info(f"Downloaded file content size={file_size}")
+
+        vault_id = _get_existing_vault_id(
+            soar,
+            file_name=file_name,
+            file_size=file_size,
         )
-        logging.info(f"Created vault attachment for file_name={file_name}")
+        if vault_id is None:
+            vault_id = _create_downloaded_vault_attachment(
+                soar,
+                temp_path=temp_path,
+                file_name=file_name,
+                file_size=file_size,
+            )
+            logging.info(f"Created vault attachment for file_name={file_name}")
+    finally:
+        temp_path.unlink(missing_ok=True)
 
     soar.set_summary(GetFileSummary(vault_id=vault_id))
     return GetFileOutput(
