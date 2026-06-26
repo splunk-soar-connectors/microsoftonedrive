@@ -32,6 +32,7 @@ DOWNLOAD_URL_FIELD = "@microsoft.graph.downloadUrl"
 FILE_HAS_NO_CONTENT_MESSAGE = "File has no content"
 FILE_NOT_FOUND_MESSAGE = "The requested file does not exist on OneDrive"
 ERROR_READING_DOWNLOADED_FILE_MESSAGE = "Reading downloaded file data failed"
+ADD_FILE_TO_VAULT_ERROR_MESSAGE = "Could not add file to vault"
 MANDATORY_FILE_ID_OR_PATH_MESSAGE = "Either File ID or File Path is mandatory"
 TARGET_USER_ID_REQUIRED_MESSAGE = (
     "Target User ID is required for Client Credentials authentication"
@@ -280,6 +281,31 @@ def _download_file_to_tmp(download_url: str, temp_dir: Path | None) -> tuple[Pat
     return temp_path, file_size
 
 
+def _add_platform_vault_attachment(
+    soar: SOARClient,
+    *,
+    temp_path: Path,
+    file_name: str,
+    metadata: dict[str, str],
+) -> str | None:
+    try:
+        phantom_vault = importlib.import_module("phantom.vault")
+        phantom = importlib.import_module("phantom.app")
+    except ModuleNotFoundError:
+        return None
+
+    vault_response = phantom_vault.Vault.add_attachment(
+        str(temp_path),
+        container_id=soar.get_executing_container_id(),
+        file_name=file_name,
+        metadata=metadata,
+    )
+    if not vault_response.get("succeeded"):
+        raise ActionFailure(ADD_FILE_TO_VAULT_ERROR_MESSAGE)
+
+    return vault_response.get("vault_id") or vault_response[phantom.APP_JSON_HASH]
+
+
 def _create_downloaded_vault_attachment(
     soar: SOARClient,
     *,
@@ -290,6 +316,15 @@ def _create_downloaded_vault_attachment(
     vault_tmp_dir = _get_download_tmp_dir(soar)
     metadata = {"size": str(file_size)}
     if vault_tmp_dir is not None and temp_path.is_relative_to(vault_tmp_dir):
+        platform_vault_id = _add_platform_vault_attachment(
+            soar,
+            temp_path=temp_path,
+            file_name=file_name,
+            metadata=metadata,
+        )
+        if platform_vault_id is not None:
+            return platform_vault_id
+
         return soar.vault.add_attachment(
             soar.get_executing_container_id(),
             str(temp_path),
