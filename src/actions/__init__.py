@@ -43,12 +43,14 @@ def register_app(app: App) -> App:
         render_as="table",
         summary_type=GetFileSummary,
     )
-    app.action(
+    app.register_action(
+        action=list_items,
         description="List of items",
         action_type="investigate",
         view_handler=display_list_items_view,
+        view_template="microsoftonedrive_list_items.html",
         summary_type=ListItemsSummary,
-    )(list_items)
+    )
     app.register_action(
         action=list_drive,
         description="List of Drives",

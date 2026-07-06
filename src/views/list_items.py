@@ -11,63 +11,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any
+from soar_sdk.models.view import ViewContext
 
-from soar_sdk.views.template_renderer import get_template_renderer, get_templates_dir
-
-
-LIST_ITEMS_ACTION = "list items"
-LIST_ITEMS_TEMPLATE = "microsoftonedrive_list_items.html"
-
-
-def _get_container_id(context: dict[str, Any]) -> int | str | None:
-    container = context.get("container")
-    if isinstance(container, dict):
-        return container.get("id")
-    return getattr(container, "id", container)
-
-
-def _get_context_result(provides: str, result: Any) -> dict[str, Any] | None:
-    ctx_result: dict[str, Any] = {
-        "param": result.get_param(),
-        "action": provides,
-    }
-
-    summary = result.get_summary()
-    if summary:
-        ctx_result["summary"] = summary
-
-    data = result.get_data()
-    if not data:
-        if provides == LIST_ITEMS_ACTION:
-            ctx_result["data"] = []
-        return ctx_result
-
-    if provides == LIST_ITEMS_ACTION:
-        ctx_result["data"] = data
-
-    return ctx_result
+from ..actions.list_items import ListItemsOutput
 
 
 def display_view(
-    provides: str,
-    all_app_runs: list[tuple[dict[str, Any], list[Any]]],
-    context: dict[str, Any],
-) -> str:
+    context: ViewContext,
+    outputs: list[ListItemsOutput],
+) -> dict:
     """Render the custom List Items widget.
 
-    This keeps the legacy custom-view input shape because list items needs
-    access to both action parameters and action data.
+    The SDK parses action result data into ListItemsOutput objects before
+    calling this handler. The action copies the input locator fields onto each
+    output row so the template does not need raw ActionResult access.
     """
-    context["results"] = []
-    context["container_id"] = _get_container_id(context)
-    context["prerender"] = True
-
-    for _summary, action_results in all_app_runs:
-        for result in action_results:
-            ctx_result = _get_context_result(provides, result)
-            if ctx_result:
-                context["results"].append(ctx_result)
-
-    renderer = get_template_renderer("jinja", get_templates_dir(globals()))
-    return renderer.render_template(LIST_ITEMS_TEMPLATE, context)
+    return {
+        "container_id": context.container,
+        "results": [{"data": outputs}],
+    }

@@ -150,6 +150,18 @@ class ParentreferenceOutput(ActionOutput):
 
 
 class ListItemsOutput(PermissiveActionOutput):
+    drive_id: str | None = OutputField(
+        cef_types=["msonedrive drive id"],
+        example_values=["example-drive-id"],
+    )
+    folder_id: str | None = OutputField(
+        cef_types=["msonedrive folder id"],
+        example_values=["example-folder-id"],
+    )
+    folder_path: str | None = OutputField(
+        cef_types=["msonedrive folder path"],
+        example_values=["Test/child"],
+    )
     microsoft_graph_download_url: str = OutputField(
         alias="@microsoft.graph.downloadUrl",
         cef_types=["url"],
@@ -361,6 +373,9 @@ def list_items(
 
     for item in items:
         _normalize_parent_reference(item)
+        item["drive_id"] = params.drive_id
+        item["folder_id"] = params.folder_id
+        item["folder_path"] = params.folder_path
 
     soar.set_summary(ListItemsSummary(total_items=len(items)))
     return [ListItemsOutput(**item) for item in items]

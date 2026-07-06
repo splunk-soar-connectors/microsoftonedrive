@@ -263,6 +263,9 @@ action_result.message | string | | |
 action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.folder_id | string | `msonedrive folder id` | |
 action_result.parameter.folder_path | string | `msonedrive folder path` | |
+action_result.data.\*.drive_id | string | `msonedrive drive id` | example-drive-id |
+action_result.data.\*.folder_id | string | `msonedrive folder id` | example-folder-id |
+action_result.data.\*.folder_path | string | `msonedrive folder path` | Test/child |
 action_result.data.\*.@microsoft.graph.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
 action_result.data.\*.cTag | string | | "c:{2test123-1234-1234-1234-test123test1},0" |
 action_result.data.\*.createdBy.application.displayName | string | | Test_One-drive |

@@ -70,42 +70,43 @@
       {% if not result.data %}
         <h4 class="wf-h4-style">No data found</h4>
       {% else %}
-        {% if result.param.drive_id or result.param.folder_id or result.param.folder_path %}
+        {% set input = result.data[0] %}
+        {% if input.drive_id or input.folder_id or input.folder_path %}
           <h4 class="wf-h4-style">Info</h4>
           <table class="wf-table-vertical">
-            {% if result.param.drive_id %}
+            {% if input.drive_id %}
               <tr>
                 <td>Drive ID</td>
                 <td>
                   <a href="javascript:;"
-                     onclick="context_menu(this, [{'contains': ['msonedrive drive id'], 'value': '{{ result.param.drive_id }}'}], 0, {{ container_id }}, null, false);">
-                    {{ result.param.drive_id }}
+                     onclick="context_menu(this, [{'contains': ['msonedrive drive id'], 'value': '{{ input.drive_id }}'}], 0, {{ container_id }}, null, false);">
+                    {{ input.drive_id }}
                     &nbsp;
                     <span class="fa fa-caret-down" style="font-size: smaller;"></span>
                   </a>
                 </td>
               </tr>
             {% endif %}
-            {% if result.param.folder_id %}
+            {% if input.folder_id %}
               <tr>
                 <td>Folder ID</td>
                 <td>
                   <a href="javascript:;"
-                     onclick="context_menu(this, [{'contains': ['msonedrive folder id'], 'value': '{{ result.param.folder_id }}'}], 0, {{ container_id }}, null, false);">
-                    {{ result.param.folder_id }}
+                     onclick="context_menu(this, [{'contains': ['msonedrive folder id'], 'value': '{{ input.folder_id }}'}], 0, {{ container_id }}, null, false);">
+                    {{ input.folder_id }}
                     &nbsp;
                     <span class="fa fa-caret-down" style="font-size: smaller;"></span>
                   </a>
                 </td>
               </tr>
             {% endif %}
-            {% if result.param.folder_path %}
+            {% if input.folder_path %}
               <tr>
                 <td>Folder Path</td>
                 <td>
                   <a href="javascript:;"
-                     onclick="context_menu(this, [{'contains': ['msonedrive folder path'], 'value': '{{ result.param.folder_path }}'}], 0, {{ container_id }}, null, false);">
-                    {{ result.param.folder_path }}
+                     onclick="context_menu(this, [{'contains': ['msonedrive folder path'], 'value': '{{ input.folder_path }}'}], 0, {{ container_id }}, null, false);">
+                    {{ input.folder_path }}
                     &nbsp;
                     <span class="fa fa-caret-down" style="font-size: smaller;"></span>
                   </a>
