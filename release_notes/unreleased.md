@@ -6,4 +6,5 @@
 * Added target user support for Client Credentials assets
 * Added make request action for arbitrary Microsoft Graph API requests
 * Restored custom widgets for get file, list items, and list drive
+* Added list items output fields for drive ID, folder ID, and folder path to support SDK-native custom view rendering
 * Fixed get file vault duplicate checking when SOAR cannot retrieve existing attachment metadata
