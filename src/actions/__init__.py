@@ -24,7 +24,7 @@ from .upload_file import upload_file
 from ..views.list_items import display_view as display_list_items_view
 
 
-def register_app(app: App) -> App:
+def register_actions(app: App) -> App:
     """
     Registers all defined actions on to the provided app.
 

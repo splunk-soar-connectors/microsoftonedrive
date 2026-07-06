@@ -14,7 +14,7 @@
 from soar_sdk.abstract import SOARClient
 from soar_sdk.app import App
 
-from .actions import register_app
+from .actions import register_actions
 from .asset import Asset
 from .auth import is_client_credentials_auth
 from .consts import OAUTH_CALLBACK_ROUTE, OAUTH_START_ROUTE
@@ -56,7 +56,7 @@ def create_ms_onedrive_soar_connector_app() -> App:
             oauth_start_url=app.get_webhook_url(OAUTH_START_ROUTE),
         )
 
-    return register_app(app)
+    return register_actions(app)
 
 
 app: App = create_ms_onedrive_soar_connector_app()
