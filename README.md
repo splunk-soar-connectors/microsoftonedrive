@@ -1,78 +1,127 @@
 # Microsoft OneDrive
 
 Publisher: Splunk <br>
-Connector Version: 2.4.1 <br>
+Connector Version: 3.0.0 <br>
 Product Vendor: Microsoft <br>
 Product Name: Microsoft OneDrive <br>
-Minimum Product Version: 6.2.2
+Minimum Product Version: 7.0.0
 
 This app integrates with Microsoft OneDrive to execute various generic actions
 
 ## Authentication
 
-This app requires creating a Microsoft Azure Application. To do so, navigate to
-<https://portal.azure.com> in a browser and log in with a Microsoft account, then select **Azure
-Active Directory** .
+This app supports two Microsoft Graph authentication methods.
 
-1. Go to **App Registrations** and click on **+ New registration** .
-1. Give the app an appropriate name. The Redirect URI will be populated in a later step.
-1. Select a supported account type (configure the application to be multitenant).
-1. Click on the **Register** .
-   - Under **Certificates & secrets** , add **New client secret** . Note this key somewhere
-     secure, as it cannot be retrieved after closing the window.
-   - Under **Authentication** , add the **Redirect URIs** field which will be filled in a later
-     step.
-   - Under **API Permissions** , click on **Add a permission** .
-   - Go to **Microsoft Graph Permissions** , the following **Delegated Permissions** need to be
-     added:
-     - Group.ReadWrite.All
-     - offline_access
-     - User.ReadWrite.All
-   - Click on the **Add permissions** .
+- **Delegated** is the default and preserves the legacy browser-based OAuth flow. A user signs in
+  to Microsoft during test connectivity, and actions run with the delegated permissions granted to
+  that signed-in user.
+- **Client Credentials** is non-interactive. The app uses the Azure application client secret to get
+  an application token and runs actions against the configured target user.
 
-After making these changes, click on **Grant admin consent** .
+## Create a Microsoft Azure application
 
-## Configure the Microsoft OneDrive Phantom app Asset
+Create an app registration in Microsoft Entra ID.
 
-When creating an asset for the **Microsoft OneDrive** app, place the **Application ID** of the app
-created during the previous step in the **Client ID** field and place the password generated during
-the app creation process in the **Client Secret** field. Then, click **SAVE** .
+1. Go to <https://portal.azure.com>.
+1. Open **Microsoft Entra ID**.
+1. Open **App registrations** and select **New registration**.
+1. Give the application a name.
+1. Select the supported account type required by your environment. For delegated auth with the
+   default `common` tenant behavior, use an account type that allows the users who will authorize the
+   app.
+1. Create a client secret under **Certificates & secrets** and keep the value available for the SOAR
+   asset configuration.
+1. Add Microsoft Graph API permissions for the authentication method you will use.
 
-After saving, a new field will appear in the **Asset Settings** tab. Take the URL found in the
-**POST incoming for Microsoft OneDrive to this location** field and place it in the **Redirect
-URIs** field mentioned in a previous step. To this URL, add **/result** . After doing so the URL
-should look something like:
+For **Delegated** auth, add delegated Microsoft Graph permissions for the actions you plan to run.
+The legacy OneDrive connector requested the `files.readwrite.all` OAuth scope and the app commonly
+uses these delegated permissions:
 
-https://\<phantom_host>/rest/handler/microsoftonedrive_564fe3f1-b1bb-4196-ba52-9422d0e4d430/\<asset_name>/result
+- Files.ReadWrite.All
+- offline_access
+- User.Read
+- User.ReadWrite.All
+- Group.ReadWrite.All
 
-Once again, click on Save.
+For **Client Credentials** auth, add Microsoft Graph **Application** permissions and grant admin
+consent. The OneDrive actions require access to the configured target user's drive, so the app
+registration must have application permissions that allow file access, such as:
 
-## Method to Run Test Connectivity
+- Files.ReadWrite.All
 
-After setting up the asset and user, click the **TEST CONNECTIVITY** button. A window should pop up
-and display a URL. Navigate to this URL in a separate browser tab. This new tab will redirect to a
-Microsoft login page. Log in to a Microsoft account. After logging in, review the requested
-permissions listed, then click **Accept** . Finally, close that tab. The test connectivity window
-should show a success.
+After adding or changing permissions, select **Grant admin consent** for the tenant.
 
-The app should now be ready to use.
+## Configure delegated authentication
 
-## State File Permissions
+Use delegated authentication when you want the connector to behave like the legacy app.
 
-Please check the permissions for the state file as mentioned below.
+1. Create or edit a Microsoft OneDrive asset in Splunk SOAR.
+1. Set **Auth Method** to **Delegated** or leave it unset.
+1. Set **Client ID** to the Azure application client ID.
+1. Set **Client Secret** to the Azure application client secret.
+1. Set **Tenant ID** only when you want to force authorization through a specific tenant. If omitted,
+   the app uses `common`.
+1. Enable webhooks for the asset.
 
-#### State Filepath
+The SDK app uses webhook routes for OAuth. The Microsoft redirect URI must point to the callback
+route, not to the authorization-start route. During test connectivity, the app logs the callback URL
+under **Using OAuth URL:**. Add that exact URL as a web redirect URI in the Azure application.
 
-- For Non-NRI Instance:
-  /opt/phantom/local_data/app_states/a73f6d32-c9d5-4fec-b024-43876700daa6/{asset_id}\_state.json
-- For NRI Instance:
-  /\<PHANTOM_HOME_DIRECTORY>/local_data/app_states/a73f6d32-c9d5-4fec-b024-43876700daa6/{asset_id}\_state.json
+The callback URL commonly has this shape:
 
-#### State File Permissions
+```text
+https://<soar_host>:<webhook_port>/webhook/microsoftonedrive_<app_instance_id>/<asset_id>/oauth/callback
+```
 
-- File Rights: rw-rw-r-- (664) (The phantom user should have read and write access for the state
-  file)
-- File Owner: appropriate phantom user
+The app also logs a second URL under **Please authorize user in a separate tab using URL**. Open that
+URL in a browser to start Microsoft authorization. That URL routes to the app's `oauth/start`
+webhook, which redirects the browser to Microsoft. After Microsoft redirects back to `oauth/callback`
+and the app receives the authorization code, test connectivity exchanges the code for a token and
+verifies the token by calling Microsoft Graph.
+
+## Configure client credentials authentication
+
+Use client credentials authentication when browser interaction is not desired.
+
+1. Create or edit a Microsoft OneDrive asset in Splunk SOAR.
+1. Set **Auth Method** to **Client Credentials**.
+1. Set **Client ID** to the Azure application client ID.
+1. Set **Client Secret** to the Azure application client secret.
+1. Set **Tenant ID** to the concrete tenant ID or tenant domain. Do not use `common` for client
+   credentials.
+1. Set **Target User ID** to the user principal name, email address, or Microsoft Graph user ID of
+   the user whose OneDrive should be used when an action does not receive an explicit drive ID.
+
+Client credentials test connectivity does not open a browser and does not use the OAuth webhook
+routes. It gets an application token and verifies access by reading:
+
+```text
+/users/<target_user_id>/drive/root
+```
+
+## Action behavior by authentication method
+
+Most action parameters are the same for both authentication methods.
+
+In **Delegated** mode, actions use Microsoft Graph delegated routes such as `/me/drive`. The signed-in
+Microsoft user determines which OneDrive data is available.
+
+In **Client Credentials** mode, actions use the configured **Target User ID** when no explicit drive
+ID is supplied. If an action receives a drive ID, it can address that drive directly.
+
+For the **make request** action:
+
+- Provide only a Microsoft Graph path, such as `/v1.0/me/drive/root` or
+  `/v1.0/users/<user_id>/drive/root`. Do not include `https://graph.microsoft.com`.
+- Use `/v1.0/me/...` for delegated auth.
+- Use `/v1.0/users/<target_user_id>/...` or `/v1.0/drives/<drive_id>/...` for client credentials
+  auth.
+
+## OAuth state
+
+The SDK app stores OAuth state through the SDK asset auth state. The legacy connector documented a
+manual state file path and file permissions; that legacy state file path does not apply to normal
+SDK app operation.
 
 ### Configuration variables
 
@@ -83,10 +132,13 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 **client_id** | required | string | Client ID |
 **client_secret** | required | password | Client secret |
 **tenant_id** | optional | string | Tenant ID |
+**auth_method** | optional | string | Authentication method |
+**target_user_id** | optional | string | User ID or user principal name for client credentials mode |
 
 ### Supported Actions
 
-[test connectivity](#action-test-connectivity) - Validate the asset configuration for connectivity using supplied configuration <br>
+[test connectivity](#action-test-connectivity) - test connectivity <br>
+[make request](#action-make-request) - Make an arbitrary Microsoft Graph request using this asset's authentication. <br>
 [get file](#action-get-file) - Download a file from server and add it to the vault <br>
 [list items](#action-list-items) - List of items <br>
 [list drive](#action-list-drive) - List of Drives <br>
@@ -97,10 +149,12 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 
 ## action: 'test connectivity'
 
-Validate the asset configuration for connectivity using supplied configuration
+test connectivity
 
 Type: **test** <br>
 Read only: **True**
+
+Basic test for app.
 
 #### Action Parameters
 
@@ -108,7 +162,51 @@ No parameters are required for this action
 
 #### Action Output
 
-No Output
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
+## action: 'make request'
+
+Make an arbitrary Microsoft Graph request using this asset's authentication.
+
+Type: **generic** <br>
+Read only: **False**
+
+'make request' action for the app. Used to handle arbitrary HTTP requests with the app's asset
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**http_method** | required | The HTTP method to use for the request. | string | |
+**endpoint** | required | Microsoft Graph endpoint to call, appended to the API base URL. Example: '/v1.0/me/drive/root' or '/beta/users/{id}/drive/root' | string | |
+**headers** | optional | The headers to send with the request (JSON object). An example is {'Content-Type': 'application/json'} | string | |
+**query_parameters** | optional | Parameters to append to the URL (JSON object or query string). An example is ?key=value&key2=value2 | string | |
+**body** | optional | The body to send with the request (JSON object). An example is {'key': 'value', 'key2': 'value2'} | string | |
+**timeout** | optional | The timeout for the request in seconds. | numeric | |
+**verify_ssl** | optional | Whether to verify the SSL certificate. | boolean | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.http_method | string | | |
+action_result.parameter.endpoint | string | | |
+action_result.parameter.headers | string | | |
+action_result.parameter.query_parameters | string | | |
+action_result.parameter.body | string | | |
+action_result.parameter.timeout | numeric | | |
+action_result.parameter.verify_ssl | boolean | | |
+action_result.data.\*.status_code | numeric | | 200 404 500 |
+action_result.data.\*.response_body | string | | {"key": "value"} |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
 
 ## action: 'get file'
 
@@ -129,16 +227,15 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.drive_id | string | `msonedrive drive id` | b!gy8xut3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q |
-action_result.parameter.file_id | string | `msonedrive file id` | 01FMDEUQZPP6VBB2PJQRF3AQRCTXQVAWMO |
-action_result.parameter.file_path | string | `file path` | newsample 1/filetxt.txt |
-action_result.data | string | | |
-action_result.data.\*.file_name | string | | filetxt.txt |
-action_result.data.\*.size | numeric | `file size` | 4 |
-action_result.data.\*.vault_id | string | `vault id` | 7110eda4d09e062aa5e4a390b0a572ac0d2c0220 |
-action_result.summary.vault_id | string | `vault id` | 7110eda4d09e062aa5e4a390b0a572ac0d2c0220 |
+action_result.status | string | | success failure |
 action_result.message | string | | |
+action_result.parameter.file_id | string | `msonedrive file id` | |
+action_result.parameter.drive_id | string | `msonedrive drive id` | |
+action_result.parameter.file_path | string | `file path` | |
+action_result.data.\*.file_name | string | | filetxt.txt |
+action_result.data.\*.vault_id | string | `vault id` | example-vault-id |
+action_result.data.\*.size | numeric | `file size` | 4 |
+action_result.summary.vault_id | string | `vault id` | example-vault-id |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -161,17 +258,21 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.drive_id | string | `msonedrive drive id` | b!gy8xut3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q |
-action_result.parameter.folder_id | string | `msonedrive folder id` | 01TEST123TEST123TEST123U3KTTEST123 |
-action_result.parameter.folder_path | string | `msonedrive folder path` | Test/child_1/child_1_1 |
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.drive_id | string | `msonedrive drive id` | |
+action_result.parameter.folder_id | string | `msonedrive folder id` | |
+action_result.parameter.folder_path | string | `msonedrive folder path` | |
+action_result.data.\*.drive_id | string | `msonedrive drive id` | example-drive-id |
+action_result.data.\*.folder_id | string | `msonedrive folder id` | example-folder-id |
+action_result.data.\*.folder_path | string | `msonedrive folder path` | Test/child |
 action_result.data.\*.@microsoft.graph.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
 action_result.data.\*.cTag | string | | "c:{2test123-1234-1234-1234-test123test1},0" |
 action_result.data.\*.createdBy.application.displayName | string | | Test_One-drive |
-action_result.data.\*.createdBy.application.id | string | | ba56100c-856c-469f-b6a0-a4335614c502 |
+action_result.data.\*.createdBy.application.id | string | | ba56002c-856c-469f-b6a0-a4335614c502 |
 action_result.data.\*.createdBy.user.displayName | string | `user name` | Test User |
-action_result.data.\*.createdBy.user.email | string | `email` | test@test.test.com |
-action_result.data.\*.createdBy.user.id | string | | 17b006d0-35ed-4881-ab62-d2eb73c2ebe3 |
+action_result.data.\*.createdBy.user.email | string | `email` | test@test.xyz.com |
+action_result.data.\*.createdBy.user.id | string | | 17be00d0-35ed-4881-ab62-d2eb73c2ebe3 |
 action_result.data.\*.createdDateTime | string | | 2018-09-01T09:21:24Z |
 action_result.data.\*.currentUserRole.blocksDownload | boolean | | True False |
 action_result.data.\*.currentUserRole.readOnly | boolean | | True False |
@@ -192,18 +293,16 @@ action_result.data.\*.lastModifiedBy.user.id | string | | 17be00d0-35ed-4881-ab6
 action_result.data.\*.lastModifiedDateTime | string | | 2018-09-01T10:37:09Z |
 action_result.data.\*.name | string | | test file |
 action_result.data.\*.package.type | string | | oneNote |
-action_result.data.\*.parentReference.driveId | string | `msonedrive drive id` | b!gyx8tu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q |
+action_result.data.\*.parentReference.driveId | string | `msonedrive drive id` | example-drive-id |
 action_result.data.\*.parentReference.drivePath | string | | /drive/root:/ |
 action_result.data.\*.parentReference.driveType | string | | business |
 action_result.data.\*.parentReference.folderPath | string | `msonedrive folder path` | Test/child |
-action_result.data.\*.parentReference.id | string | `msonedrive drive id` `msonedrive folder id` | 01FMDEUQ56Y2GOVW7725BZO354PWSELRRZ |
+action_result.data.\*.parentReference.id | string | `msonedrive drive id` `msonedrive folder id` | example-parent-reference-id |
 action_result.data.\*.size | numeric | `file size` | 359666 |
 action_result.data.\*.webUrl | string | `url` | https://test-my.test.com/personal/test_abc_com/Documents/Test |
-action_result.summary.total_items | numeric | | 20 |
-action_result.message | string | | Total items: 20 |
+action_result.summary.total_items | numeric | | |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
-action_result.parameter.ph_0 | ph | | |
 
 ## action: 'list drive'
 
@@ -220,28 +319,30 @@ No parameters are required for this action
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.data.\*.createdBy.user.displayName | string | `user name` | System Account |
-action_result.data.\*.createdDateTime | string | | 2018-09-04T01:34:10Z |
-action_result.data.\*.description | string | | |
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.data.\*.name | string | | OneDrive |
 action_result.data.\*.driveType | string | | business |
 action_result.data.\*.id | string | `msonedrive drive id` | b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123 |
-action_result.data.\*.lastModifiedBy.user.displayName | string | `user name` | Test User |
-action_result.data.\*.lastModifiedBy.user.email | string | `email` | test@test.xyz.com |
-action_result.data.\*.lastModifiedBy.user.id | string | | 17be76d0-35ed-4881-ab62-d2eb73c2ebe3 |
-action_result.data.\*.lastModifiedDateTime | string | | 2018-09-21T05:40:10Z |
-action_result.data.\*.name | string | | OneDrive |
 action_result.data.\*.owner.user.displayName | string | `user name` | Test User |
 action_result.data.\*.owner.user.email | string | `email` | test@test.abc.com |
 action_result.data.\*.owner.user.id | string | | 17be76d0-35ed-4881-ab62-d2eb73c2ebe3 |
+action_result.data.\*.lastModifiedDateTime | string | | 2018-09-21T05:40:10Z |
+action_result.data.\*.lastModifiedBy.user.displayName | string | `user name` | Test User |
+action_result.data.\*.lastModifiedBy.user.email | string | `email` | test@test.abc.com |
+action_result.data.\*.lastModifiedBy.user.id | string | | 17be76d0-35ed-4881-ab62-d2eb73c2ebe3 |
+action_result.data.\*.createdDateTime | string | | 2018-09-04T01:34:10Z |
+action_result.data.\*.createdBy.user.displayName | string | `user name` | Test User |
+action_result.data.\*.createdBy.user.email | string | `email` | test@test.abc.com |
+action_result.data.\*.createdBy.user.id | string | | 17be76d0-35ed-4881-ab62-d2eb73c2ebe3 |
+action_result.data.\*.webUrl | string | `url` | https://test-my.abc.com/personal/test_test_xyz_com/Documents |
+action_result.data.\*.description | string | | |
 action_result.data.\*.quota.deleted | numeric | | 2555167314 |
 action_result.data.\*.quota.remaining | numeric | | 1097114685696 |
 action_result.data.\*.quota.state | string | | normal |
 action_result.data.\*.quota.total | numeric | | 1099511627776 |
 action_result.data.\*.quota.used | numeric | | 355597522 |
-action_result.data.\*.webUrl | string | `url` | https://test-my.abc.com/personal/test_test_xyz_com/Documents |
 action_result.summary.total_drives | numeric | | 1 |
-action_result.message | string | | Total drives: 1 |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -265,27 +366,28 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.auto_rename | boolean | | True False |
-action_result.parameter.drive_id | string | `msonedrive drive id` | b!gy8xuu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q |
-action_result.parameter.file_path | string | `file path` | Test/test135.txt |
-action_result.parameter.vault_id | string | `vault id` `sha1` | c46f17281437ff7906b5c6779a2fb7c3f002b786 |
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.drive_id | string | `msonedrive drive id` | |
+action_result.parameter.vault_id | string | `vault id` `sha1` | |
+action_result.parameter.file_path | string | `file path` | |
+action_result.parameter.auto_rename | boolean | | |
 action_result.data.\*.@content.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
-action_result.data.\*.file.irmEnabled | boolean | | True False |
 action_result.data.\*.@odata.context | string | `url` | https://test-my.abc.com/personal/test_abc_com/\_api/v2.0/$metadata#items/$entity |
 action_result.data.\*.@odata.editLink | string | | drives/b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/items/01FMDEUQ532OAQOAAUFVCL6MDY7H3CUEKN |
 action_result.data.\*.@odata.id | string | `url` | https://test-my.abc.com/personal/test_abc_com/\_api/v2.0/drives/b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123/items/01TEST123TEST123TEST123U3KTTEST123 |
 action_result.data.\*.@odata.type | string | | #oneDrive.item |
+action_result.data.\*.file.irmEnabled | boolean | | True False |
+action_result.data.\*.file.hashes.quickXorHash | string | | AAAAAAAAAAAAAAAAAIwPCgAAAAA= |
+action_result.data.\*.file.mimeType | string | | text/plain |
 action_result.data.\*.cTag | string | | "c:{2test123-1234-1234-1234-test123test1},2" |
 action_result.data.\*.createdBy.application.displayName | string | | Test_One-drive |
 action_result.data.\*.createdBy.application.id | string | | ba56122c-856c-469f-b6a0-a4335614c502 |
 action_result.data.\*.createdBy.user.displayName | string | `user name` | Test User |
-action_result.data.\*.createdBy.user.email | string | `email` | test@test.test.com |
+action_result.data.\*.createdBy.user.email | string | `email` | test@test.xyz.com |
 action_result.data.\*.createdBy.user.id | string | | 17be76d0-35ed-4881-ab62-d2eb73c2ebe3 |
 action_result.data.\*.createdDateTime | string | | 2018-09-21T12:22:02Z |
 action_result.data.\*.eTag | string | | "{2test123-1234-1234-1234-test123test1},3" |
-action_result.data.\*.file.hashes.quickXorHash | string | | AAAAAAAAAAAAAAAAAIwPCgAAAAA= |
-action_result.data.\*.file.mimeType | string | | text/plain |
 action_result.data.\*.fileSystemInfo.createdDateTime | string | | 2018-09-01T12:22:02Z |
 action_result.data.\*.fileSystemInfo.lastModifiedDateTime | string | | 2018-09-01T12:23:03Z |
 action_result.data.\*.id | string | `msonedrive file id` | 01TEST123TEST123TEST123U3KTTEST123 |
@@ -303,8 +405,6 @@ action_result.data.\*.parentReference.folderPath | string | `msonedrive folder p
 action_result.data.\*.parentReference.id | string | `msonedrive drive id` `msonedrive folder id` | 01FMDEUQZDNXCWNB3JIZCIM2A27DHROBE2 |
 action_result.data.\*.size | numeric | `file size` | 168791040 |
 action_result.data.\*.webUrl | string | `url` | https://test-my.TEST.com/personal/test_xyz_com/Documents/Test/abc135%203.txt |
-action_result.summary | string | | |
-action_result.message | string | | The file is uploaded successfully |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -327,13 +427,11 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.drive_id | string | `msonedrive drive id` | b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q |
-action_result.parameter.file_id | string | `msonedrive file id` | 01FMDEUQYMRSDNYGDC3NB3KAX7M2UWFZLA |
-action_result.parameter.file_path | string | `file path` | /Test/a.txt |
-action_result.data | string | | |
-action_result.summary | string | | |
-action_result.message | string | | File is deleted successfully |
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.file_id | string | `msonedrive file id` | |
+action_result.parameter.drive_id | string | `msonedrive drive id` | |
+action_result.parameter.file_path | string | `file path` | |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -356,16 +454,13 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.drive_id | string | `msonedrive drive id` | b!gy8txu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q |
-action_result.parameter.folder_id | string | `msonedrive folder id` | 01TEST123TEST123TEST123U3KTTEST123 |
-action_result.parameter.folder_path | string | `msonedrive folder path` | Test/child/test1234567 |
-action_result.data | string | | |
-action_result.summary | string | | |
-action_result.message | string | | Either Folder ID or Folder Path is mandatory |
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.drive_id | string | `msonedrive drive id` | |
+action_result.parameter.folder_id | string | `msonedrive folder id` | |
+action_result.parameter.folder_path | string | `msonedrive folder path` | |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
-action_result.parameter.ph_0 | ph | | |
 
 ## action: 'create folder'
 
@@ -388,41 +483,40 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 
 DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
-action_result.status | string | | success failed |
-action_result.parameter.auto_rename | boolean | | True False |
-action_result.parameter.drive_id | string | `msonedrive drive id` | b!gy8xu3t_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q |
-action_result.parameter.folder_id | string | `msonedrive folder id` | 01TEST123TEST123TEST123U3KTTEST123 |
-action_result.parameter.folder_name | string | `msonedrive folder name` | Test_1 |
-action_result.parameter.folder_path | string | `msonedrive folder path` | TestParentFolder/child |
-action_result.data.\*.@odata.context | string | `url` | https://abc.test.com/v1.0/$metadata#users(01TEST123TEST123TEST123U3KTTEST123)/drive/items(01TEST123TEST123TEST123U3KTTEST123)/children/$entity |
-action_result.data.\*.cTag | string | | "c:{2test123-1234-1234-1234-test123test1},0" |
-action_result.data.\*.createdBy.application.displayName | string | | Test_One-drive |
-action_result.data.\*.createdBy.application.id | string | | ba56002c-856c-469f-b6a0-a4335614c502 |
-action_result.data.\*.createdBy.user.displayName | string | `user name` | Test User |
-action_result.data.\*.createdBy.user.email | string | `email` | test@test.test.com |
-action_result.data.\*.createdBy.user.id | string | | 17be00d0-35ed-4881-ab62-d2eb73c2ebe3 |
-action_result.data.\*.createdDateTime | string | | 2018-09-01T08:49:18Z |
-action_result.data.\*.eTag | string | | "{2test123-1234-1234-1234-test123test1},1" |
-action_result.data.\*.fileSystemInfo.createdDateTime | string | | 2018-09-01T08:49:18Z |
-action_result.data.\*.fileSystemInfo.lastModifiedDateTime | string | | 2018-09-01T08:49:18Z |
-action_result.data.\*.folder.childCount | numeric | | 0 |
-action_result.data.\*.id | string | `msonedrive folder id` | 01TEST123TEST123TEST123U3KTTEST123 |
-action_result.data.\*.lastModifiedBy.application.displayName | string | | Test_One-drive |
-action_result.data.\*.lastModifiedBy.application.id | string | | ba56002c-856c-469f-b6a0-a4335614c502 |
-action_result.data.\*.lastModifiedBy.user.displayName | string | `file path` | Test User |
-action_result.data.\*.lastModifiedBy.user.email | string | `email` | test@test.xyz.com |
-action_result.data.\*.lastModifiedBy.user.id | string | | 17be00d0-35ed-4881-ab62-d2eb73c2ebe3 |
-action_result.data.\*.lastModifiedDateTime | string | | 2018-09-01T08:49:18Z |
-action_result.data.\*.name | string | `msonedrive folder name` | Test_1 1 |
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.drive_id | string | `msonedrive drive id` | |
+action_result.parameter.folder_id | string | `msonedrive folder id` | |
+action_result.parameter.folder_path | string | `msonedrive folder path` | |
+action_result.parameter.folder_name | string | `msonedrive folder name` | |
+action_result.parameter.auto_rename | boolean | | |
 action_result.data.\*.parentReference.driveId | string | `msonedrive drive id` | b!gy8txu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q |
 action_result.data.\*.parentReference.drivePath | string | | /drives/b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123/root:/ |
 action_result.data.\*.parentReference.driveType | string | | business |
 action_result.data.\*.parentReference.folderPath | string | `msonedrive folder path` | Test |
 action_result.data.\*.parentReference.id | string | `msonedrive drive id` `msonedrive folder id` | 01FMDUEQY3MRPCRFEYX5FJPU3KT7J24LJB |
-action_result.data.\*.size | numeric | `file size` | 0 |
+action_result.data.\*.id | string | `msonedrive folder id` | 01TEST123TEST123TEST123U3KTTEST123 |
+action_result.data.\*.name | string | `msonedrive folder name` | Test_1 1 |
 action_result.data.\*.webUrl | string | `url` | https://test-my.test.com/personal/test_xyz_com/Documents/Test/Test_1%201 |
-action_result.summary | string | | |
-action_result.message | string | | The folder: Test_1 is created successfully |
+action_result.data.\*.size | numeric | `file size` | 0 |
+action_result.data.\*.createdBy.application.displayName | string | | Test_One-drive |
+action_result.data.\*.createdBy.application.id | string | | ba56002c-856c-469f-b6a0-a4335614c502 |
+action_result.data.\*.createdBy.user.displayName | string | `user name` | Test User |
+action_result.data.\*.createdBy.user.email | string | `email` | test@test.xyz.com |
+action_result.data.\*.createdBy.user.id | string | | 17be00d0-35ed-4881-ab62-d2eb73c2ebe3 |
+action_result.data.\*.createdDateTime | string | | 2018-09-01T08:49:18Z |
+action_result.data.\*.@odata.context | string | `url` | https://abc.test.com/v1.0/$metadata#users(01TEST123TEST123TEST123U3KTTEST123)/drive/items(01TEST123TEST123TEST123U3KTTEST123)/children/$entity |
+action_result.data.\*.cTag | string | | "c:{2test123-1234-1234-1234-test123test1},0" |
+action_result.data.\*.eTag | string | | "{2test123-1234-1234-1234-test123test1},1" |
+action_result.data.\*.fileSystemInfo.createdDateTime | string | | 2018-09-01T08:49:18Z |
+action_result.data.\*.fileSystemInfo.lastModifiedDateTime | string | | 2018-09-01T08:49:18Z |
+action_result.data.\*.folder.childCount | numeric | | 0 |
+action_result.data.\*.lastModifiedBy.application.displayName | string | | Test_One-drive |
+action_result.data.\*.lastModifiedBy.application.id | string | | ba56002c-856c-469f-b6a0-a4335614c502 |
+action_result.data.\*.lastModifiedBy.user.displayName | string | `user name` | Test User |
+action_result.data.\*.lastModifiedBy.user.email | string | `email` | test@test.xyz.com |
+action_result.data.\*.lastModifiedBy.user.id | string | | 17be00d0-35ed-4881-ab62-d2eb73c2ebe3 |
+action_result.data.\*.lastModifiedDateTime | string | | 2018-09-01T08:49:18Z |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -430,7 +524,7 @@ ______________________________________________________________________
 
 Auto-generated Splunk SOAR Connector documentation.
 
-Copyright 2025 Splunk Inc.
+Copyright 2026 Splunk Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
