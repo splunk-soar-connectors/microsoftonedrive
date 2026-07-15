@@ -29,14 +29,21 @@ MICROSOFT_GRAPH_SCOPE = "https://graph.microsoft.com/.default"
 MICROSOFT_LOGIN_BASE_URL = "https://login.microsoftonline.com"
 
 
+class RedactedAssetConfig(dict[str, str]):
+    """Prevent live Azure credentials from appearing in pytest tracebacks."""
+
+    def __repr__(self) -> str:
+        return f"{type(self).__name__}(<redacted>)"
+
+
 @pytest.fixture(scope="session", autouse=True)
 def load_dotenv() -> None:
     test_config.load_dotenv_file()
 
 
 @pytest.fixture(scope="session")
-def live_asset_config(load_dotenv: None) -> dict[str, str]:
-    config: dict[str, str] = {}
+def live_asset_config(load_dotenv: None) -> RedactedAssetConfig:
+    config = RedactedAssetConfig()
     missing: list[str] = []
     for name in test_config.ASSET_CONFIG_ENV_KEYS:
         value = test_config.get_asset_config_value(name)
