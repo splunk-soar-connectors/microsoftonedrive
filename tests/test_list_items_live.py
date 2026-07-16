@@ -143,6 +143,7 @@ def test_list_items_live_lists_configured_folder(
     connector_app: App,
     build_soar_action_input: Callable[..., dict[str, Any]],
     list_items_test_folder: dict[str, Any],
+    live_asset_config: dict[str, str],
 ) -> None:
     result = run_list_items_action(
         connector_app,
@@ -151,6 +152,7 @@ def test_list_items_live_lists_configured_folder(
             "drive_id": "",
             "folder_id": "",
             "folder_path": list_items_test_folder["folder_path"],
+            "target_user_id": live_asset_config["target_user_id"],
         },
     )
 
