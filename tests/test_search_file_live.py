@@ -12,21 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import json
-import time
-import urllib.parse
 import uuid
 from collections.abc import Callable
 from typing import Any
 
 import httpx
-import pytest
 from soar_sdk.app import App
 
 from src.consts import AUTH_METHOD_CLIENT_CREDENTIALS
 
 
-SEARCH_INDEX_TIMEOUT_SECONDS = 90.0
-SEARCH_INDEX_POLL_SECONDS = 2.0
 SEARCH_FILE_CONTENT = b"search file live test\n"
 
 
@@ -76,38 +71,6 @@ def delete_graph_folder_if_exists(
         response.raise_for_status()
 
 
-def wait_for_graph_search_index(
-    microsoft_graph_client: httpx.Client,
-    drive_id: str,
-    file_name: str,
-    file_id: str,
-) -> None:
-    encoded_query = urllib.parse.quote(file_name, safe="")
-    endpoint = f"/drives/{drive_id}/root/search(q='{encoded_query}')"
-    deadline = time.monotonic() + SEARCH_INDEX_TIMEOUT_SECONDS
-
-    while time.monotonic() < deadline:
-        response = microsoft_graph_client.get(
-            endpoint,
-            params={"$select": "id,name"},
-        )
-        if response.is_error:
-            error = response.json().get("error", {})
-            pytest.fail(
-                "Microsoft Graph search failed with "
-                f"{error.get('code', response.status_code)}: "
-                f"{error.get('message', response.reason_phrase)}"
-            )
-        if any(item.get("id") == file_id for item in response.json().get("value", [])):
-            return
-        time.sleep(SEARCH_INDEX_POLL_SECONDS)
-
-    pytest.fail(
-        f"Microsoft Graph did not index {file_name!r} within "
-        f"{SEARCH_INDEX_TIMEOUT_SECONDS:.0f} seconds"
-    )
-
-
 def run_search_file_action(
     connector_app: App,
     build_soar_action_input: Callable[..., dict[str, Any]],
@@ -137,12 +100,6 @@ def test_search_file_live_finds_file_by_supported_scope(
         graph_file = create_graph_file(microsoft_graph_client, folder)
         file_id = graph_file["id"]
         file_name = graph_file["name"]
-        wait_for_graph_search_index(
-            microsoft_graph_client,
-            drive_id,
-            file_name,
-            file_id,
-        )
         for use_drive_id, use_folder_id in (
             (True, False),
             (True, True),

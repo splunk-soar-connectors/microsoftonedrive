@@ -14,6 +14,7 @@
 import urllib.parse
 from typing import Any
 
+import httpx
 from soar_sdk import logging
 from soar_sdk.abstract import SOARClient
 from soar_sdk.action_results import ActionOutput, OutputField, PermissiveActionOutput
@@ -46,6 +47,8 @@ SEARCH_DRIVE_ID_ENDPOINT = "/drives/{drive_id}/root/search(q='{search_text}')"
 SEARCH_DRIVE_FOLDER_ID_ENDPOINT = (
     "/drives/{drive_id}/items/{folder_id}/search(q='{search_text}')"
 )
+SEARCH_DRIVE_ROOT_CHILDREN_ENDPOINT = "/drives/{drive_id}/root/children"
+SEARCH_DRIVE_FOLDER_CHILDREN_ENDPOINT = "/drives/{drive_id}/items/{folder_id}/children"
 TARGET_USER_DEFAULT_DRIVE_ENDPOINT = "/users/{target_user_id}/drive"
 TARGET_USER_DEFAULT_DRIVE_SELECT_FIELDS = "id"
 TARGET_USER_DRIVE_ID_MISSING_MESSAGE = (
@@ -232,28 +235,42 @@ def _get_client_credentials_search_endpoint(
     asset: Asset,
     graph_client: Any | None,
 ) -> str:
+    drive_id = _resolve_client_credentials_drive_id(params, asset, graph_client)
+    return _get_drive_search_endpoint(params, drive_id)
+
+
+def _resolve_client_credentials_drive_id(
+    params: SearchFileParams,
+    asset: Asset,
+    graph_client: Any | None,
+) -> str:
     drive_id = (params.drive_id or "").strip()
+    if drive_id:
+        return drive_id
+
+    target_user_id = resolve_target_user_id(
+        params.target_user_id,
+        asset.target_user_id,
+    )
+    if graph_client is None:
+        raise ActionFailure(GRAPH_CLIENT_REQUIRED_MESSAGE)
+
+    response = graph_client.get(
+        TARGET_USER_DEFAULT_DRIVE_ENDPOINT.format(
+            target_user_id=target_user_id,
+        ),
+        params={"$select": TARGET_USER_DEFAULT_DRIVE_SELECT_FIELDS},
+    )
+    response.raise_for_status()
+    drive_id = str(response.json().get("id") or "").strip()
+    if not drive_id:
+        raise ActionFailure(TARGET_USER_DRIVE_ID_MISSING_MESSAGE)
+    return drive_id
+
+
+def _get_drive_search_endpoint(params: SearchFileParams, drive_id: str) -> str:
     folder_id = params.folder_id or ""
     search_text = _encode_search_text(params.search_text)
-
-    if not drive_id:
-        target_user_id = resolve_target_user_id(
-            params.target_user_id,
-            asset.target_user_id,
-        )
-        if graph_client is None:
-            raise ActionFailure(GRAPH_CLIENT_REQUIRED_MESSAGE)
-
-        response = graph_client.get(
-            TARGET_USER_DEFAULT_DRIVE_ENDPOINT.format(
-                target_user_id=target_user_id,
-            ),
-            params={"$select": TARGET_USER_DEFAULT_DRIVE_SELECT_FIELDS},
-        )
-        response.raise_for_status()
-        drive_id = str(response.json().get("id") or "").strip()
-        if not drive_id:
-            raise ActionFailure(TARGET_USER_DRIVE_ID_MISSING_MESSAGE)
 
     if folder_id:
         return SEARCH_DRIVE_FOLDER_ID_ENDPOINT.format(
@@ -303,6 +320,64 @@ def _get_search_response(
     return items
 
 
+def _get_filename_search_response(
+    graph_client: Any,
+    drive_id: str,
+    folder_id: str | None,
+    search_text: str,
+    *,
+    max_results: int,
+) -> list[dict[str, Any]]:
+    if folder_id:
+        first_endpoint = SEARCH_DRIVE_FOLDER_CHILDREN_ENDPOINT.format(
+            drive_id=drive_id,
+            folder_id=folder_id,
+        )
+    else:
+        first_endpoint = SEARCH_DRIVE_ROOT_CHILDREN_ENDPOINT.format(
+            drive_id=drive_id,
+        )
+
+    matches: list[dict[str, Any]] = []
+    pending_endpoints: list[str] = [first_endpoint]
+    visited_folder_ids: set[str] = set()
+    normalized_search_text = search_text.casefold()
+
+    while pending_endpoints and len(matches) < max_results:
+        next_endpoint: str | None = pending_endpoints.pop()
+        query_params: dict[str, Any] | None = {"$top": MAX_RESULTS_LIMIT}
+
+        while next_endpoint and len(matches) < max_results:
+            response = graph_client.get(next_endpoint, params=query_params)
+            response.raise_for_status()
+            response_json = response.json()
+
+            for item in response_json.get(GRAPH_VALUE_FIELD, []):
+                if normalized_search_text in str(item.get("name") or "").casefold():
+                    matches.append(item)
+                    if len(matches) >= max_results:
+                        break
+
+                child_folder_id = str(item.get("id") or "")
+                if (
+                    item.get(FOLDER_FIELD) is not None
+                    and child_folder_id
+                    and child_folder_id not in visited_folder_ids
+                ):
+                    visited_folder_ids.add(child_folder_id)
+                    pending_endpoints.append(
+                        SEARCH_DRIVE_FOLDER_CHILDREN_ENDPOINT.format(
+                            drive_id=drive_id,
+                            folder_id=child_folder_id,
+                        )
+                    )
+
+            next_endpoint = response_json.get(GRAPH_NEXT_LINK_FIELD)
+            query_params = None
+
+    return matches
+
+
 def _normalize_search_result(
     item: dict[str, Any],
     params: SearchFileParams,
@@ -319,16 +394,56 @@ def search_file(
 ) -> list[SearchFileOutput]:
     logging.info("In action handler for: search_file")
     max_results = _get_max_results(params)
+    client_credentials_auth = is_client_credentials_auth(asset)
+    filename_fallback_used = False
 
     try:
         with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
-            endpoint = _get_search_endpoint(params, asset, graph_client)
+            resolved_drive_id = ""
+            if client_credentials_auth:
+                resolved_drive_id = _resolve_client_credentials_drive_id(
+                    params,
+                    asset,
+                    graph_client,
+                )
+                endpoint = _get_drive_search_endpoint(params, resolved_drive_id)
+            else:
+                endpoint = _get_delegated_search_endpoint(params)
+
             logging.info(f"Using Microsoft Graph search endpoint: {endpoint}")
-            items = _get_search_response(
-                graph_client,
-                endpoint,
-                max_results=max_results,
-            )
+            try:
+                items = _get_search_response(
+                    graph_client,
+                    endpoint,
+                    max_results=max_results,
+                )
+            except httpx.HTTPStatusError as e:
+                if not client_credentials_auth or e.response.status_code != 403:
+                    raise
+                logging.warning(
+                    "Microsoft Graph denied app-only drive search; using "
+                    "filename matching over drive children"
+                )
+                items = _get_filename_search_response(
+                    graph_client,
+                    resolved_drive_id,
+                    params.folder_id,
+                    params.search_text,
+                    max_results=max_results,
+                )
+                filename_fallback_used = True
+
+            if client_credentials_auth and not items and not filename_fallback_used:
+                filename_matches = _get_filename_search_response(
+                    graph_client,
+                    resolved_drive_id,
+                    params.folder_id,
+                    params.search_text,
+                    max_results=max_results,
+                )
+                if filename_matches:
+                    items = filename_matches
+                    filename_fallback_used = True
     except OAuthClientError as e:
         raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e
 
@@ -337,5 +452,12 @@ def search_file(
 
     total_items_found = len(items)
     soar.set_summary(SearchFileSummary(total_items_found=total_items_found))
-    soar.set_message(f"Total items found: {total_items_found}")
+    if filename_fallback_used:
+        soar.set_message(
+            f"Total items found: {total_items_found}. Microsoft Graph app-only "
+            "content search was unavailable or not yet indexed, so results were "
+            "matched by file or folder name."
+        )
+    else:
+        soar.set_message(f"Total items found: {total_items_found}")
     return [SearchFileOutput(**item) for item in items]
