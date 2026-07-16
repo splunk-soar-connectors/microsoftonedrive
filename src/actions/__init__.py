@@ -20,6 +20,7 @@ from .get_file import GetFileSummary, get_file
 from .list_drive import ListDriveSummary, list_drive
 from .list_items import ListItemsSummary, list_items
 from .make_request import make_request
+from .search_file import SearchFileSummary, search_file
 from .upload_file import upload_file
 from ..views.list_items import display_view as display_list_items_view
 
@@ -57,6 +58,13 @@ def register_actions(app: App) -> App:
         action_type="investigate",
         render_as="table",
         summary_type=ListDriveSummary,
+    )
+    app.register_action(
+        action=search_file,
+        description="Search for files or folders by name or content",
+        action_type="investigate",
+        render_as="table",
+        summary_type=SearchFileSummary,
     )
     app.register_action(
         action=upload_file,

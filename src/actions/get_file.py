@@ -45,6 +45,8 @@ GET_FILE_DELEGATED_DRIVE_FILE_ID_ENDPOINT = "/me/drives/{drive_id}/items/{file_i
 GET_FILE_DELEGATED_DRIVE_FILE_PATH_ENDPOINT = "/me/drives/{drive_id}/root:/{file_path}"
 GET_FILE_DELEGATED_FILE_ID_ENDPOINT = "/me/drive/items/{file_id}"
 GET_FILE_DELEGATED_FILE_PATH_ENDPOINT = "/me/drive/root:/{file_path}"
+GET_FILE_DELEGATED_FILE_ID_CONTENT_ENDPOINT = "/me/drive/items/{file_id}/content"
+GET_FILE_DELEGATED_FILE_PATH_CONTENT_ENDPOINT = "/me/drive/root:/{file_path}:/content"
 GET_FILE_CLIENT_CREDENTIALS_DRIVE_FILE_ID_ENDPOINT = (
     "/drives/{drive_id}/items/{file_id}"
 )
@@ -57,6 +59,17 @@ GET_FILE_CLIENT_CREDENTIALS_FILE_ID_ENDPOINT = (
 GET_FILE_CLIENT_CREDENTIALS_FILE_PATH_ENDPOINT = (
     "/users/{target_user_id}/drive/root:/{file_path}"
 )
+GET_FILE_DRIVE_FILE_ID_CONTENT_ENDPOINT = "/drives/{drive_id}/items/{file_id}/content"
+GET_FILE_DRIVE_FILE_PATH_CONTENT_ENDPOINT = (
+    "/drives/{drive_id}/root:/{file_path}:/content"
+)
+GET_FILE_CLIENT_CREDENTIALS_FILE_ID_CONTENT_ENDPOINT = (
+    "/users/{target_user_id}/drive/items/{file_id}/content"
+)
+GET_FILE_CLIENT_CREDENTIALS_FILE_PATH_CONTENT_ENDPOINT = (
+    "/users/{target_user_id}/drive/root:/{file_path}:/content"
+)
+FORCE_INFECTED_DOWNLOAD_HEADER = {"Prefer": "forceInfectedDownload"}
 DOWNLOAD_TIMEOUT_SECONDS = 30.0
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024
 
@@ -115,6 +128,14 @@ class GetFileParams(Params):
         cef_types=["file path"],
         column_name="File Path",
     )
+    force_infected_download: bool | None = Param(
+        description=(
+            "Download a file that Microsoft has flagged as infected by sending "
+            "the Prefer: forceInfectedDownload header"
+        ),
+        default=False,
+        column_name="Force Infected Download",
+    )
 
 
 class GetFileOutput(ActionOutput):
@@ -131,6 +152,14 @@ class GetFileOutput(ActionOutput):
         column_name="Size (Bytes)",
         cef_types=["file size"],
         example_values=[4],
+    )
+    force_infected_download: bool = OutputField(
+        column_name="Force Infected Download",
+        example_values=[False],
+    )
+    malware_flagged: bool = OutputField(
+        column_name="Malware Flagged",
+        example_values=[False],
     )
 
 
@@ -211,6 +240,70 @@ def _get_file_endpoint(params: GetFileParams, asset: Asset) -> str:
     return _get_delegated_file_endpoint(params)
 
 
+def _get_delegated_file_content_endpoint(params: GetFileParams) -> str:
+    file_id = params.file_id or ""
+    drive_id = params.drive_id or ""
+    file_path = (params.file_path or "").strip("/\\")
+
+    if not file_id and not file_path:
+        raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
+
+    if drive_id:
+        if file_id:
+            return GET_FILE_DRIVE_FILE_ID_CONTENT_ENDPOINT.format(
+                drive_id=drive_id,
+                file_id=file_id,
+            )
+        return GET_FILE_DRIVE_FILE_PATH_CONTENT_ENDPOINT.format(
+            drive_id=drive_id,
+            file_path=file_path,
+        )
+
+    if file_id:
+        return GET_FILE_DELEGATED_FILE_ID_CONTENT_ENDPOINT.format(file_id=file_id)
+    return GET_FILE_DELEGATED_FILE_PATH_CONTENT_ENDPOINT.format(file_path=file_path)
+
+
+def _get_client_credentials_file_content_endpoint(
+    params: GetFileParams, asset: Asset
+) -> str:
+    file_id = params.file_id or ""
+    drive_id = params.drive_id or ""
+    file_path = (params.file_path or "").strip("/\\")
+
+    if not file_id and not file_path:
+        raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
+
+    if drive_id:
+        if file_id:
+            return GET_FILE_DRIVE_FILE_ID_CONTENT_ENDPOINT.format(
+                drive_id=drive_id,
+                file_id=file_id,
+            )
+        return GET_FILE_DRIVE_FILE_PATH_CONTENT_ENDPOINT.format(
+            drive_id=drive_id,
+            file_path=file_path,
+        )
+
+    target_user_id = _get_target_user_id(asset)
+    if file_id:
+        return GET_FILE_CLIENT_CREDENTIALS_FILE_ID_CONTENT_ENDPOINT.format(
+            target_user_id=target_user_id,
+            file_id=file_id,
+        )
+    return GET_FILE_CLIENT_CREDENTIALS_FILE_PATH_CONTENT_ENDPOINT.format(
+        target_user_id=target_user_id,
+        file_path=file_path,
+    )
+
+
+def _get_file_content_endpoint(params: GetFileParams, asset: Asset) -> str:
+    if is_client_credentials_auth(asset):
+        return _get_client_credentials_file_content_endpoint(params, asset)
+
+    return _get_delegated_file_content_endpoint(params)
+
+
 def _get_existing_vault_id(
     soar: SOARClient,
     *,
@@ -266,6 +359,44 @@ def _download_file_to_tmp(download_url: str, temp_dir: Path | None) -> tuple[Pat
 
             with httpx.stream(
                 "GET", download_url, timeout=DOWNLOAD_TIMEOUT_SECONDS
+            ) as response:
+                response.raise_for_status()
+                for chunk in response.iter_bytes(chunk_size=DOWNLOAD_CHUNK_SIZE):
+                    if not chunk:
+                        continue
+                    temp_file.write(chunk)
+                    file_size += len(chunk)
+    except Exception:
+        if temp_path is not None:
+            temp_path.unlink(missing_ok=True)
+        raise
+
+    return temp_path, file_size
+
+
+def _download_graph_content_to_tmp(
+    graph_client: httpx.Client,
+    endpoint: str,
+    temp_dir: Path | None,
+    *,
+    headers: dict[str, str] | None = None,
+) -> tuple[Path, int]:
+    temp_path: Path | None = None
+    try:
+        with NamedTemporaryFile(
+            "wb",
+            delete=False,
+            dir=temp_dir,
+        ) as temp_file:
+            temp_path = Path(temp_file.name)
+            file_size = 0
+
+            with graph_client.stream(
+                "GET",
+                endpoint,
+                headers=headers,
+                timeout=DOWNLOAD_TIMEOUT_SECONDS,
+                follow_redirects=True,
             ) as response:
                 response.raise_for_status()
                 for chunk in response.iter_bytes(chunk_size=DOWNLOAD_CHUNK_SIZE):
@@ -355,19 +486,35 @@ def get_file(params: GetFileParams, soar: SOARClient, asset: Asset) -> GetFileOu
             metadata_response = graph_client.get(endpoint)
             metadata_response.raise_for_status()
             metadata = metadata_response.json()
+
+            file_name = metadata.get("name")
+            if not file_name:
+                raise ActionFailure(FILE_NOT_FOUND_MESSAGE)
+            logging.info(f"Resolved OneDrive file metadata for file_name={file_name}")
+
+            if params.force_infected_download:
+                content_endpoint = _get_file_content_endpoint(params, asset)
+                logging.info(
+                    "force_infected_download enabled; using Microsoft Graph "
+                    f"content endpoint: {content_endpoint}"
+                )
+                temp_path, file_size = _download_graph_content_to_tmp(
+                    graph_client,
+                    content_endpoint,
+                    _get_download_tmp_dir(soar),
+                    headers=FORCE_INFECTED_DOWNLOAD_HEADER,
+                )
+            else:
+                download_url = metadata.get(DOWNLOAD_URL_FIELD)
+                if not download_url:
+                    raise ActionFailure(FILE_NOT_FOUND_MESSAGE)
+                temp_path, file_size = _download_file_to_tmp(
+                    download_url,
+                    _get_download_tmp_dir(soar),
+                )
     except OAuthClientError as e:
         raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e
 
-    file_name = metadata.get("name")
-    download_url = metadata.get(DOWNLOAD_URL_FIELD)
-    if not file_name or not download_url:
-        raise ActionFailure(FILE_NOT_FOUND_MESSAGE)
-    logging.info(f"Resolved OneDrive file metadata for file_name={file_name}")
-
-    temp_path, file_size = _download_file_to_tmp(
-        download_url,
-        _get_download_tmp_dir(soar),
-    )
     try:
         if not file_size:
             raise ActionFailure(FILE_HAS_NO_CONTENT_MESSAGE)
@@ -394,4 +541,6 @@ def get_file(params: GetFileParams, soar: SOARClient, asset: Asset) -> GetFileOu
         file_name=file_name,
         vault_id=vault_id,
         size=file_size,
+        force_infected_download=bool(params.force_infected_download),
+        malware_flagged="malware" in metadata,
     )
