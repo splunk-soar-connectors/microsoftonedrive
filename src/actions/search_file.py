@@ -46,11 +46,13 @@ SEARCH_DRIVE_ID_ENDPOINT = "/drives/{drive_id}/root/search(q='{search_text}')"
 SEARCH_DRIVE_FOLDER_ID_ENDPOINT = (
     "/drives/{drive_id}/items/{folder_id}/search(q='{search_text}')"
 )
-SEARCH_CLIENT_CREDENTIALS_DEFAULT_ENDPOINT = (
-    "/users/{target_user_id}/drive/root/search(q='{search_text}')"
+TARGET_USER_DEFAULT_DRIVE_ENDPOINT = "/users/{target_user_id}/drive"
+TARGET_USER_DEFAULT_DRIVE_SELECT_FIELDS = "id"
+TARGET_USER_DRIVE_ID_MISSING_MESSAGE = (
+    "Microsoft Graph did not return a default drive ID for the target user"
 )
-SEARCH_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT = (
-    "/users/{target_user_id}/drive/items/{folder_id}/search(q='{search_text}')"
+GRAPH_CLIENT_REQUIRED_MESSAGE = (
+    "Microsoft Graph client is required to resolve the target user's drive"
 )
 SEARCH_SELECT_FIELDS = (
     "id,name,size,webUrl,createdDateTime,lastModifiedDateTime,file,folder,"
@@ -226,43 +228,52 @@ def _get_delegated_search_endpoint(params: SearchFileParams) -> str:
 
 
 def _get_client_credentials_search_endpoint(
-    params: SearchFileParams, asset: Asset
+    params: SearchFileParams,
+    asset: Asset,
+    graph_client: Any | None,
 ) -> str:
-    drive_id = params.drive_id or ""
+    drive_id = (params.drive_id or "").strip()
     folder_id = params.folder_id or ""
     search_text = _encode_search_text(params.search_text)
 
-    if drive_id:
-        if folder_id:
-            return SEARCH_DRIVE_FOLDER_ID_ENDPOINT.format(
-                drive_id=drive_id,
-                folder_id=folder_id,
-                search_text=search_text,
-            )
-        return SEARCH_DRIVE_ID_ENDPOINT.format(
-            drive_id=drive_id,
-            search_text=search_text,
+    if not drive_id:
+        target_user_id = resolve_target_user_id(
+            params.target_user_id,
+            asset.target_user_id,
         )
+        if graph_client is None:
+            raise ActionFailure(GRAPH_CLIENT_REQUIRED_MESSAGE)
 
-    target_user_id = resolve_target_user_id(
-        params.target_user_id,
-        asset.target_user_id,
-    )
+        response = graph_client.get(
+            TARGET_USER_DEFAULT_DRIVE_ENDPOINT.format(
+                target_user_id=target_user_id,
+            ),
+            params={"$select": TARGET_USER_DEFAULT_DRIVE_SELECT_FIELDS},
+        )
+        response.raise_for_status()
+        drive_id = str(response.json().get("id") or "").strip()
+        if not drive_id:
+            raise ActionFailure(TARGET_USER_DRIVE_ID_MISSING_MESSAGE)
+
     if folder_id:
-        return SEARCH_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT.format(
-            target_user_id=target_user_id,
+        return SEARCH_DRIVE_FOLDER_ID_ENDPOINT.format(
+            drive_id=drive_id,
             folder_id=folder_id,
             search_text=search_text,
         )
-    return SEARCH_CLIENT_CREDENTIALS_DEFAULT_ENDPOINT.format(
-        target_user_id=target_user_id,
+    return SEARCH_DRIVE_ID_ENDPOINT.format(
+        drive_id=drive_id,
         search_text=search_text,
     )
 
 
-def _get_search_endpoint(params: SearchFileParams, asset: Asset) -> str:
+def _get_search_endpoint(
+    params: SearchFileParams,
+    asset: Asset,
+    graph_client: Any | None = None,
+) -> str:
     if is_client_credentials_auth(asset):
-        return _get_client_credentials_search_endpoint(params, asset)
+        return _get_client_credentials_search_endpoint(params, asset, graph_client)
 
     return _get_delegated_search_endpoint(params)
 
@@ -308,11 +319,11 @@ def search_file(
 ) -> list[SearchFileOutput]:
     logging.info("In action handler for: search_file")
     max_results = _get_max_results(params)
-    endpoint = _get_search_endpoint(params, asset)
-    logging.info(f"Using Microsoft Graph search endpoint: {endpoint}")
 
     try:
         with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
+            endpoint = _get_search_endpoint(params, asset, graph_client)
+            logging.info(f"Using Microsoft Graph search endpoint: {endpoint}")
             items = _get_search_response(
                 graph_client,
                 endpoint,
