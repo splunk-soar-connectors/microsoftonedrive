@@ -24,6 +24,7 @@ from soar_sdk.params import Param, Params
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
+from .target_user import resolve_target_user_id, target_user_id_param
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
@@ -37,9 +38,6 @@ FOLDER_FIELD = "folder"
 DEFAULT_MAX_RESULTS = 100
 MAX_RESULTS_LIMIT = 200
 INVALID_MAX_RESULTS_MESSAGE = "Max Results must be greater than zero"
-TARGET_USER_ID_REQUIRED_MESSAGE = (
-    "Target User ID is required for Client Credentials authentication"
-)
 SEARCH_DELEGATED_DEFAULT_ENDPOINT = "/me/drive/root/search(q='{search_text}')"
 SEARCH_DELEGATED_FOLDER_ID_ENDPOINT = (
     "/me/drive/items/{folder_id}/search(q='{search_text}')"
@@ -84,6 +82,7 @@ class SearchFileParams(Params):
         default=DEFAULT_MAX_RESULTS,
         column_name="Max Results",
     )
+    target_user_id: str | None = target_user_id_param()
 
 
 class ApplicationOutput(ActionOutput):
@@ -187,14 +186,6 @@ class SearchFileSummary(ActionOutput):
     total_items_found: int = OutputField(example_values=[1])
 
 
-def _get_target_user_id(asset: Asset) -> str:
-    target_user_id = (asset.target_user_id or "").strip()
-    if not target_user_id:
-        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
-
-    return target_user_id
-
-
 def _encode_search_text(search_text: str) -> str:
     escaped_search_text = search_text.replace("'", "''")
     return urllib.parse.quote(escaped_search_text, safe="")
@@ -253,7 +244,10 @@ def _get_client_credentials_search_endpoint(
             search_text=search_text,
         )
 
-    target_user_id = _get_target_user_id(asset)
+    target_user_id = resolve_target_user_id(
+        params.target_user_id,
+        asset.target_user_id,
+    )
     if folder_id:
         return SEARCH_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT.format(
             target_user_id=target_user_id,

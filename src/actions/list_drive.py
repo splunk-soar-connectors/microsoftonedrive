@@ -23,18 +23,20 @@ from soar_sdk.params import Params
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
+from .target_user import resolve_target_user_id, target_user_id_param
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
 )
-TARGET_USER_ID_REQUIRED_MESSAGE = (
-    "Target User ID is required for Client Credentials authentication"
-)
 GRAPH_VALUE_FIELD = "value"
 GRAPH_NEXT_LINK_FIELD = "@odata.nextLink"
 LIST_DRIVES_ENDPOINT = "/me/drives"
 LIST_DRIVES_CLIENT_CREDENTIALS_ENDPOINT = "/users/{target_user_id}/drives"
+
+
+class ListDriveParams(Params):
+    target_user_id: str | None = target_user_id_param()
 
 
 class CreatedByUserOutput(ActionOutput):
@@ -147,29 +149,29 @@ def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]
     return drives
 
 
-def _get_target_user_id(asset: Asset) -> str:
-    target_user_id = (asset.target_user_id or "").strip()
-    if not target_user_id:
-        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
-
-    return target_user_id
-
-
-def _get_list_drives_endpoint(asset: Asset) -> str:
+def _get_list_drives_endpoint(params: ListDriveParams, asset: Asset) -> str:
     if is_client_credentials_auth(asset):
         return LIST_DRIVES_CLIENT_CREDENTIALS_ENDPOINT.format(
-            target_user_id=_get_target_user_id(asset)
+            target_user_id=resolve_target_user_id(
+                params.target_user_id,
+                asset.target_user_id,
+            )
         )
 
     return LIST_DRIVES_ENDPOINT
 
 
-def list_drive(params: Params, soar: SOARClient, asset: Asset) -> list[ListDriveOutput]:
+def list_drive(
+    params: ListDriveParams, soar: SOARClient, asset: Asset
+) -> list[ListDriveOutput]:
     logging.info("In action handler for: list_drive")
 
     try:
         with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
-            drives = _get_list_response(graph_client, _get_list_drives_endpoint(asset))
+            drives = _get_list_response(
+                graph_client,
+                _get_list_drives_endpoint(params, asset),
+            )
     except OAuthClientError as e:
         raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e
 

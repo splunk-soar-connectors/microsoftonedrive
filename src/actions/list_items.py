@@ -23,6 +23,7 @@ from soar_sdk.params import Param, Params
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
+from .target_user import resolve_target_user_id, target_user_id_param
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
@@ -59,9 +60,6 @@ LIST_ITEMS_APPLICATION_FOLDER_ID_ENDPOINT = (
 LIST_ITEMS_APPLICATION_FOLDER_PATH_ENDPOINT = (
     "/users/{target_user_id}/drive/root:/{folder_path}:/children"
 )
-TARGET_USER_ID_REQUIRED_MESSAGE = (
-    "Target User ID is required for Client Credentials authentication"
-)
 
 
 class ListItemsParams(Params):
@@ -76,6 +74,7 @@ class ListItemsParams(Params):
         primary=True,
         cef_types=["msonedrive folder path"],
     )
+    target_user_id: str | None = target_user_id_param()
 
 
 class ApplicationOutput(ActionOutput):
@@ -204,14 +203,6 @@ class ListItemsSummary(ActionOutput):
     total_items: int
 
 
-def _get_target_user_id(asset: Asset) -> str:
-    target_user_id = (asset.target_user_id or "").strip()
-    if not target_user_id:
-        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
-
-    return target_user_id
-
-
 def _get_delegated_list_items_endpoint(params: ListItemsParams) -> str:
     drive_id: str = params.drive_id or ""
     folder_id: str = params.folder_id or ""
@@ -257,7 +248,10 @@ def _get_client_credentials_list_items_endpoint(
             )
         return LIST_ITEMS_APPLICATION_DRIVE_ID_ENDPOINT.format(drive_id=drive_id)
 
-    target_user_id = _get_target_user_id(asset)
+    target_user_id = resolve_target_user_id(
+        params.target_user_id,
+        asset.target_user_id,
+    )
     if folder_id:
         return LIST_ITEMS_APPLICATION_FOLDER_ID_ENDPOINT.format(
             target_user_id=target_user_id,
@@ -332,7 +326,12 @@ def list_items(
             items: list[dict[str, Any]] = []
             pending_endpoints: list[str] = [endpoint]
             target_user_id = (
-                _get_target_user_id(asset) if client_credentials_auth else ""
+                resolve_target_user_id(
+                    params.target_user_id,
+                    asset.target_user_id,
+                )
+                if client_credentials_auth
+                else ""
             )
 
             while pending_endpoints:

@@ -26,6 +26,7 @@ from soar_sdk.params import Param, Params
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
+from .target_user import resolve_target_user_id, target_user_id_param
 
 
 DOWNLOAD_URL_FIELD = "@microsoft.graph.downloadUrl"
@@ -34,9 +35,6 @@ FILE_NOT_FOUND_MESSAGE = "The requested file does not exist on OneDrive"
 ERROR_READING_DOWNLOADED_FILE_MESSAGE = "Reading downloaded file data failed"
 ADD_FILE_TO_VAULT_ERROR_MESSAGE = "Could not add file to vault"
 MANDATORY_FILE_ID_OR_PATH_MESSAGE = "Either File ID or File Path is mandatory"
-TARGET_USER_ID_REQUIRED_MESSAGE = (
-    "Target User ID is required for Client Credentials authentication"
-)
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
 )
@@ -136,6 +134,7 @@ class GetFileParams(Params):
         default=False,
         column_name="Force Infected Download",
     )
+    target_user_id: str | None = target_user_id_param()
 
 
 class GetFileOutput(ActionOutput):
@@ -168,14 +167,6 @@ class GetFileSummary(ActionOutput):
         cef_types=["vault id"],
         example_values=["example-vault-id"],
     )
-
-
-def _get_target_user_id(asset: Asset) -> str:
-    target_user_id = (asset.target_user_id or "").strip()
-    if not target_user_id:
-        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
-
-    return target_user_id
 
 
 def _get_delegated_file_endpoint(params: GetFileParams) -> str:
@@ -221,7 +212,10 @@ def _get_client_credentials_file_endpoint(params: GetFileParams, asset: Asset) -
             file_path=file_path,
         )
 
-    target_user_id = _get_target_user_id(asset)
+    target_user_id = resolve_target_user_id(
+        params.target_user_id,
+        asset.target_user_id,
+    )
     if file_id:
         return GET_FILE_CLIENT_CREDENTIALS_FILE_ID_ENDPOINT.format(
             target_user_id=target_user_id,
@@ -285,7 +279,10 @@ def _get_client_credentials_file_content_endpoint(
             file_path=file_path,
         )
 
-    target_user_id = _get_target_user_id(asset)
+    target_user_id = resolve_target_user_id(
+        params.target_user_id,
+        asset.target_user_id,
+    )
     if file_id:
         return GET_FILE_CLIENT_CREDENTIALS_FILE_ID_CONTENT_ENDPOINT.format(
             target_user_id=target_user_id,
