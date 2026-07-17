@@ -145,6 +145,51 @@ def test_client_credentials_actions_override_asset_target_user(
 
 
 @pytest.mark.parametrize(
+    ("params", "expected_endpoint"),
+    [
+        (
+            CreateFolderParams(
+                drive_id="drive-id",
+                folder_name="Reports",
+            ),
+            "/drives/drive-id/root/children",
+        ),
+        (
+            CreateFolderParams(
+                drive_id="drive-id",
+                folder_id="folder-id",
+                folder_name="Reports",
+            ),
+            "/drives/drive-id/items/folder-id/children",
+        ),
+        (
+            CreateFolderParams(
+                drive_id="drive-id",
+                folder_path="Parent Folder",
+                folder_name="Reports",
+            ),
+            "/drives/drive-id/root:/Parent Folder:/children",
+        ),
+    ],
+)
+def test_create_folder_drive_scope_does_not_require_target_user(
+    params: CreateFolderParams,
+    expected_endpoint: str,
+) -> None:
+    assert (
+        _get_create_folder_endpoint(params, _asset(target_user_id=None))
+        == expected_endpoint
+    )
+
+
+def test_create_folder_user_scope_requires_target_user() -> None:
+    params = CreateFolderParams(folder_name="Reports")
+
+    with pytest.raises(ActionFailure, match="Target User ID is required"):
+        _get_create_folder_endpoint(params, _asset(target_user_id=None))
+
+
+@pytest.mark.parametrize(
     ("params", "endpoint_builder", "expected_endpoint"),
     [
         (

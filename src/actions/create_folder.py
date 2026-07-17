@@ -271,10 +271,6 @@ def _get_client_credentials_create_folder_endpoint(
     drive_id = params.drive_id or ""
     folder_id = params.folder_id or ""
     folder_path = (params.folder_path or "").strip("/\\")
-    target_user_id = resolve_target_user_id(
-        params.target_user_id,
-        asset.target_user_id,
-    )
 
     if drive_id:
         if folder_id:
@@ -289,6 +285,10 @@ def _get_client_credentials_create_folder_endpoint(
             )
         return LIST_ITEMS_CLIENT_CREDENTIALS_DRIVE_ID_ENDPOINT.format(drive_id=drive_id)
 
+    target_user_id = resolve_target_user_id(
+        params.target_user_id,
+        asset.target_user_id,
+    )
     if folder_id:
         return LIST_ITEMS_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT.format(
             target_user_id=target_user_id,
