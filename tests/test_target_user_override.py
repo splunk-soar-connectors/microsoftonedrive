@@ -328,9 +328,13 @@ def test_delegated_actions_ignore_target_user_override(
 def test_user_routed_actions_expose_optional_target_user_id(action_name: str) -> None:
     action = app.actions_manager.get_action(action_name)
     target_user_schema = action.meta.parameters._to_json_schema()["target_user_id"]
+    target_user_metadata = action.meta.parameters.model_fields[
+        "target_user_id"
+    ].json_schema_extra
 
     assert target_user_schema["required"] is False
     assert "overrides the asset Target User ID" in target_user_schema["description"]
+    assert "column_name" not in target_user_metadata
 
 
 def test_make_request_does_not_expose_target_user_override() -> None:

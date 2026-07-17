@@ -28,7 +28,6 @@ def target_user_id_param() -> Any:
             "User ID or user principal name that overrides the asset Target User ID "
             "for this action in Client Credentials mode"
         ),
-        column_name="Target User ID",
     )
 
 
