@@ -25,6 +25,7 @@ from src.actions.search_file import (
     _get_search_message,
     _get_search_endpoint,
     _is_filename_fallback_enabled,
+    _normalize_search_result,
 )
 from src.app import app
 from src.consts import AUTH_METHOD_CLIENT_CREDENTIALS, AUTH_METHOD_DELEGATED
@@ -189,7 +190,6 @@ def test_search_file_output_accepts_sparse_graph_result() -> None:
             "folder": {},
             "parentReference": {"driveId": "drive-id"},
             "is_folder": True,
-            "search_text": "Reports",
             "drive_id": "drive-id",
         }
     )
@@ -197,3 +197,24 @@ def test_search_file_output_accepts_sparse_graph_result() -> None:
     assert output.id == "folder-id"
     assert output.folder.childCount is None
     assert output.parentReference.driveId == "drive-id"
+
+
+def test_search_scope_parameters_are_not_duplicated_in_output_data() -> None:
+    params = SearchFileParams(
+        search_text="Reports",
+        folder_id="folder-id",
+        drive_id="requested-drive-id",
+    )
+    item = {"parentReference": {"driveId": "resolved-drive-id"}}
+
+    _normalize_search_result(item, params)
+
+    assert "search_text" in SearchFileParams.model_fields
+    assert "folder_id" in SearchFileParams.model_fields
+    assert "search_text" not in SearchFileOutput.model_fields
+    assert "folder_id" not in SearchFileOutput.model_fields
+    assert item == {
+        "parentReference": {"driveId": "resolved-drive-id"},
+        "drive_id": "resolved-drive-id",
+        "is_folder": False,
+    }

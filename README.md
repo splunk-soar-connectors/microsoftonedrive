@@ -389,8 +389,6 @@ action_result.parameter.max_results | numeric | | |
 action_result.parameter.fallback_to_filename_scan | boolean | | |
 action_result.parameter.target_user_id | string | | |
 action_result.data.\*.drive_id | string | `msonedrive drive id` | example-drive-id |
-action_result.data.\*.folder_id | string | `msonedrive folder id` | example-folder-id |
-action_result.data.\*.search_text | string | | report |
 action_result.data.\*.is_folder | boolean | | True False |
 action_result.data.\*.@microsoft.graph.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
 action_result.data.\*.createdBy.application.displayName | string | | Test_One-drive |

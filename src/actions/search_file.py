@@ -159,11 +159,6 @@ class SearchFileOutput(PermissiveActionOutput):
         cef_types=["msonedrive drive id"],
         example_values=["example-drive-id"],
     )
-    folder_id: str | None = OutputField(
-        cef_types=["msonedrive folder id"],
-        example_values=["example-folder-id"],
-    )
-    search_text: str = OutputField(example_values=["report"])
     is_folder: bool = OutputField(column_name="Is Folder", example_values=[False])
     microsoft_graph_download_url: str = OutputField(
         alias="@microsoft.graph.downloadUrl",
@@ -440,8 +435,6 @@ def _normalize_search_result(
 ) -> None:
     parent_reference = item.get(PARENT_REFERENCE_FIELD) or {}
     item["drive_id"] = parent_reference.get(PARENT_DRIVE_ID_FIELD) or params.drive_id
-    item["folder_id"] = params.folder_id
-    item["search_text"] = params.search_text
     item["is_folder"] = FOLDER_FIELD in item
 
 
