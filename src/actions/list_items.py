@@ -272,6 +272,34 @@ def _get_list_items_endpoint(params: ListItemsParams, asset: Asset) -> str:
     return _get_delegated_list_items_endpoint(params)
 
 
+def _get_list_items_child_endpoint(
+    params: ListItemsParams,
+    asset: Asset,
+    folder_id: str | None,
+) -> str:
+    if params.drive_id:
+        endpoint = (
+            LIST_ITEMS_APPLICATION_DRIVE_FOLDER_ID_ENDPOINT
+            if is_client_credentials_auth(asset)
+            else LIST_ITEMS_DRIVE_FOLDER_ID_ENDPOINT
+        )
+        return endpoint.format(
+            drive_id=params.drive_id,
+            folder_id=folder_id,
+        )
+
+    if is_client_credentials_auth(asset):
+        return LIST_ITEMS_APPLICATION_FOLDER_ID_ENDPOINT.format(
+            target_user_id=resolve_target_user_id(
+                params.target_user_id,
+                asset.target_user_id,
+            ),
+            folder_id=folder_id,
+        )
+
+    return LIST_ITEMS_FOLDER_ID_ENDPOINT.format(folder_id=folder_id)
+
+
 def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]:
     """Return every item from a paginated Microsoft Graph list response.
 
@@ -317,7 +345,6 @@ def list_items(
     params: ListItemsParams, soar: SOARClient, asset: Asset
 ) -> list[ListItemsOutput]:
     logging.info("In action handler for: list_items")
-    client_credentials_auth = is_client_credentials_auth(asset)
     endpoint = _get_list_items_endpoint(params, asset)
     logging.info(f"Using Microsoft Graph list items endpoint: {endpoint}")
 
@@ -325,14 +352,6 @@ def list_items(
         with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
             items: list[dict[str, Any]] = []
             pending_endpoints: list[str] = [endpoint]
-            target_user_id = (
-                resolve_target_user_id(
-                    params.target_user_id,
-                    asset.target_user_id,
-                )
-                if client_credentials_auth
-                else ""
-            )
 
             while pending_endpoints:
                 current_endpoint: str = pending_endpoints.pop()
@@ -344,28 +363,13 @@ def list_items(
                     items.append(child)
                     if not child.get(ITEM_FILE_FIELD):
                         child_id: str | None = child.get(ITEM_ID_FIELD)
-                        if params.drive_id:
-                            folder_endpoint = (
-                                LIST_ITEMS_APPLICATION_DRIVE_FOLDER_ID_ENDPOINT
-                                if client_credentials_auth
-                                else LIST_ITEMS_DRIVE_FOLDER_ID_ENDPOINT
+                        pending_endpoints.append(
+                            _get_list_items_child_endpoint(
+                                params,
+                                asset,
+                                child_id,
                             )
-                            pending_endpoint = folder_endpoint.format(
-                                drive_id=params.drive_id,
-                                folder_id=child_id,
-                            )
-                        elif client_credentials_auth:
-                            pending_endpoint = (
-                                LIST_ITEMS_APPLICATION_FOLDER_ID_ENDPOINT.format(
-                                    target_user_id=target_user_id,
-                                    folder_id=child_id,
-                                )
-                            )
-                        else:
-                            pending_endpoint = LIST_ITEMS_FOLDER_ID_ENDPOINT.format(
-                                folder_id=child_id
-                            )
-                        pending_endpoints.append(pending_endpoint)
+                        )
 
     except OAuthClientError as e:
         raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e

@@ -29,6 +29,7 @@ from src.actions.get_file import GetFileParams, _get_file_content_endpoint
 from src.actions.list_drive import ListDriveParams, _get_list_drives_endpoint
 from src.actions.list_items import (
     ListItemsParams,
+    _get_list_items_child_endpoint,
     _get_list_items_endpoint,
 )
 from src.actions.search_file import SearchFileParams, _get_search_endpoint
@@ -187,6 +188,52 @@ def test_create_folder_user_scope_requires_target_user() -> None:
 
     with pytest.raises(ActionFailure, match="Target User ID is required"):
         _get_create_folder_endpoint(params, _asset(target_user_id=None))
+
+
+@pytest.mark.parametrize(
+    ("params", "asset", "expected_endpoint"),
+    [
+        (
+            ListItemsParams(drive_id="drive-id"),
+            _asset(target_user_id=None),
+            "/drives/drive-id/items/folder-id/children",
+        ),
+        (
+            ListItemsParams(drive_id="drive-id"),
+            _asset(
+                auth_method=AUTH_METHOD_DELEGATED,
+                target_user_id=None,
+            ),
+            "/me/drives/drive-id/items/folder-id/children",
+        ),
+        (
+            ListItemsParams(target_user_id="action@example.com"),
+            _asset(),
+            "/users/action@example.com/drive/items/folder-id/children",
+        ),
+        (
+            ListItemsParams(target_user_id="action@example.com"),
+            _asset(
+                auth_method=AUTH_METHOD_DELEGATED,
+                target_user_id=None,
+            ),
+            "/me/drive/items/folder-id/children",
+        ),
+    ],
+)
+def test_list_items_recursive_child_endpoint_uses_requested_scope(
+    params: ListItemsParams,
+    asset: SimpleNamespace,
+    expected_endpoint: str,
+) -> None:
+    assert (
+        _get_list_items_child_endpoint(
+            params,
+            asset,
+            "folder-id",
+        )
+        == expected_endpoint
+    )
 
 
 @pytest.mark.parametrize(
