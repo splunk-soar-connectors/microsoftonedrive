@@ -85,12 +85,16 @@ def assert_vault_attachment_metadata(
 
 
 @pytest.mark.parametrize(
-    ("locator", "use_drive_id"),
+    ("locator", "use_drive_id", "force_infected_download"),
     [
-        ("file_id", False),
-        ("file_id", True),
-        ("file_path", False),
-        ("file_path", True),
+        ("file_id", False, False),
+        ("file_id", True, False),
+        ("file_path", False, False),
+        ("file_path", True, False),
+        ("file_id", False, True),
+        ("file_id", True, True),
+        ("file_path", False, True),
+        ("file_path", True, True),
     ],
 )
 def test_get_file_live_downloads_file_to_vault(
@@ -100,6 +104,7 @@ def test_get_file_live_downloads_file_to_vault(
     live_asset_config: dict[str, str],
     locator: str,
     use_drive_id: bool,
+    force_infected_download: bool,
 ) -> None:
     graph_file = create_graph_file(microsoft_graph_client, live_asset_config)
     file_id = graph_file["id"]
@@ -110,6 +115,7 @@ def test_get_file_live_downloads_file_to_vault(
         "file_id": file_id if locator == "file_id" else "",
         "drive_id": drive_id,
         "file_path": file_name if locator == "file_path" else "",
+        "force_infected_download": force_infected_download,
     }
 
     try:
@@ -124,6 +130,8 @@ def test_get_file_live_downloads_file_to_vault(
         assert output["file_name"] == file_name
         assert output["size"] == len(GET_FILE_CONTENT)
         assert output["vault_id"]
+        assert output["force_infected_download"] is force_infected_download
+        assert output["malware_flagged"] is False
         assert result.get_summary()["vault_id"] == output["vault_id"]
 
         assert_vault_attachment_metadata(

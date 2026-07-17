@@ -21,13 +21,11 @@ from soar_sdk.params import Param, Params
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
+from ..target_user import resolve_target_user_id, target_user_id_param
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
-)
-TARGET_USER_ID_REQUIRED_MESSAGE = (
-    "Target User ID is required for Client Credentials authentication"
 )
 DELETE_FOLDER_SUCCESS_MESSAGE = "The folder is deleted successfully"
 MANDATORY_FOLDER_ID_OR_PATH_MESSAGE = "Either Folder ID or Folder Path is mandatory"
@@ -68,18 +66,11 @@ class DeleteFolderParams(Params):
         cef_types=["msonedrive folder path"],
         column_name="Folder Path",
     )
+    target_user_id: str | None = target_user_id_param()
 
 
 class DeleteFolderOutput(ActionOutput):
     pass
-
-
-def _get_target_user_id(asset: Asset) -> str:
-    target_user_id = (asset.target_user_id or "").strip()
-    if not target_user_id:
-        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
-
-    return target_user_id
 
 
 def _get_delegated_delete_folder_endpoint(params: DeleteFolderParams) -> str:
@@ -127,7 +118,10 @@ def _get_client_credentials_delete_folder_endpoint(
             folder_path=folder_path,
         )
 
-    target_user_id = _get_target_user_id(asset)
+    target_user_id = resolve_target_user_id(
+        params.target_user_id,
+        asset.target_user_id,
+    )
     if folder_id:
         return DELETE_FOLDER_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT.format(
             target_user_id=target_user_id,

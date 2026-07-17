@@ -28,13 +28,11 @@ from soar_sdk.params import Param, Params
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
+from ..target_user import resolve_target_user_id, target_user_id_param
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
-)
-TARGET_USER_ID_REQUIRED_MESSAGE = (
-    "Target User ID is required for Client Credentials authentication"
 )
 CREATE_FOLDER_SUCCESS_MESSAGE = "The folder: {folder_name} is created successfully"
 GRAPH_CONFLICT_BEHAVIOR_FIELD = "@microsoft.graph.conflictBehavior"
@@ -88,6 +86,7 @@ class CreateFolderParams(Params):
         description="Folder name", primary=True, cef_types=["msonedrive folder name"]
     )
     auto_rename: bool | None = Param(description="Auto rename folder", default=True)
+    target_user_id: str | None = target_user_id_param()
 
 
 class ApplicationOutput(ActionOutput):
@@ -241,14 +240,6 @@ class CreateFolderOutput(ActionOutput):
             yield field
 
 
-def _get_target_user_id(asset: Asset) -> str:
-    target_user_id = (asset.target_user_id or "").strip()
-    if not target_user_id:
-        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
-
-    return target_user_id
-
-
 def _get_delegated_create_folder_endpoint(params: CreateFolderParams) -> str:
     drive_id = params.drive_id or ""
     folder_id = params.folder_id or ""
@@ -280,7 +271,6 @@ def _get_client_credentials_create_folder_endpoint(
     drive_id = params.drive_id or ""
     folder_id = params.folder_id or ""
     folder_path = (params.folder_path or "").strip("/\\")
-    target_user_id = _get_target_user_id(asset)
 
     if drive_id:
         if folder_id:
@@ -295,6 +285,10 @@ def _get_client_credentials_create_folder_endpoint(
             )
         return LIST_ITEMS_CLIENT_CREDENTIALS_DRIVE_ID_ENDPOINT.format(drive_id=drive_id)
 
+    target_user_id = resolve_target_user_id(
+        params.target_user_id,
+        asset.target_user_id,
+    )
     if folder_id:
         return LIST_ITEMS_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT.format(
             target_user_id=target_user_id,

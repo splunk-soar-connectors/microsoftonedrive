@@ -32,13 +32,11 @@ from soar_sdk.params import Param, Params
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
+from ..target_user import resolve_target_user_id, target_user_id_param
 
 
 AUTHORIZATION_REQUIRED_MESSAGE = (
     "Token not available. Please run Test Connectivity first."
-)
-TARGET_USER_ID_REQUIRED_MESSAGE = (
-    "Target User ID is required for Client Credentials authentication"
 )
 UNABLE_TO_RETRIEVE_VAULT_ITEM_MESSAGE = "Unable to retrieve vault item details"
 VAULT_PATH_ABSENT_MESSAGE = "Vault path not accessible for provided Vault ID"
@@ -99,6 +97,7 @@ class UploadFileParams(Params):
         description="File path with file name", primary=True, cef_types=["file path"]
     )
     auto_rename: bool | None = Param(description="Auto rename file", default=True)
+    target_user_id: str | None = target_user_id_param()
 
 
 class HashesOutput(ActionOutput):
@@ -281,14 +280,6 @@ class UploadFileOutput(ActionOutput):
             yield field
 
 
-def _get_target_user_id(asset: Asset) -> str:
-    target_user_id = (asset.target_user_id or "").strip()
-    if not target_user_id:
-        raise ActionFailure(TARGET_USER_ID_REQUIRED_MESSAGE)
-
-    return target_user_id
-
-
 def _get_delegated_upload_session_endpoint(params: UploadFileParams) -> str:
     drive_id = params.drive_id or ""
     file_path = params.file_path.strip("/\\")
@@ -314,7 +305,10 @@ def _get_client_credentials_upload_session_endpoint(
         )
 
     return CREATE_UPLOAD_SESSION_CLIENT_CREDENTIALS_NO_DRIVE_ENDPOINT.format(
-        target_user_id=_get_target_user_id(asset),
+        target_user_id=resolve_target_user_id(
+            params.target_user_id,
+            asset.target_user_id,
+        ),
         file_path=file_path,
     )
 

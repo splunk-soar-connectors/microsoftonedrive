@@ -142,6 +142,7 @@ VARIABLE | REQUIRED | TYPE | DESCRIPTION
 [get file](#action-get-file) - Download a file from server and add it to the vault <br>
 [list items](#action-list-items) - List of items <br>
 [list drive](#action-list-drive) - List of Drives <br>
+[search file](#action-search-file) - Search for files or folders by name or content <br>
 [upload file](#action-upload-file) - Upload file <br>
 [delete file](#action-delete-file) - Delete file <br>
 [delete folder](#action-delete-folder) - Delete a folder <br>
@@ -222,6 +223,8 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **file_id** | optional | ID of file | string | `msonedrive file id` |
 **drive_id** | optional | Drive ID | string | `msonedrive drive id` |
 **file_path** | optional | Path of file | string | `file path` |
+**force_infected_download** | optional | Download a file that Microsoft has flagged as infected by sending the Prefer: forceInfectedDownload header | boolean | |
+**target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
 
 #### Action Output
 
@@ -232,9 +235,13 @@ action_result.message | string | | |
 action_result.parameter.file_id | string | `msonedrive file id` | |
 action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.file_path | string | `file path` | |
+action_result.parameter.force_infected_download | boolean | | |
+action_result.parameter.target_user_id | string | | |
 action_result.data.\*.file_name | string | | filetxt.txt |
 action_result.data.\*.vault_id | string | `vault id` | example-vault-id |
 action_result.data.\*.size | numeric | `file size` | 4 |
+action_result.data.\*.force_infected_download | boolean | | True False |
+action_result.data.\*.malware_flagged | boolean | | True False |
 action_result.summary.vault_id | string | `vault id` | example-vault-id |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
@@ -253,6 +260,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **drive_id** | optional | Parent drive ID | string | `msonedrive drive id` |
 **folder_id** | optional | Parent folder ID | string | `msonedrive folder id` |
 **folder_path** | optional | Parent folder path | string | `msonedrive folder path` |
+**target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
 
 #### Action Output
 
@@ -263,6 +271,7 @@ action_result.message | string | | |
 action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.folder_id | string | `msonedrive folder id` | |
 action_result.parameter.folder_path | string | `msonedrive folder path` | |
+action_result.parameter.target_user_id | string | | |
 action_result.data.\*.drive_id | string | `msonedrive drive id` | example-drive-id |
 action_result.data.\*.folder_id | string | `msonedrive folder id` | example-folder-id |
 action_result.data.\*.folder_path | string | `msonedrive folder path` | Test/child |
@@ -313,7 +322,9 @@ Read only: **True**
 
 #### Action Parameters
 
-No parameters are required for this action
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
 
 #### Action Output
 
@@ -321,6 +332,7 @@ DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
 --------- | ---- | -------- | --------------
 action_result.status | string | | success failure |
 action_result.message | string | | |
+action_result.parameter.target_user_id | string | | |
 action_result.data.\*.name | string | | OneDrive |
 action_result.data.\*.driveType | string | | business |
 action_result.data.\*.id | string | `msonedrive drive id` | b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123 |
@@ -346,6 +358,68 @@ action_result.summary.total_drives | numeric | | 1 |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
+## action: 'search file'
+
+Search for files or folders by name or content
+
+Type: **investigate** <br>
+Read only: **True**
+
+#### Action Parameters
+
+PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
+--------- | -------- | ----------- | ---- | --------
+**search_text** | required | Text to search for in file or folder names and content | string | |
+**drive_id** | optional | Drive ID | string | `msonedrive drive id` |
+**folder_id** | optional | Folder ID to limit search scope | string | `msonedrive folder id` |
+**max_results** | optional | Maximum number of matching items to return, capped at 200 | numeric | |
+**fallback_to_filename_scan** | optional | In Client Credentials mode, recursively scan file and folder names when Microsoft Graph search is forbidden or returns no results. The scan stops after 100 Microsoft Graph requests | boolean | |
+**target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
+
+#### Action Output
+
+DATA PATH | TYPE | CONTAINS | EXAMPLE VALUES
+--------- | ---- | -------- | --------------
+action_result.status | string | | success failure |
+action_result.message | string | | |
+action_result.parameter.search_text | string | | |
+action_result.parameter.drive_id | string | `msonedrive drive id` | |
+action_result.parameter.folder_id | string | `msonedrive folder id` | |
+action_result.parameter.max_results | numeric | | |
+action_result.parameter.fallback_to_filename_scan | boolean | | |
+action_result.parameter.target_user_id | string | | |
+action_result.data.\*.drive_id | string | `msonedrive drive id` | example-drive-id |
+action_result.data.\*.is_folder | boolean | | True False |
+action_result.data.\*.@microsoft.graph.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
+action_result.data.\*.createdBy.application.displayName | string | | Test_One-drive |
+action_result.data.\*.createdBy.application.id | string | | ba56002c-856c-469f-b6a0-a4335614c502 |
+action_result.data.\*.createdBy.user.displayName | string | `user name` | Test User |
+action_result.data.\*.createdBy.user.email | string | `email` | test@test.xyz.com |
+action_result.data.\*.createdBy.user.id | string | | 17be00d0-35ed-4881-ab62-d2eb73c2ebe3 |
+action_result.data.\*.createdDateTime | string | | 2018-09-01T09:21:24Z |
+action_result.data.\*.file.hashes.quickXorHash | string | | fio2VWDQgVGaX34LXedeos6Y6/s= |
+action_result.data.\*.file.hashes.sha1Hash | string | | example-sha1 |
+action_result.data.\*.file.hashes.sha256Hash | string | | example-sha256 |
+action_result.data.\*.file.mimeType | string | | image/png |
+action_result.data.\*.folder.childCount | numeric | | 17 |
+action_result.data.\*.id | string | `msonedrive file id` `msonedrive folder id` | 01TEST123TEST123TEST123U3KTTEST123 |
+action_result.data.\*.lastModifiedBy.application.displayName | string | | Test_One-drive |
+action_result.data.\*.lastModifiedBy.application.id | string | | ba56002c-856c-469f-b6a0-a4335614c502 |
+action_result.data.\*.lastModifiedBy.user.displayName | string | `user name` | Test User |
+action_result.data.\*.lastModifiedBy.user.email | string | `email` | test@test.xyz.com |
+action_result.data.\*.lastModifiedBy.user.id | string | | 17be00d0-35ed-4881-ab62-d2eb73c2ebe3 |
+action_result.data.\*.lastModifiedDateTime | string | | 2018-09-01T10:37:09Z |
+action_result.data.\*.name | string | | test file |
+action_result.data.\*.parentReference.driveId | string | `msonedrive drive id` | example-drive-id |
+action_result.data.\*.parentReference.driveType | string | | business |
+action_result.data.\*.parentReference.id | string | `msonedrive drive id` `msonedrive folder id` | example-parent-reference-id |
+action_result.data.\*.parentReference.path | string | | /drive/root:/Test |
+action_result.data.\*.size | numeric | `file size` | 359666 |
+action_result.data.\*.webUrl | string | `url` | https://test-my.test.com/personal/test_abc_com/Documents/Test |
+action_result.summary.total_items_found | numeric | | 1 |
+summary.total_objects | numeric | | 1 |
+summary.total_objects_successful | numeric | | 1 |
+
 ## action: 'upload file'
 
 Upload file
@@ -361,6 +435,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **vault_id** | required | Vault ID | string | `vault id` `sha1` |
 **file_path** | required | File path with file name | string | `file path` |
 **auto_rename** | optional | Auto rename file | boolean | |
+**target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
 
 #### Action Output
 
@@ -372,6 +447,7 @@ action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.vault_id | string | `vault id` `sha1` | |
 action_result.parameter.file_path | string | `file path` | |
 action_result.parameter.auto_rename | boolean | | |
+action_result.parameter.target_user_id | string | | |
 action_result.data.\*.@content.downloadUrl | string | `url` | https://test-my.abc.com/test/test_xyz_com/\_layouts/00/download.aspx?UniqueId=test&ApiVersion=2.0 |
 action_result.data.\*.@odata.context | string | `url` | https://test-my.abc.com/personal/test_abc_com/\_api/v2.0/$metadata#items/$entity |
 action_result.data.\*.@odata.editLink | string | | drives/b!gy8xtu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q/items/01FMDEUQ532OAQOAAUFVCL6MDY7H3CUEKN |
@@ -422,6 +498,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **file_id** | optional | File id | string | `msonedrive file id` |
 **drive_id** | optional | Drive id | string | `msonedrive drive id` |
 **file_path** | optional | Path of file | string | `file path` |
+**target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
 
 #### Action Output
 
@@ -432,6 +509,7 @@ action_result.message | string | | |
 action_result.parameter.file_id | string | `msonedrive file id` | |
 action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.file_path | string | `file path` | |
+action_result.parameter.target_user_id | string | | |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -449,6 +527,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **drive_id** | optional | Parent drive ID | string | `msonedrive drive id` |
 **folder_id** | optional | Folder ID | string | `msonedrive folder id` |
 **folder_path** | optional | Folder path | string | `msonedrive folder path` |
+**target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
 
 #### Action Output
 
@@ -459,6 +538,7 @@ action_result.message | string | | |
 action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.folder_id | string | `msonedrive folder id` | |
 action_result.parameter.folder_path | string | `msonedrive folder path` | |
+action_result.parameter.target_user_id | string | | |
 summary.total_objects | numeric | | 1 |
 summary.total_objects_successful | numeric | | 1 |
 
@@ -478,6 +558,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **folder_path** | optional | Parent folder path | string | `msonedrive folder path` |
 **folder_name** | required | Folder name | string | `msonedrive folder name` |
 **auto_rename** | optional | Auto rename folder | boolean | |
+**target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
 
 #### Action Output
 
@@ -490,6 +571,7 @@ action_result.parameter.folder_id | string | `msonedrive folder id` | |
 action_result.parameter.folder_path | string | `msonedrive folder path` | |
 action_result.parameter.folder_name | string | `msonedrive folder name` | |
 action_result.parameter.auto_rename | boolean | | |
+action_result.parameter.target_user_id | string | | |
 action_result.data.\*.parentReference.driveId | string | `msonedrive drive id` | b!gy8txu3_CUGGzSNOtUDsfa7hXaCCfLxItT-7xwy5GBi-M3iaikaERJQb3tinpt9q |
 action_result.data.\*.parentReference.drivePath | string | | /drives/b!test123_TESTzTEST123faTEST123LTEST-7TEST123-MTEST123RJQb3TEST123/root:/ |
 action_result.data.\*.parentReference.driveType | string | | business |
