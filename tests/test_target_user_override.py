@@ -33,10 +33,10 @@ from src.actions.list_items import (
     _get_list_items_endpoint,
 )
 from src.actions.search_file import SearchFileParams, _get_search_endpoint
-from src.actions.target_user import resolve_target_user_id
 from src.actions.upload_file import UploadFileParams, _get_upload_session_endpoint
 from src.app import app
 from src.consts import AUTH_METHOD_CLIENT_CREDENTIALS, AUTH_METHOD_DELEGATED
+from src.target_user import resolve_target_user_id
 
 
 EndpointBuilder = Callable[[Any, SimpleNamespace], str]

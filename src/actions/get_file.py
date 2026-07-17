@@ -26,7 +26,7 @@ from soar_sdk.params import Param, Params
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
 from ..graph import get_graph_client
-from .target_user import resolve_target_user_id, target_user_id_param
+from ..target_user import resolve_target_user_id, target_user_id_param
 
 
 DOWNLOAD_URL_FIELD = "@microsoft.graph.downloadUrl"
