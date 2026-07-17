@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import urllib.parse
+from dataclasses import dataclass
 from typing import Any
 
 import httpx
@@ -38,6 +39,7 @@ PARENT_DRIVE_ID_FIELD = "driveId"
 FOLDER_FIELD = "folder"
 DEFAULT_MAX_RESULTS = 100
 MAX_RESULTS_LIMIT = 200
+MAX_FILENAME_SCAN_REQUESTS = 100
 INVALID_MAX_RESULTS_MESSAGE = "Max Results must be greater than zero"
 SEARCH_DELEGATED_DEFAULT_ENDPOINT = "/me/drive/root/search(q='{search_text}')"
 SEARCH_DELEGATED_FOLDER_ID_ENDPOINT = (
@@ -86,6 +88,16 @@ class SearchFileParams(Params):
         description="Maximum number of matching items to return, capped at 200",
         default=DEFAULT_MAX_RESULTS,
         column_name="Max Results",
+    )
+    fallback_to_filename_scan: bool | None = Param(
+        description=(
+            "In Client Credentials mode, recursively scan file and folder names "
+            "when Microsoft Graph search is forbidden or returns no results. "
+            f"The scan stops after {MAX_FILENAME_SCAN_REQUESTS} Microsoft Graph "
+            "requests"
+        ),
+        default=False,
+        column_name="Fallback to Filename Scan",
     )
     target_user_id: str | None = target_user_id_param()
 
@@ -191,6 +203,12 @@ class SearchFileSummary(ActionOutput):
     total_items_found: int = OutputField(example_values=[1])
 
 
+@dataclass(frozen=True)
+class _FilenameScanResult:
+    items: list[dict[str, Any]]
+    request_limit_reached: bool = False
+
+
 def _encode_search_text(search_text: str) -> str:
     escaped_search_text = search_text.replace("'", "''")
     return urllib.parse.quote(escaped_search_text, safe="")
@@ -203,6 +221,13 @@ def _get_max_results(params: SearchFileParams) -> int:
     if max_results <= 0:
         raise ActionFailure(INVALID_MAX_RESULTS_MESSAGE)
     return min(max_results, MAX_RESULTS_LIMIT)
+
+
+def _is_filename_fallback_enabled(
+    params: SearchFileParams,
+    asset: Asset,
+) -> bool:
+    return is_client_credentials_auth(asset) and bool(params.fallback_to_filename_scan)
 
 
 def _get_delegated_search_endpoint(params: SearchFileParams) -> str:
@@ -327,7 +352,8 @@ def _get_filename_search_response(
     search_text: str,
     *,
     max_results: int,
-) -> list[dict[str, Any]]:
+    max_requests: int = MAX_FILENAME_SCAN_REQUESTS,
+) -> _FilenameScanResult:
     if folder_id:
         first_endpoint = SEARCH_DRIVE_FOLDER_CHILDREN_ENDPOINT.format(
             drive_id=drive_id,
@@ -342,12 +368,20 @@ def _get_filename_search_response(
     pending_endpoints: list[str] = [first_endpoint]
     visited_folder_ids: set[str] = set()
     normalized_search_text = search_text.casefold()
+    requests_made = 0
 
     while pending_endpoints and len(matches) < max_results:
         next_endpoint: str | None = pending_endpoints.pop()
         query_params: dict[str, Any] | None = {"$top": MAX_RESULTS_LIMIT}
 
         while next_endpoint and len(matches) < max_results:
+            if requests_made >= max_requests:
+                return _FilenameScanResult(
+                    items=matches,
+                    request_limit_reached=True,
+                )
+
+            requests_made += 1
             response = graph_client.get(next_endpoint, params=query_params)
             response.raise_for_status()
             response_json = response.json()
@@ -375,7 +409,29 @@ def _get_filename_search_response(
             next_endpoint = response_json.get(GRAPH_NEXT_LINK_FIELD)
             query_params = None
 
-    return matches
+    return _FilenameScanResult(items=matches)
+
+
+def _get_search_message(
+    total_items_found: int,
+    *,
+    filename_fallback_used: bool,
+    filename_scan_incomplete: bool,
+) -> str:
+    message = f"Total items found: {total_items_found}"
+    if not filename_fallback_used:
+        return message
+
+    message += (
+        ". Microsoft Graph app-only content search was unavailable or not yet "
+        "indexed, so results were matched by file or folder name."
+    )
+    if filename_scan_incomplete:
+        message += (
+            f" The filename scan reached the limit of {MAX_FILENAME_SCAN_REQUESTS} "
+            "Microsoft Graph requests, so results may be incomplete."
+        )
+    return message
 
 
 def _normalize_search_result(
@@ -395,7 +451,9 @@ def search_file(
     logging.info("In action handler for: search_file")
     max_results = _get_max_results(params)
     client_credentials_auth = is_client_credentials_auth(asset)
+    filename_fallback_enabled = _is_filename_fallback_enabled(params, asset)
     filename_fallback_used = False
+    filename_scan_incomplete = False
 
     try:
         with get_graph_client(asset, str(soar.get_asset_id())) as graph_client:
@@ -418,32 +476,37 @@ def search_file(
                     max_results=max_results,
                 )
             except httpx.HTTPStatusError as e:
-                if not client_credentials_auth or e.response.status_code != 403:
+                if (
+                    not filename_fallback_enabled
+                    or e.response.status_code != httpx.codes.FORBIDDEN
+                ):
                     raise
                 logging.warning(
                     "Microsoft Graph denied app-only drive search; using "
                     "filename matching over drive children"
                 )
-                items = _get_filename_search_response(
+                filename_scan = _get_filename_search_response(
                     graph_client,
                     resolved_drive_id,
                     params.folder_id,
                     params.search_text,
                     max_results=max_results,
                 )
+                items = filename_scan.items
                 filename_fallback_used = True
+                filename_scan_incomplete = filename_scan.request_limit_reached
 
-            if client_credentials_auth and not items and not filename_fallback_used:
-                filename_matches = _get_filename_search_response(
+            if filename_fallback_enabled and not items and not filename_fallback_used:
+                filename_scan = _get_filename_search_response(
                     graph_client,
                     resolved_drive_id,
                     params.folder_id,
                     params.search_text,
                     max_results=max_results,
                 )
-                if filename_matches:
-                    items = filename_matches
-                    filename_fallback_used = True
+                items = filename_scan.items
+                filename_fallback_used = True
+                filename_scan_incomplete = filename_scan.request_limit_reached
     except OAuthClientError as e:
         raise ActionFailure(AUTHORIZATION_REQUIRED_MESSAGE) from e
 
@@ -452,12 +515,11 @@ def search_file(
 
     total_items_found = len(items)
     soar.set_summary(SearchFileSummary(total_items_found=total_items_found))
-    if filename_fallback_used:
-        soar.set_message(
-            f"Total items found: {total_items_found}. Microsoft Graph app-only "
-            "content search was unavailable or not yet indexed, so results were "
-            "matched by file or folder name."
+    soar.set_message(
+        _get_search_message(
+            total_items_found,
+            filename_fallback_used=filename_fallback_used,
+            filename_scan_incomplete=filename_scan_incomplete,
         )
-    else:
-        soar.set_message(f"Total items found: {total_items_found}")
+    )
     return [SearchFileOutput(**item) for item in items]

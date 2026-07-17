@@ -17,10 +17,14 @@ import pytest
 from soar_sdk.exceptions import ActionFailure
 
 from src.actions.search_file import (
+    MAX_FILENAME_SCAN_REQUESTS,
     SearchFileOutput,
     SearchFileParams,
+    _get_filename_search_response,
     _get_max_results,
+    _get_search_message,
     _get_search_endpoint,
+    _is_filename_fallback_enabled,
 )
 from src.app import app
 from src.consts import AUTH_METHOD_CLIENT_CREDENTIALS, AUTH_METHOD_DELEGATED
@@ -104,6 +108,77 @@ def test_search_file_caps_max_results() -> None:
         _get_max_results(SearchFileParams(search_text="Quarterly", max_results=500))
         == 200
     )
+
+
+def test_filename_fallback_defaults_to_disabled() -> None:
+    params = SearchFileParams(search_text="Quarterly")
+
+    assert (
+        _is_filename_fallback_enabled(
+            params,
+            _asset(auth_method=AUTH_METHOD_CLIENT_CREDENTIALS),
+        )
+        is False
+    )
+
+
+def test_search_file_exposes_optional_filename_fallback() -> None:
+    action = app.actions_manager.get_action("search_file")
+    fallback_schema = action.meta.parameters._to_json_schema()[
+        "fallback_to_filename_scan"
+    ]
+
+    assert fallback_schema["required"] is False
+    assert fallback_schema["default"] is False
+
+
+@pytest.mark.parametrize(
+    ("auth_method", "fallback_to_filename_scan", "expected"),
+    [
+        (AUTH_METHOD_CLIENT_CREDENTIALS, False, False),
+        (AUTH_METHOD_CLIENT_CREDENTIALS, True, True),
+        (AUTH_METHOD_DELEGATED, True, False),
+    ],
+)
+def test_filename_fallback_requires_explicit_client_credentials_opt_in(
+    auth_method: str,
+    fallback_to_filename_scan: bool,
+    expected: bool,
+) -> None:
+    params = SearchFileParams(
+        search_text="Quarterly",
+        fallback_to_filename_scan=fallback_to_filename_scan,
+    )
+
+    assert (
+        _is_filename_fallback_enabled(params, _asset(auth_method=auth_method))
+        is expected
+    )
+
+
+def test_filename_scan_stops_when_request_budget_is_exhausted() -> None:
+    filename_scan = _get_filename_search_response(
+        None,
+        "drive-id",
+        None,
+        "Quarterly",
+        max_results=10,
+        max_requests=0,
+    )
+
+    assert filename_scan.items == []
+    assert filename_scan.request_limit_reached is True
+
+
+def test_filename_scan_limit_is_reported_as_incomplete() -> None:
+    message = _get_search_message(
+        2,
+        filename_fallback_used=True,
+        filename_scan_incomplete=True,
+    )
+
+    assert f"limit of {MAX_FILENAME_SCAN_REQUESTS} Microsoft Graph requests" in message
+    assert "results may be incomplete" in message
 
 
 def test_search_file_output_accepts_sparse_graph_result() -> None:

@@ -100,6 +100,23 @@ def test_search_file_live_finds_file_by_supported_scope(
         graph_file = create_graph_file(microsoft_graph_client, folder)
         file_id = graph_file["id"]
         file_name = graph_file["name"]
+
+        default_result = run_search_file_action(
+            connector_app,
+            build_soar_action_input,
+            {
+                "search_text": file_name,
+                "drive_id": drive_id,
+                "folder_id": folder_id,
+                "max_results": 10,
+            },
+        )
+        default_message = default_result.get_message()
+        if default_result.get_status():
+            assert "matched by file or folder name" not in default_message
+        else:
+            assert "403" in default_message or "Forbidden" in default_message
+
         for use_drive_id, use_folder_id in (
             (True, False),
             (True, True),
@@ -114,6 +131,7 @@ def test_search_file_live_finds_file_by_supported_scope(
                     "drive_id": drive_id if use_drive_id else "",
                     "folder_id": folder_id if use_folder_id else "",
                     "max_results": 10,
+                    "fallback_to_filename_scan": True,
                 },
             )
 
@@ -126,6 +144,7 @@ def test_search_file_live_finds_file_by_supported_scope(
             assert matching_items[0]["drive_id"] == drive_id
             assert matching_items[0]["is_folder"] is False
             assert result.get_summary()["total_items_found"] >= 1
+            assert "results may be incomplete" not in result.get_message()
     finally:
         delete_graph_folder_if_exists(
             microsoft_graph_client,

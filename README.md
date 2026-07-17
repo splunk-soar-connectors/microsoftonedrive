@@ -373,6 +373,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **drive_id** | optional | Drive ID | string | `msonedrive drive id` |
 **folder_id** | optional | Folder ID to limit search scope | string | `msonedrive folder id` |
 **max_results** | optional | Maximum number of matching items to return, capped at 200 | numeric | |
+**fallback_to_filename_scan** | optional | In Client Credentials mode, recursively scan file and folder names when Microsoft Graph search is forbidden or returns no results. The scan stops after 100 Microsoft Graph requests | boolean | |
 **target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
 
 #### Action Output
@@ -385,6 +386,7 @@ action_result.parameter.search_text | string | | |
 action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.folder_id | string | `msonedrive folder id` | |
 action_result.parameter.max_results | numeric | | |
+action_result.parameter.fallback_to_filename_scan | boolean | | |
 action_result.parameter.target_user_id | string | | |
 action_result.data.\*.drive_id | string | `msonedrive drive id` | example-drive-id |
 action_result.data.\*.folder_id | string | `msonedrive folder id` | example-folder-id |
