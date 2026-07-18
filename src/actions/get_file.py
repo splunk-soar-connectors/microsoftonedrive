@@ -25,7 +25,7 @@ from soar_sdk.params import Param, Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
-from ..graph import get_graph_client
+from ..graph import encode_graph_id, encode_graph_path, get_graph_client
 from ..target_user import resolve_target_user_id, target_user_id_param
 
 
@@ -170,9 +170,9 @@ class GetFileSummary(ActionOutput):
 
 
 def _get_delegated_file_endpoint(params: GetFileParams) -> str:
-    file_id = params.file_id or ""
-    drive_id = params.drive_id or ""
-    file_path = (params.file_path or "").strip("/\\")
+    file_id = encode_graph_id(params.file_id or "")
+    drive_id = encode_graph_id(params.drive_id or "")
+    file_path = encode_graph_path((params.file_path or "").strip("/\\"))
 
     if not file_id and not file_path:
         raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
@@ -194,9 +194,9 @@ def _get_delegated_file_endpoint(params: GetFileParams) -> str:
 
 
 def _get_client_credentials_file_endpoint(params: GetFileParams, asset: Asset) -> str:
-    file_id = params.file_id or ""
-    drive_id = params.drive_id or ""
-    file_path = (params.file_path or "").strip("/\\")
+    file_id = encode_graph_id(params.file_id or "")
+    drive_id = encode_graph_id(params.drive_id or "")
+    file_path = encode_graph_path((params.file_path or "").strip("/\\"))
 
     if not file_id and not file_path:
         raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
@@ -212,9 +212,8 @@ def _get_client_credentials_file_endpoint(params: GetFileParams, asset: Asset) -
             file_path=file_path,
         )
 
-    target_user_id = resolve_target_user_id(
-        params.target_user_id,
-        asset.target_user_id,
+    target_user_id = encode_graph_id(
+        resolve_target_user_id(params.target_user_id, asset.target_user_id)
     )
     if file_id:
         return GET_FILE_CLIENT_CREDENTIALS_FILE_ID_ENDPOINT.format(
@@ -235,9 +234,9 @@ def _get_file_endpoint(params: GetFileParams, asset: Asset) -> str:
 
 
 def _get_delegated_file_content_endpoint(params: GetFileParams) -> str:
-    file_id = params.file_id or ""
-    drive_id = params.drive_id or ""
-    file_path = (params.file_path or "").strip("/\\")
+    file_id = encode_graph_id(params.file_id or "")
+    drive_id = encode_graph_id(params.drive_id or "")
+    file_path = encode_graph_path((params.file_path or "").strip("/\\"))
 
     if not file_id and not file_path:
         raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
@@ -261,9 +260,9 @@ def _get_delegated_file_content_endpoint(params: GetFileParams) -> str:
 def _get_client_credentials_file_content_endpoint(
     params: GetFileParams, asset: Asset
 ) -> str:
-    file_id = params.file_id or ""
-    drive_id = params.drive_id or ""
-    file_path = (params.file_path or "").strip("/\\")
+    file_id = encode_graph_id(params.file_id or "")
+    drive_id = encode_graph_id(params.drive_id or "")
+    file_path = encode_graph_path((params.file_path or "").strip("/\\"))
 
     if not file_id and not file_path:
         raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
@@ -279,9 +278,8 @@ def _get_client_credentials_file_content_endpoint(
             file_path=file_path,
         )
 
-    target_user_id = resolve_target_user_id(
-        params.target_user_id,
-        asset.target_user_id,
+    target_user_id = encode_graph_id(
+        resolve_target_user_id(params.target_user_id, asset.target_user_id)
     )
     if file_id:
         return GET_FILE_CLIENT_CREDENTIALS_FILE_ID_CONTENT_ENDPOINT.format(

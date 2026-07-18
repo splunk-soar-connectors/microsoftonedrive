@@ -22,7 +22,7 @@ from soar_sdk.params import Param, Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
-from ..graph import get_graph_client
+from ..graph import encode_graph_id, encode_graph_path, get_graph_client
 from ..target_user import resolve_target_user_id, target_user_id_param
 
 
@@ -204,9 +204,9 @@ class ListItemsSummary(ActionOutput):
 
 
 def _get_delegated_list_items_endpoint(params: ListItemsParams) -> str:
-    drive_id: str = params.drive_id or ""
-    folder_id: str = params.folder_id or ""
-    folder_path: str = (params.folder_path or "").strip("/\\")
+    drive_id = encode_graph_id(params.drive_id or "")
+    folder_id = encode_graph_id(params.folder_id or "")
+    folder_path = encode_graph_path((params.folder_path or "").strip("/\\"))
 
     if drive_id:
         if folder_id:
@@ -231,9 +231,9 @@ def _get_delegated_list_items_endpoint(params: ListItemsParams) -> str:
 def _get_client_credentials_list_items_endpoint(
     params: ListItemsParams, asset: Asset
 ) -> str:
-    drive_id: str = params.drive_id or ""
-    folder_id: str = params.folder_id or ""
-    folder_path: str = (params.folder_path or "").strip("/\\")
+    drive_id = encode_graph_id(params.drive_id or "")
+    folder_id = encode_graph_id(params.folder_id or "")
+    folder_path = encode_graph_path((params.folder_path or "").strip("/\\"))
 
     if drive_id:
         if folder_id:
@@ -248,9 +248,8 @@ def _get_client_credentials_list_items_endpoint(
             )
         return LIST_ITEMS_APPLICATION_DRIVE_ID_ENDPOINT.format(drive_id=drive_id)
 
-    target_user_id = resolve_target_user_id(
-        params.target_user_id,
-        asset.target_user_id,
+    target_user_id = encode_graph_id(
+        resolve_target_user_id(params.target_user_id, asset.target_user_id)
     )
     if folder_id:
         return LIST_ITEMS_APPLICATION_FOLDER_ID_ENDPOINT.format(
@@ -284,20 +283,21 @@ def _get_list_items_child_endpoint(
             else LIST_ITEMS_DRIVE_FOLDER_ID_ENDPOINT
         )
         return endpoint.format(
-            drive_id=params.drive_id,
-            folder_id=folder_id,
+            drive_id=encode_graph_id(params.drive_id),
+            folder_id=encode_graph_id(folder_id or ""),
         )
 
     if is_client_credentials_auth(asset):
         return LIST_ITEMS_APPLICATION_FOLDER_ID_ENDPOINT.format(
-            target_user_id=resolve_target_user_id(
-                params.target_user_id,
-                asset.target_user_id,
+            target_user_id=encode_graph_id(
+                resolve_target_user_id(params.target_user_id, asset.target_user_id)
             ),
-            folder_id=folder_id,
+            folder_id=encode_graph_id(folder_id or ""),
         )
 
-    return LIST_ITEMS_FOLDER_ID_ENDPOINT.format(folder_id=folder_id)
+    return LIST_ITEMS_FOLDER_ID_ENDPOINT.format(
+        folder_id=encode_graph_id(folder_id or "")
+    )
 
 
 def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]:

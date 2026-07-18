@@ -22,7 +22,7 @@ from soar_sdk.params import Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
-from ..graph import get_graph_client
+from ..graph import encode_graph_id, get_graph_client
 from ..target_user import resolve_target_user_id, target_user_id_param
 
 
@@ -152,9 +152,8 @@ def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]
 def _get_list_drives_endpoint(params: ListDriveParams, asset: Asset) -> str:
     if is_client_credentials_auth(asset):
         return LIST_DRIVES_CLIENT_CREDENTIALS_ENDPOINT.format(
-            target_user_id=resolve_target_user_id(
-                params.target_user_id,
-                asset.target_user_id,
+            target_user_id=encode_graph_id(
+                resolve_target_user_id(params.target_user_id, asset.target_user_id)
             )
         )
 

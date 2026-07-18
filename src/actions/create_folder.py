@@ -27,7 +27,7 @@ from soar_sdk.params import Param, Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
-from ..graph import get_graph_client
+from ..graph import encode_graph_id, encode_graph_path, get_graph_client
 from ..target_user import resolve_target_user_id, target_user_id_param
 
 
@@ -241,9 +241,9 @@ class CreateFolderOutput(ActionOutput):
 
 
 def _get_delegated_create_folder_endpoint(params: CreateFolderParams) -> str:
-    drive_id = params.drive_id or ""
-    folder_id = params.folder_id or ""
-    folder_path = (params.folder_path or "").strip("/\\")
+    drive_id = encode_graph_id(params.drive_id or "")
+    folder_id = encode_graph_id(params.folder_id or "")
+    folder_path = encode_graph_path((params.folder_path or "").strip("/\\"))
 
     if drive_id:
         if folder_id:
@@ -268,9 +268,9 @@ def _get_delegated_create_folder_endpoint(params: CreateFolderParams) -> str:
 def _get_client_credentials_create_folder_endpoint(
     params: CreateFolderParams, asset: Asset
 ) -> str:
-    drive_id = params.drive_id or ""
-    folder_id = params.folder_id or ""
-    folder_path = (params.folder_path or "").strip("/\\")
+    drive_id = encode_graph_id(params.drive_id or "")
+    folder_id = encode_graph_id(params.folder_id or "")
+    folder_path = encode_graph_path((params.folder_path or "").strip("/\\"))
 
     if drive_id:
         if folder_id:
@@ -285,9 +285,8 @@ def _get_client_credentials_create_folder_endpoint(
             )
         return LIST_ITEMS_CLIENT_CREDENTIALS_DRIVE_ID_ENDPOINT.format(drive_id=drive_id)
 
-    target_user_id = resolve_target_user_id(
-        params.target_user_id,
-        asset.target_user_id,
+    target_user_id = encode_graph_id(
+        resolve_target_user_id(params.target_user_id, asset.target_user_id)
     )
     if folder_id:
         return LIST_ITEMS_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT.format(
