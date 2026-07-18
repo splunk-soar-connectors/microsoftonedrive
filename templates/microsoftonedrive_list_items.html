@@ -79,7 +79,7 @@
                 <td>Drive ID</td>
                 <td>
                   <a href="javascript:;"
-                     onclick="context_menu(this, [{'contains': ['msonedrive drive id'], 'value': '{{ input.drive_id }}'}], 0, {{ container_id }}, null, false);">
+                     onclick="context_menu(this, [{'contains': ['msonedrive drive id'], 'value': '{{ input.drive_id|escapejs }}'}], 0, {{ container_id }}, null, false);">
                     {{ input.drive_id }}
                     &nbsp;
                     <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -92,7 +92,7 @@
                 <td>Folder ID</td>
                 <td>
                   <a href="javascript:;"
-                     onclick="context_menu(this, [{'contains': ['msonedrive folder id'], 'value': '{{ input.folder_id }}'}], 0, {{ container_id }}, null, false);">
+                     onclick="context_menu(this, [{'contains': ['msonedrive folder id'], 'value': '{{ input.folder_id|escapejs }}'}], 0, {{ container_id }}, null, false);">
                     {{ input.folder_id }}
                     &nbsp;
                     <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -105,7 +105,7 @@
                 <td>Folder Path</td>
                 <td>
                   <a href="javascript:;"
-                     onclick="context_menu(this, [{'contains': ['msonedrive folder path'], 'value': '{{ input.folder_path }}'}], 0, {{ container_id }}, null, false);">
+                     onclick="context_menu(this, [{'contains': ['msonedrive folder path'], 'value': '{{ input.folder_path|escapejs }}'}], 0, {{ container_id }}, null, false);">
                     {{ input.folder_path }}
                     &nbsp;
                     <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -137,7 +137,7 @@
                   <tr>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['msonedrive drive id'], 'value': '{{ item.parentReference.driveId }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['msonedrive drive id'], 'value': '{{ item.parentReference.driveId|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.parentReference.driveId }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -145,7 +145,7 @@
                     </td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['msonedrive folder id'], 'value': '{{ item.id }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['msonedrive folder id'], 'value': '{{ item.id|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.id }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -154,7 +154,7 @@
                     <td class="widget-td">{{ item.name }}</td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['url'], 'value': '{{ item.webUrl }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['url'], 'value': '{{ item.webUrl|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.webUrl }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -162,7 +162,7 @@
                     </td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['msonedrive folder path'], 'value': '{{ item.parentReference.folderPath }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['msonedrive folder path'], 'value': '{{ item.parentReference.folderPath|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.parentReference.folderPath }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -170,7 +170,7 @@
                     </td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['file size'], 'value': '{{ item.size }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['file size'], 'value': '{{ item.size|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.size }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -179,7 +179,7 @@
                     <td class="widget-td">{{ item.folder.childCount }}</td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['email'], 'value': '{{ item.createdBy.user.email }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['email'], 'value': '{{ item.createdBy.user.email|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.createdBy.user.email }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -213,7 +213,7 @@
                   <tr>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['msonedrive drive id'], 'value': '{{ item.parentReference.driveId }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['msonedrive drive id'], 'value': '{{ item.parentReference.driveId|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.parentReference.driveId }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -221,7 +221,7 @@
                     </td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['msonedrive file id'], 'value': '{{ item.id }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['msonedrive file id'], 'value': '{{ item.id|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.id }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -229,7 +229,7 @@
                     </td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['file name'], 'value': '{{ item.name }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['file name'], 'value': '{{ item.name|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.name }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -237,7 +237,7 @@
                     </td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['url'], 'value': '{{ item.webUrl }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['url'], 'value': '{{ item.webUrl|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.webUrl }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -245,7 +245,7 @@
                     </td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['msonedrive folder path'], 'value': '{{ item.parentReference.folderPath }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['msonedrive folder path'], 'value': '{{ item.parentReference.folderPath|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.parentReference.folderPath }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -253,7 +253,7 @@
                     </td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['file size'], 'value': '{{ item.size }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['file size'], 'value': '{{ item.size|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.size }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
@@ -261,7 +261,7 @@
                     </td>
                     <td class="widget-td">
                       <a href="javascript:;"
-                         onclick="context_menu(this, [{'contains': ['email'], 'value': '{{ item.createdBy.user.email }}'}], 0, {{ container_id }}, null, false);">
+                         onclick="context_menu(this, [{'contains': ['email'], 'value': '{{ item.createdBy.user.email|escapejs }}'}], 0, {{ container_id }}, null, false);">
                         {{ item.createdBy.user.email }}
                         &nbsp;
                         <span class="fa fa-caret-down" style="font-size: smaller;"></span>
