@@ -260,6 +260,7 @@ PARAMETER | REQUIRED | DESCRIPTION | TYPE | CONTAINS
 **drive_id** | optional | Parent drive ID | string | `msonedrive drive id` |
 **folder_id** | optional | Parent folder ID | string | `msonedrive folder id` |
 **folder_path** | optional | Parent folder path | string | `msonedrive folder path` |
+**max_results** | optional | Maximum number of items to return, capped at 200 | numeric | |
 **target_user_id** | optional | User ID or user principal name that overrides the asset Target User ID for this action in Client Credentials mode | string | |
 
 #### Action Output
@@ -271,6 +272,7 @@ action_result.message | string | | |
 action_result.parameter.drive_id | string | `msonedrive drive id` | |
 action_result.parameter.folder_id | string | `msonedrive folder id` | |
 action_result.parameter.folder_path | string | `msonedrive folder path` | |
+action_result.parameter.max_results | numeric | | |
 action_result.parameter.target_user_id | string | | |
 action_result.data.\*.drive_id | string | `msonedrive drive id` | example-drive-id |
 action_result.data.\*.folder_id | string | `msonedrive folder id` | example-folder-id |

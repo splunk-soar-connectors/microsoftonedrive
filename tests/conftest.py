@@ -53,7 +53,7 @@ def live_asset_config(load_dotenv: None) -> RedactedAssetConfig:
             config[name] = value
 
     if missing:
-        raise AssertionError(
+        pytest.skip(
             "Missing required live test environment variables: " + ", ".join(missing)
         )
 
