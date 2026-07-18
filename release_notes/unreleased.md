@@ -4,3 +4,4 @@
 * Escape connector-controlled values rendered in the list-items action widget.
 * Reject unsafe destinations in pre-authenticated OneDrive download URLs.
 * Bind delegated OAuth callbacks to their initiating connectivity flow with a single-use nonce.
+* Bound list-items pagination and recursive traversal with a capped result limit.
