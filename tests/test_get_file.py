@@ -92,3 +92,16 @@ def test_get_file_content_endpoint_requires_target_user_for_client_credentials()
 
     with pytest.raises(ActionFailure, match="Target User ID is required"):
         _get_file_content_endpoint(params, asset)
+
+
+def test_get_file_content_endpoint_encodes_untrusted_path_components() -> None:
+    params = GetFileParams(file_id="file/id?select=secret", drive_id="drive/id")
+
+    assert _get_file_content_endpoint(params, _asset()) == (
+        "/drives/drive%2Fid/items/file%2Fid%3Fselect%3Dsecret/content"
+    )
+
+
+def test_get_file_content_endpoint_rejects_dot_segments() -> None:
+    with pytest.raises(ActionFailure, match="dot segments"):
+        _get_file_content_endpoint(GetFileParams(file_path="../secret.txt"), _asset())
