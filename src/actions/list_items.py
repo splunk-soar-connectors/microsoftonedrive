@@ -38,6 +38,9 @@ PARENT_PATH_FIELD = "path"
 PARENT_DRIVE_PATH_FIELD = "drivePath"
 PARENT_FOLDER_PATH_FIELD = "folderPath"
 ROOT_PATH_SPLIT = "root:/"
+DEFAULT_MAX_RESULTS = 100
+MAX_RESULTS_LIMIT = 200
+INVALID_MAX_RESULTS_MESSAGE = "Max Results must be greater than zero"
 LIST_ITEMS_DEFAULT_ENDPOINT = "/me/drive/root/children"
 LIST_ITEMS_DRIVE_ID_ENDPOINT = "/me/drives/{drive_id}/root/children"
 LIST_ITEMS_DRIVE_FOLDER_ID_ENDPOINT = "/me/drives/{drive_id}/items/{folder_id}/children"
@@ -73,6 +76,11 @@ class ListItemsParams(Params):
         description="Parent folder path",
         primary=True,
         cef_types=["msonedrive folder path"],
+    )
+    max_results: int | None = Param(
+        description="Maximum number of items to return, capped at 200",
+        default=DEFAULT_MAX_RESULTS,
+        column_name="Max Results",
     )
     target_user_id: str | None = target_user_id_param()
 
@@ -300,7 +308,18 @@ def _get_list_items_child_endpoint(
     )
 
 
-def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]:
+def _get_max_results(params: ListItemsParams) -> int:
+    max_results = (
+        params.max_results if params.max_results is not None else DEFAULT_MAX_RESULTS
+    )
+    if max_results <= 0:
+        raise ActionFailure(INVALID_MAX_RESULTS_MESSAGE)
+    return min(max_results, MAX_RESULTS_LIMIT)
+
+
+def _get_list_response(
+    graph_client: Any, endpoint: str, max_results: int
+) -> list[dict[str, Any]]:
     """Return every item from a paginated Microsoft Graph list response.
 
     Microsoft Graph paginates list responses by returning a page of items in
@@ -310,11 +329,12 @@ def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]
     items: list[dict[str, Any]] = []
     next_endpoint: str | None = endpoint
 
-    while next_endpoint:
+    while next_endpoint and len(items) < max_results:
         response = graph_client.get(next_endpoint)
         response.raise_for_status()
         response_json = response.json()
-        items.extend(response_json.get(GRAPH_VALUE_FIELD, []))
+        remaining = max_results - len(items)
+        items.extend(response_json.get(GRAPH_VALUE_FIELD, [])[:remaining])
         next_endpoint = response_json.get(GRAPH_NEXT_LINK_FIELD)
 
     return items
@@ -345,6 +365,7 @@ def list_items(
     params: ListItemsParams, soar: SOARClient, asset: Asset
 ) -> list[ListItemsOutput]:
     logging.info("In action handler for: list_items")
+    max_results = _get_max_results(params)
     endpoint = _get_list_items_endpoint(params, asset)
     logging.info(f"Using Microsoft Graph list items endpoint: {endpoint}")
 
@@ -353,14 +374,18 @@ def list_items(
             items: list[dict[str, Any]] = []
             pending_endpoints: list[str] = [endpoint]
 
-            while pending_endpoints:
+            while pending_endpoints and len(items) < max_results:
                 current_endpoint: str = pending_endpoints.pop()
                 children: list[dict[str, Any]] = _get_list_response(
-                    graph_client, current_endpoint
+                    graph_client,
+                    current_endpoint,
+                    max_results - len(items),
                 )
 
                 for child in children:
                     items.append(child)
+                    if len(items) >= max_results:
+                        break
                     if not child.get(ITEM_FILE_FIELD):
                         child_id: str | None = child.get(ITEM_ID_FIELD)
                         pending_endpoints.append(
