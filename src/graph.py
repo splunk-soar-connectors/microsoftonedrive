@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import httpx
+from urllib.parse import quote
 from soar_sdk.auth import OAuthBearerAuth
 from soar_sdk.auth.flows import AuthorizationCodeFlow
+from soar_sdk.exceptions import ActionFailure
 
 from .asset import Asset
 from .auth import (
@@ -22,6 +24,19 @@ from .auth import (
     is_client_credentials_auth,
 )
 from .consts import MICROSOFT_GRAPH_BASE_URL, REDIRECT_URI_STATE_KEY
+
+
+def encode_graph_id(value: str) -> str:
+    """Encode an opaque value used as one Microsoft Graph path segment."""
+    return quote(value, safe="@")
+
+
+def encode_graph_path(value: str) -> str:
+    """Encode a Microsoft Graph item path while retaining its separators."""
+    segments = value.split("/")
+    if any(segment in {".", ".."} for segment in segments):
+        raise ActionFailure("Microsoft Graph paths cannot contain dot segments")
+    return "/".join(encode_graph_id(segment) for segment in segments)
 
 
 def get_graph_client(
