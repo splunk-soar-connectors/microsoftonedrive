@@ -114,7 +114,7 @@ def test_get_file_content_endpoint_rejects_dot_segments() -> None:
     "url",
     [
         "http://download.example/file",
-        "https://user:password@download.example/file",
+        "https://user:password@download.example/file",  # pragma: allowlist secret
         "https://download.example:8443/file",
         "https://download.example/file#fragment",
         "not-a-url",
