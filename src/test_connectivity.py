@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import time
+import secrets
 
 import httpx
 from soar_sdk import logging
@@ -28,6 +29,7 @@ from .consts import (
     AUTHORIZATION_ERROR_STATE_KEY,
     AUTHORIZATION_URL_STATE_KEY,
     MICROSOFT_GRAPH_BASE_URL,
+    OAUTH_NONCE_STATE_KEY,
     REDIRECT_URI_STATE_KEY,
 )
 
@@ -67,6 +69,7 @@ def run_delegated_test_connectivity(
     oauth_start_url: str,
 ) -> None:
     asset.auth_state.pop(AUTHORIZATION_ERROR_STATE_KEY, None)
+    asset.auth_state[OAUTH_NONCE_STATE_KEY] = secrets.token_urlsafe(32)
     flow = get_auth_code_flow(
         asset,
         str(soar.get_asset_id()),

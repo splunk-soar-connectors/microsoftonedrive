@@ -13,12 +13,14 @@
 # limitations under the License.
 from soar_sdk.app import App
 from soar_sdk.webhooks.models import WebhookRequest, WebhookResponse
+import hmac
 
 from ..auth import get_auth_code_flow
 from ..consts import (
     AUTHORIZATION_ERROR_STATE_KEY,
     AUTHORIZATION_URL_STATE_KEY,
     OAUTH_CALLBACK_ROUTE,
+    OAUTH_NONCE_STATE_KEY,
     OAUTH_START_ROUTE,
     REDIRECT_URI_STATE_KEY,
 )
@@ -47,14 +49,25 @@ def oauth_callback(request: WebhookRequest) -> WebhookResponse:
         if query.get("error_description"):
             message = f"{message} Details: {query['error_description']}"
         request.asset.auth_state[AUTHORIZATION_ERROR_STATE_KEY] = message
+        request.asset.auth_state.pop(OAUTH_NONCE_STATE_KEY, None)
         return WebhookResponse.text_response(
             f"Server returned {message}",
             status_code=400,
         )
 
-    if query["state"] != str(request.asset_id):
+    callback_asset_id, separator, callback_nonce = query.get("state", "").partition(".")
+    expected_nonce = request.asset.auth_state.get(OAUTH_NONCE_STATE_KEY, "")
+    if (
+        not separator
+        or callback_asset_id != str(request.asset_id)
+        or not expected_nonce
+        or not hmac.compare_digest(callback_nonce, expected_nonce)
+    ):
         raise ValueError("OAuth state mismatch.")
+    if not query.get("code"):
+        raise ValueError("OAuth authorization code is missing.")
 
+    request.asset.auth_state.pop(OAUTH_NONCE_STATE_KEY, None)
     flow.set_authorization_code(query["code"])
     return WebhookResponse.text_response(
         "Code received. Please close this window, the action will continue to get new token."
