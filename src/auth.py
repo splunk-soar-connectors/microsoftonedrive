@@ -14,7 +14,7 @@
 from soar_sdk.auth import AuthorizationCodeFlow, ClientCredentialsFlow
 
 from .asset import Asset
-from .consts import AUTH_METHOD_CLIENT_CREDENTIALS
+from .consts import AUTH_METHOD_CLIENT_CREDENTIALS, OAUTH_NONCE_STATE_KEY
 
 
 MICROSOFT_LOGIN_BASE_URL = "https://login.microsoftonline.com"
@@ -38,6 +38,8 @@ def get_auth_code_flow(
     redirect_uri: str,
 ) -> AuthorizationCodeFlow:
     tenant = asset.tenant_id or "common"
+    nonce = asset.auth_state.get(OAUTH_NONCE_STATE_KEY)
+    oauth_state = f"{asset_id}.{nonce}" if nonce else asset_id
     return AuthorizationCodeFlow(
         asset.auth_state,
         asset_id,
@@ -47,7 +49,7 @@ def get_auth_code_flow(
         token_endpoint=f"{MICROSOFT_LOGIN_BASE_URL}/{tenant}/oauth2/token",
         redirect_uri=redirect_uri,
         scope=MICROSOFT_GRAPH_SCOPE,
-        extra_auth_params={"state": asset_id},
+        extra_auth_params={"state": oauth_state},
         extra_token_params={"scope": MICROSOFT_GRAPH_SCOPE},
         use_pkce=False,
     )

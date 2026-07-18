@@ -36,6 +36,9 @@ AUTHORIZATION_ERROR_STATE_KEY = "authorization_error"
 # context and by src/webhooks/oauth.py to rebuild the callback flow.
 REDIRECT_URI_STATE_KEY = "redirect_uri"
 
+# Single-use nonce binding an OAuth callback to the initiating test-connectivity run.
+OAUTH_NONCE_STATE_KEY = "oauth_nonce"
+
 # Used by src/asset.py for the authentication mode asset field and by
 # src/auth.py and src/test_connectivity.py to select the authentication flow.
 AUTH_METHOD_DELEGATED = "Delegated"
