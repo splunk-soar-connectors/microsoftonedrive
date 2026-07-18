@@ -12,8 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import importlib
+import ipaddress
 from pathlib import Path
+import socket
 from tempfile import NamedTemporaryFile
+from urllib.parse import urlsplit
 
 import httpx
 from soar_sdk import logging
@@ -70,6 +73,7 @@ GET_FILE_CLIENT_CREDENTIALS_FILE_PATH_CONTENT_ENDPOINT = (
 FORCE_INFECTED_DOWNLOAD_HEADER = {"Prefer": "forceInfectedDownload"}
 DOWNLOAD_TIMEOUT_SECONDS = 30.0
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024
+INVALID_DOWNLOAD_URL_MESSAGE = "OneDrive returned an unsafe file download URL"
 
 
 def _log_legacy_vault_lookup(container_id: int) -> None:
@@ -341,7 +345,37 @@ def _get_download_tmp_dir(soar: SOARClient) -> Path | None:
     return None
 
 
+def _validate_download_url(download_url: str) -> None:
+    try:
+        parsed = urlsplit(download_url)
+        hostname = parsed.hostname
+        port = parsed.port
+    except ValueError as e:
+        raise ActionFailure(INVALID_DOWNLOAD_URL_MESSAGE) from e
+
+    if (
+        parsed.scheme.lower() != "https"
+        or not hostname
+        or parsed.username is not None
+        or parsed.password is not None
+        or port not in {None, 443}
+        or parsed.fragment
+    ):
+        raise ActionFailure(INVALID_DOWNLOAD_URL_MESSAGE)
+
+    try:
+        addresses = socket.getaddrinfo(hostname, 443, type=socket.SOCK_STREAM)
+    except OSError as e:
+        raise ActionFailure(INVALID_DOWNLOAD_URL_MESSAGE) from e
+
+    if not addresses or any(
+        not ipaddress.ip_address(address[4][0]).is_global for address in addresses
+    ):
+        raise ActionFailure(INVALID_DOWNLOAD_URL_MESSAGE)
+
+
 def _download_file_to_tmp(download_url: str, temp_dir: Path | None) -> tuple[Path, int]:
+    _validate_download_url(download_url)
     temp_path: Path | None = None
     try:
         with NamedTemporaryFile(
@@ -353,7 +387,10 @@ def _download_file_to_tmp(download_url: str, temp_dir: Path | None) -> tuple[Pat
             file_size = 0
 
             with httpx.stream(
-                "GET", download_url, timeout=DOWNLOAD_TIMEOUT_SECONDS
+                "GET",
+                download_url,
+                timeout=DOWNLOAD_TIMEOUT_SECONDS,
+                follow_redirects=False,
             ) as response:
                 response.raise_for_status()
                 for chunk in response.iter_bytes(chunk_size=DOWNLOAD_CHUNK_SIZE):
