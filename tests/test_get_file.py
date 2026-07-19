@@ -12,13 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 from soar_sdk.exceptions import ActionFailure
 
 from src.actions.get_file import (
     GetFileParams,
+    _download_file_to_tmp,
     _get_file_content_endpoint,
+    _validate_download_url,
 )
 from src.consts import AUTH_METHOD_CLIENT_CREDENTIALS, AUTH_METHOD_DELEGATED
 
@@ -92,3 +95,64 @@ def test_get_file_content_endpoint_requires_target_user_for_client_credentials()
 
     with pytest.raises(ActionFailure, match="Target User ID is required"):
         _get_file_content_endpoint(params, asset)
+
+
+def test_get_file_content_endpoint_encodes_untrusted_path_components() -> None:
+    params = GetFileParams(file_id="file/id?select=secret", drive_id="drive/id")
+
+    assert _get_file_content_endpoint(params, _asset()) == (
+        "/drives/drive%2Fid/items/file%2Fid%3Fselect%3Dsecret/content"
+    )
+
+
+def test_get_file_content_endpoint_rejects_dot_segments() -> None:
+    with pytest.raises(ActionFailure, match="dot segments"):
+        _get_file_content_endpoint(GetFileParams(file_path="../secret.txt"), _asset())
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://download.example/file",
+        "https://user:password@download.example/file",  # pragma: allowlist secret
+        "https://download.example:8443/file",
+        "https://download.example/file#fragment",
+        "not-a-url",
+    ],
+)
+def test_validate_download_url_rejects_unsafe_structure(url: str) -> None:
+    with pytest.raises(ActionFailure, match="unsafe file download URL"):
+        _validate_download_url(url)
+
+
+@pytest.mark.parametrize(
+    "address", ["127.0.0.1", "10.0.0.1", "169.254.1.1", "::1", "fc00::1"]
+)
+def test_validate_download_url_rejects_non_global_addresses(address: str) -> None:
+    answers = [(None, None, None, None, (address, 443))]
+
+    with (
+        patch("src.actions.get_file.socket.getaddrinfo", return_value=answers),
+        pytest.raises(ActionFailure, match="unsafe file download URL"),
+    ):
+        _validate_download_url("https://download.example/file")
+
+
+def test_validate_download_url_accepts_only_global_answers() -> None:
+    answers = [
+        (None, None, None, None, ("8.8.8.8", 443)),
+        (None, None, None, None, ("2606:4700:4700::1111", 443, 0, 0)),
+    ]
+
+    with patch("src.actions.get_file.socket.getaddrinfo", return_value=answers):
+        _validate_download_url("https://download.example/file")
+
+
+def test_download_validates_before_creating_temporary_file(tmp_path) -> None:
+    with (
+        patch("src.actions.get_file.NamedTemporaryFile") as temporary_file,
+        pytest.raises(ActionFailure, match="unsafe file download URL"),
+    ):
+        _download_file_to_tmp("http://127.0.0.1/secret", tmp_path)
+
+    temporary_file.assert_not_called()

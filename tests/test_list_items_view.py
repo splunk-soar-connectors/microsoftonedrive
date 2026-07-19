@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from soar_sdk.models.view import ViewContext
+from pathlib import Path
+import re
 
 from src.actions.list_items import ListItemsOutput
 from src.app import app
@@ -50,3 +52,13 @@ def test_list_items_view_uses_parsed_outputs() -> None:
     assert template_context["container_id"] == 123
     assert template_context["results"] == [{"data": [output]}]
     assert template_context["results"][0]["data"][0].drive_id == "configured-drive-id"
+
+
+def test_list_items_widget_escapes_all_javascript_context_values() -> None:
+    template = (
+        Path(__file__).parents[1] / "templates" / "microsoftonedrive_list_items.html"
+    ).read_text()
+    interpolations = re.findall(r"'value': '(\{\{.*?\}\})'", template)
+
+    assert interpolations
+    assert all("|escapejs" in interpolation for interpolation in interpolations)
