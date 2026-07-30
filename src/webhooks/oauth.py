@@ -44,17 +44,6 @@ def oauth_callback(request: WebhookRequest) -> WebhookResponse:
     query = {
         name: values[0] if values else "" for name, values in request.query.items()
     }
-    if "error" in query:
-        message = f"Error: {query['error']}"
-        if query.get("error_description"):
-            message = f"{message} Details: {query['error_description']}"
-        request.asset.auth_state[AUTHORIZATION_ERROR_STATE_KEY] = message
-        request.asset.auth_state.pop(OAUTH_NONCE_STATE_KEY, None)
-        return WebhookResponse.text_response(
-            f"Server returned {message}",
-            status_code=400,
-        )
-
     callback_asset_id, separator, callback_nonce = query.get("state", "").partition(".")
     expected_nonce = request.asset.auth_state.get(OAUTH_NONCE_STATE_KEY, "")
     if (
@@ -64,10 +53,21 @@ def oauth_callback(request: WebhookRequest) -> WebhookResponse:
         or not hmac.compare_digest(callback_nonce, expected_nonce)
     ):
         raise ValueError("OAuth state mismatch.")
+
+    request.asset.auth_state.pop(OAUTH_NONCE_STATE_KEY, None)
+    if "error" in query:
+        message = f"Error: {query['error']}"
+        if query.get("error_description"):
+            message = f"{message} Details: {query['error_description']}"
+        request.asset.auth_state[AUTHORIZATION_ERROR_STATE_KEY] = message
+        return WebhookResponse.text_response(
+            f"Server returned {message}",
+            status_code=400,
+        )
+
     if not query.get("code"):
         raise ValueError("OAuth authorization code is missing.")
 
-    request.asset.auth_state.pop(OAUTH_NONCE_STATE_KEY, None)
     flow.set_authorization_code(query["code"])
     return WebhookResponse.text_response(
         "Code received. Please close this window, the action will continue to get new token."

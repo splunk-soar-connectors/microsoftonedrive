@@ -382,12 +382,11 @@ def _get_filename_search_response(
             response_json = response.json()
 
             for item in response_json.get(GRAPH_VALUE_FIELD, []):
+                child_folder_id = encode_graph_id(str(item.get("id") or ""))
                 if normalized_search_text in str(item.get("name") or "").casefold():
                     matches.append(item)
                     if len(matches) >= max_results:
                         break
-
-                    child_folder_id = encode_graph_id(str(item.get("id") or ""))
                 if (
                     item.get(FOLDER_FIELD) is not None
                     and child_folder_id
