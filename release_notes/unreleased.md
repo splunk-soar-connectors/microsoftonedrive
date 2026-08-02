@@ -4,6 +4,7 @@
 * Reject exact dot identifiers before Microsoft Graph endpoint construction.
 * Escape connector-controlled values rendered in the list-items action widget.
 * Reject unsafe destinations in pre-authenticated OneDrive download URLs.
+* Restrict pre-authenticated file downloads to trusted OneDrive and SharePoint hosts.
 * Bind delegated OAuth callbacks to their initiating connectivity flow with a single-use nonce.
 * Bound list-items pagination and recursive traversal with a capped result limit.
 * Exclude malformed Authlib 1.7.2 from connector dependency resolution.
