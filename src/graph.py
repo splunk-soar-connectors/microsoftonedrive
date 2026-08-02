@@ -28,6 +28,8 @@ from .consts import MICROSOFT_GRAPH_BASE_URL, REDIRECT_URI_STATE_KEY
 
 def encode_graph_id(value: str) -> str:
     """Encode an opaque value used as one Microsoft Graph path segment."""
+    if value in {".", ".."}:
+        raise ActionFailure("Microsoft Graph identifiers cannot be dot segments")
     return quote(value, safe="@")
 
 
