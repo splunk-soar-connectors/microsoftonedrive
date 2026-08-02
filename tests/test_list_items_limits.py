@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from soar_sdk.exceptions import ActionFailure
@@ -35,48 +35,51 @@ def test_list_items_caps_max_results() -> None:
 
 def test_list_response_stops_before_fetching_another_page() -> None:
     graph_client = MagicMock()
-    first_response = MagicMock()
-    first_response.json.return_value = {
+    first_response = {
         "value": [{"id": "one"}, {"id": "two"}, {"id": "three"}],
         "@odata.nextLink": "https://graph.microsoft.com/next",
     }
-    graph_client.get.return_value = first_response
 
-    items = _get_list_response(graph_client, "/root/children", max_results=2)
+    with patch(
+        "src.actions.list_items.get_bounded_graph_json", return_value=first_response
+    ) as get_json:
+        items = _get_list_response(graph_client, "/root/children", max_results=2)
 
     assert items == [{"id": "one"}, {"id": "two"}]
-    graph_client.get.assert_called_once_with("/root/children")
+    get_json.assert_called_once_with(graph_client, "/root/children")
 
 
 def test_list_response_uses_remaining_budget_on_later_pages() -> None:
     graph_client = MagicMock()
-    first_response = MagicMock()
-    first_response.json.return_value = {
+    first_response = {
         "value": [{"id": "one"}],
         "@odata.nextLink": "https://graph.microsoft.com/next",
     }
-    second_response = MagicMock()
-    second_response.json.return_value = {
+    second_response = {
         "value": [{"id": "two"}, {"id": "three"}],
     }
-    graph_client.get.side_effect = [first_response, second_response]
 
-    items = _get_list_response(graph_client, "/root/children", max_results=2)
+    with patch(
+        "src.actions.list_items.get_bounded_graph_json",
+        side_effect=[first_response, second_response],
+    ) as get_json:
+        items = _get_list_response(graph_client, "/root/children", max_results=2)
 
     assert items == [{"id": "one"}, {"id": "two"}]
-    assert graph_client.get.call_count == 2
+    assert get_json.call_count == 2
 
 
 def test_list_response_rejects_repeated_empty_page() -> None:
     graph_client = MagicMock()
-    response = MagicMock()
-    response.json.return_value = {
+    response_json = {
         "value": [],
         "@odata.nextLink": "https://graph.microsoft.com/repeated",
     }
-    graph_client.get.return_value = response
 
-    with pytest.raises(ActionFailure, match="repeated a continuation URL"):
+    with (
+        patch(
+            "src.actions.list_items.get_bounded_graph_json", return_value=response_json
+        ),
+        pytest.raises(ActionFailure, match="repeated a continuation URL"),
+    ):
         _get_list_response(graph_client, "https://graph.microsoft.com/repeated", 10)
-
-    graph_client.get.assert_called_once()
