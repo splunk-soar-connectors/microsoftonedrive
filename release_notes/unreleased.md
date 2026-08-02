@@ -13,3 +13,4 @@
 * Adopt Splunk SOAR SDK 3.26.4 for current OAuth and email handling.
 * Exclude malformed Authlib 1.7.2 from connector dependency resolution.
 * Remove credential-bearing state left by pre-SDK releases and keep OAuth tokens in the SDK's encrypted authentication partition.
+* Require the pending-flow nonce before returning the delegated OAuth authorization URL.

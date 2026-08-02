@@ -69,9 +69,7 @@ def test_migration_removes_legacy_state_and_preserves_sdk_partitions(tmp_path) -
 def test_migration_is_idempotent_when_legacy_state_is_absent(tmp_path) -> None:
     backend = MagicMock()
     backend.load_state.return_value = {"auth": "encrypted-auth-partition"}
-    asset = SimpleNamespace(
-        auth_state=SimpleNamespace(backend=backend, asset_id="42")
-    )
+    asset = SimpleNamespace(auth_state=SimpleNamespace(backend=backend, asset_id="42"))
 
     remove_legacy_cleartext_state(asset, legacy_app_dir=tmp_path)
 

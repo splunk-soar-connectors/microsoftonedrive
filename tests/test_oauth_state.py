@@ -20,15 +20,17 @@ from soar_sdk.webhooks.models import WebhookRequest
 from src.auth import get_auth_code_flow
 from src.consts import (
     AUTHORIZATION_ERROR_STATE_KEY,
+    AUTHORIZATION_URL_STATE_KEY,
     OAUTH_NONCE_STATE_KEY,
     REDIRECT_URI_STATE_KEY,
 )
-from src.webhooks.oauth import oauth_callback
+from src.webhooks.oauth import oauth_callback, oauth_start
 
 
 def _asset(nonce: str = "expected-nonce") -> SimpleNamespace:
     return SimpleNamespace(
         auth_state={
+            AUTHORIZATION_URL_STATE_KEY: "https://login.example/authorize?state=42.expected-nonce",
             OAUTH_NONCE_STATE_KEY: nonce,
             REDIRECT_URI_STATE_KEY: "https://soar.example/oauth/callback",
         },
@@ -65,6 +67,27 @@ def test_authorization_flow_includes_asset_and_nonce_in_state() -> None:
     assert flow_factory.call_args.kwargs["extra_auth_params"] == {
         "state": "42.expected-nonce"
     }
+
+
+def test_oauth_start_rejects_asset_id_without_flow_nonce() -> None:
+    response = oauth_start(_request(_asset(), {}))
+
+    assert response.status_code == 400
+
+
+def test_oauth_start_rejects_wrong_flow_nonce() -> None:
+    response = oauth_start(_request(_asset(), {"state_nonce": ["attacker"]}))
+
+    assert response.status_code == 400
+
+
+def test_oauth_start_returns_authorization_url_for_matching_flow_nonce() -> None:
+    response = oauth_start(_request(_asset(), {"state_nonce": ["expected-nonce"]}))
+
+    assert response.status_code == 302
+    assert response.headers == [
+        ("Location", "https://login.example/authorize?state=42.expected-nonce")
+    ]
 
 
 def test_oauth_callback_accepts_and_consumes_matching_nonce() -> None:

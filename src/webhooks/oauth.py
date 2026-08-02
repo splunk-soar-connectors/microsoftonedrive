@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import hmac
+
 from soar_sdk.app import App
 from soar_sdk.webhooks.models import WebhookRequest, WebhookResponse
-import hmac
 
 from ..auth import get_auth_code_flow
 from ..consts import (
@@ -27,6 +28,17 @@ from ..consts import (
 
 
 def oauth_start(request: WebhookRequest) -> WebhookResponse:
+    presented_nonce = (request.query.get("state_nonce") or [""])[0]
+    expected_nonce = request.asset.auth_state.get(OAUTH_NONCE_STATE_KEY, "")
+    if (
+        not expected_nonce
+        or not presented_nonce
+        or not hmac.compare_digest(presented_nonce, expected_nonce)
+    ):
+        return WebhookResponse.text_response(
+            "OAuth state mismatch.",
+            status_code=400,
+        )
     return WebhookResponse(
         status_code=302,
         headers=[("Location", request.asset.auth_state[AUTHORIZATION_URL_STATE_KEY])],
