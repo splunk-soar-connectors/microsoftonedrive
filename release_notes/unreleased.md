@@ -7,5 +7,6 @@
 * Restrict pre-authenticated file downloads to trusted OneDrive and SharePoint hosts.
 * Bind delegated OAuth callbacks to their initiating connectivity flow with a single-use nonce.
 * Bound list-items pagination and recursive traversal with a capped result limit.
+* Bound list-drive pagination and reject repeated continuation URLs.
 * Adopt Splunk SOAR SDK 3.26.1 for current OAuth and email handling.
 * Exclude malformed Authlib 1.7.2 from connector dependency resolution.

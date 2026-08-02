@@ -65,3 +65,18 @@ def test_list_response_uses_remaining_budget_on_later_pages() -> None:
 
     assert items == [{"id": "one"}, {"id": "two"}]
     assert graph_client.get.call_count == 2
+
+
+def test_list_response_rejects_repeated_empty_page() -> None:
+    graph_client = MagicMock()
+    response = MagicMock()
+    response.json.return_value = {
+        "value": [],
+        "@odata.nextLink": "https://graph.microsoft.com/repeated",
+    }
+    graph_client.get.return_value = response
+
+    with pytest.raises(ActionFailure, match="repeated a continuation URL"):
+        _get_list_response(graph_client, "https://graph.microsoft.com/repeated", 10)
+
+    graph_client.get.assert_called_once()

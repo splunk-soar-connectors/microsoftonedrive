@@ -40,6 +40,7 @@ PARENT_FOLDER_PATH_FIELD = "folderPath"
 ROOT_PATH_SPLIT = "root:/"
 DEFAULT_MAX_RESULTS = 100
 MAX_RESULTS_LIMIT = 200
+MAX_GRAPH_PAGES = 1000
 INVALID_MAX_RESULTS_MESSAGE = "Max Results must be greater than zero"
 LIST_ITEMS_DEFAULT_ENDPOINT = "/me/drive/root/children"
 LIST_ITEMS_DRIVE_ID_ENDPOINT = "/me/drives/{drive_id}/root/children"
@@ -328,8 +329,18 @@ def _get_list_response(
     """
     items: list[dict[str, Any]] = []
     next_endpoint: str | None = endpoint
+    visited_endpoints: set[str] = set()
+    page_count = 0
 
     while next_endpoint and len(items) < max_results:
+        if next_endpoint in visited_endpoints:
+            raise ActionFailure(
+                "Microsoft Graph pagination repeated a continuation URL"
+            )
+        if page_count >= MAX_GRAPH_PAGES:
+            raise ActionFailure("Microsoft Graph pagination exceeded the page limit")
+        visited_endpoints.add(next_endpoint)
+        page_count += 1
         response = graph_client.get(next_endpoint)
         response.raise_for_status()
         response_json = response.json()
