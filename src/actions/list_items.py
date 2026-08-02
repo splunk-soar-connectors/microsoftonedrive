@@ -22,7 +22,12 @@ from soar_sdk.params import Param, Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
-from ..graph import encode_graph_id, encode_graph_path, get_graph_client
+from ..graph import (
+    encode_graph_id,
+    encode_graph_path,
+    get_bounded_graph_json,
+    get_graph_client,
+)
 from ..target_user import resolve_target_user_id, target_user_id_param
 
 
@@ -341,11 +346,12 @@ def _get_list_response(
             raise ActionFailure("Microsoft Graph pagination exceeded the page limit")
         visited_endpoints.add(next_endpoint)
         page_count += 1
-        response = graph_client.get(next_endpoint)
-        response.raise_for_status()
-        response_json = response.json()
+        response_json = get_bounded_graph_json(graph_client, next_endpoint)
+        page_items = response_json.get(GRAPH_VALUE_FIELD, [])
+        if not isinstance(page_items, list):
+            raise ActionFailure("Microsoft Graph returned an invalid item list")
         remaining = max_results - len(items)
-        items.extend(response_json.get(GRAPH_VALUE_FIELD, [])[:remaining])
+        items.extend(page_items[:remaining])
         next_endpoint = response_json.get(GRAPH_NEXT_LINK_FIELD)
 
     return items
