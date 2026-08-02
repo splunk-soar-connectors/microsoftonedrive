@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 from soar_sdk.exceptions import ActionFailure
@@ -20,6 +20,7 @@ from soar_sdk.exceptions import ActionFailure
 from src.actions.get_file import (
     GetFileParams,
     _download_file_to_tmp,
+    _download_graph_content_to_tmp,
     _get_file_content_endpoint,
     _validate_download_url,
 )
@@ -167,3 +168,29 @@ def test_download_validates_before_creating_temporary_file(tmp_path) -> None:
         _download_file_to_tmp("http://127.0.0.1/secret", tmp_path)
 
     temporary_file.assert_not_called()
+
+
+def test_forced_download_rejects_untrusted_redirect_before_file_creation(
+    tmp_path,
+) -> None:
+    graph_client = MagicMock()
+    response = MagicMock()
+    response.is_redirect = True
+    response.headers = {"location": "http://127.0.0.1/secret"}
+    response.request.url = "https://graph.microsoft.com/v1.0/me/drive/content"
+    graph_client.stream.return_value.__enter__.return_value = response
+
+    with (
+        patch("src.actions.get_file.NamedTemporaryFile") as temporary_file,
+        pytest.raises(ActionFailure, match="unsafe file download URL"),
+    ):
+        _download_graph_content_to_tmp(graph_client, "/content", tmp_path)
+
+    temporary_file.assert_not_called()
+    graph_client.stream.assert_called_once_with(
+        "GET",
+        "/content",
+        headers=None,
+        timeout=30.0,
+        follow_redirects=False,
+    )
