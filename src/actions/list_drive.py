@@ -31,6 +31,7 @@ AUTHORIZATION_REQUIRED_MESSAGE = (
 )
 GRAPH_VALUE_FIELD = "value"
 GRAPH_NEXT_LINK_FIELD = "@odata.nextLink"
+MAX_GRAPH_PAGES = 1000
 LIST_DRIVES_ENDPOINT = "/me/drives"
 LIST_DRIVES_CLIENT_CREDENTIALS_ENDPOINT = "/users/{target_user_id}/drives"
 
@@ -138,8 +139,18 @@ def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]
     """
     drives: list[dict[str, Any]] = []
     next_endpoint: str | None = endpoint
+    visited_endpoints: set[str] = set()
+    page_count = 0
 
     while next_endpoint:
+        if next_endpoint in visited_endpoints:
+            raise ActionFailure(
+                "Microsoft Graph pagination repeated a continuation URL"
+            )
+        if page_count >= MAX_GRAPH_PAGES:
+            raise ActionFailure("Microsoft Graph pagination exceeded the page limit")
+        visited_endpoints.add(next_endpoint)
+        page_count += 1
         response = graph_client.get(next_endpoint)
         response.raise_for_status()
         response_json = response.json()
