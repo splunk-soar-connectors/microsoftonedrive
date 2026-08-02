@@ -16,7 +16,7 @@ import ipaddress
 from pathlib import Path
 import socket
 from tempfile import NamedTemporaryFile
-from urllib.parse import urlsplit
+from urllib.parse import urljoin, urlsplit
 
 import httpx
 from soar_sdk import logging
@@ -421,22 +421,29 @@ def _download_graph_content_to_tmp(
 ) -> tuple[Path, int]:
     temp_path: Path | None = None
     try:
-        with NamedTemporaryFile(
-            "wb",
-            delete=False,
-            dir=temp_dir,
-        ) as temp_file:
-            temp_path = Path(temp_file.name)
-            file_size = 0
+        with graph_client.stream(
+            "GET",
+            endpoint,
+            headers=headers,
+            timeout=DOWNLOAD_TIMEOUT_SECONDS,
+            follow_redirects=False,
+        ) as response:
+            if response.is_redirect:
+                location = response.headers.get("location")
+                if not location:
+                    raise ActionFailure(INVALID_DOWNLOAD_URL_MESSAGE)
+                redirect_url = urljoin(str(response.request.url), location)
+                _validate_download_url(redirect_url)
+                return _download_file_to_tmp(redirect_url, temp_dir)
 
-            with graph_client.stream(
-                "GET",
-                endpoint,
-                headers=headers,
-                timeout=DOWNLOAD_TIMEOUT_SECONDS,
-                follow_redirects=True,
-            ) as response:
-                response.raise_for_status()
+            response.raise_for_status()
+            with NamedTemporaryFile(
+                "wb",
+                delete=False,
+                dir=temp_dir,
+            ) as temp_file:
+                temp_path = Path(temp_file.name)
+                file_size = 0
                 for chunk in response.iter_bytes(chunk_size=DOWNLOAD_CHUNK_SIZE):
                     if not chunk:
                         continue
