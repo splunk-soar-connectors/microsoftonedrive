@@ -15,6 +15,7 @@ from soar_sdk.auth import AuthorizationCodeFlow, ClientCredentialsFlow
 
 from .asset import Asset
 from .consts import AUTH_METHOD_CLIENT_CREDENTIALS, OAUTH_NONCE_STATE_KEY
+from .state_migration import remove_legacy_cleartext_state
 
 
 MICROSOFT_LOGIN_BASE_URL = "https://login.microsoftonline.com"
@@ -37,6 +38,7 @@ def get_auth_code_flow(
     *,
     redirect_uri: str,
 ) -> AuthorizationCodeFlow:
+    remove_legacy_cleartext_state(asset)
     tenant = asset.tenant_id or "common"
     nonce = asset.auth_state.get(OAUTH_NONCE_STATE_KEY)
     oauth_state = f"{asset_id}.{nonce}" if nonce else asset_id
@@ -56,6 +58,7 @@ def get_auth_code_flow(
 
 
 def get_client_credentials_flow(asset: Asset) -> ClientCredentialsFlow:
+    remove_legacy_cleartext_state(asset)
     tenant = (asset.tenant_id or "").strip()
     if not tenant or tenant.lower() == "common":
         raise ValueError(CLIENT_CREDENTIALS_TENANT_ERROR)
