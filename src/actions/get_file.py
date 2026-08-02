@@ -74,6 +74,11 @@ FORCE_INFECTED_DOWNLOAD_HEADER = {"Prefer": "forceInfectedDownload"}
 DOWNLOAD_TIMEOUT_SECONDS = 30.0
 DOWNLOAD_CHUNK_SIZE = 1024 * 1024
 INVALID_DOWNLOAD_URL_MESSAGE = "OneDrive returned an unsafe file download URL"
+TRUSTED_DOWNLOAD_HOST_SUFFIXES = (
+    ".1drv.com",
+    ".onedrive.com",
+    ".sharepoint.com",
+)
 
 
 def _log_legacy_vault_lookup(container_id: int) -> None:
@@ -360,6 +365,7 @@ def _validate_download_url(download_url: str) -> None:
         or parsed.password is not None
         or port not in {None, 443}
         or parsed.fragment
+        or not hostname.lower().endswith(TRUSTED_DOWNLOAD_HOST_SUFFIXES)
     ):
         raise ActionFailure(INVALID_DOWNLOAD_URL_MESSAGE)
 

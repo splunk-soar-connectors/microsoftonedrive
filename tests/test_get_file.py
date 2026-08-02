@@ -113,10 +113,11 @@ def test_get_file_content_endpoint_rejects_dot_segments() -> None:
 @pytest.mark.parametrize(
     "url",
     [
-        "http://download.example/file",
-        "https://user:password@download.example/file",  # pragma: allowlist secret
-        "https://download.example:8443/file",
-        "https://download.example/file#fragment",
+        "http://tenant.sharepoint.com/file",
+        "https://user:password@tenant.sharepoint.com/file",  # pragma: allowlist secret
+        "https://tenant.sharepoint.com:8443/file",
+        "https://tenant.sharepoint.com/file#fragment",
+        "https://download.example/file",
         "not-a-url",
     ],
 )
@@ -135,17 +136,27 @@ def test_validate_download_url_rejects_non_global_addresses(address: str) -> Non
         patch("src.actions.get_file.socket.getaddrinfo", return_value=answers),
         pytest.raises(ActionFailure, match="unsafe file download URL"),
     ):
-        _validate_download_url("https://download.example/file")
+        _validate_download_url("https://tenant.sharepoint.com/file")
 
 
-def test_validate_download_url_accepts_only_global_answers() -> None:
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://tenant.sharepoint.com/file",
+        "https://public.dm.files.1drv.com/file",
+        "https://download.onedrive.com/file",
+    ],
+)
+def test_validate_download_url_accepts_only_trusted_hosts_with_global_answers(
+    url: str,
+) -> None:
     answers = [
         (None, None, None, None, ("8.8.8.8", 443)),
         (None, None, None, None, ("2606:4700:4700::1111", 443, 0, 0)),
     ]
 
     with patch("src.actions.get_file.socket.getaddrinfo", return_value=answers):
-        _validate_download_url("https://download.example/file")
+        _validate_download_url(url)
 
 
 def test_download_validates_before_creating_temporary_file(tmp_path) -> None:
