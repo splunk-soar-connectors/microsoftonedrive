@@ -11,6 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import hmac
+
 from soar_sdk.app import App
 from soar_sdk.webhooks.models import WebhookRequest, WebhookResponse
 
@@ -19,12 +21,24 @@ from ..consts import (
     AUTHORIZATION_ERROR_STATE_KEY,
     AUTHORIZATION_URL_STATE_KEY,
     OAUTH_CALLBACK_ROUTE,
+    OAUTH_NONCE_STATE_KEY,
     OAUTH_START_ROUTE,
     REDIRECT_URI_STATE_KEY,
 )
 
 
 def oauth_start(request: WebhookRequest) -> WebhookResponse:
+    presented_nonce = (request.query.get("state_nonce") or [""])[0]
+    expected_nonce = request.asset.auth_state.get(OAUTH_NONCE_STATE_KEY, "")
+    if (
+        not expected_nonce
+        or not presented_nonce
+        or not hmac.compare_digest(presented_nonce, expected_nonce)
+    ):
+        return WebhookResponse.text_response(
+            "OAuth state mismatch.",
+            status_code=400,
+        )
     return WebhookResponse(
         status_code=302,
         headers=[("Location", request.asset.auth_state[AUTHORIZATION_URL_STATE_KEY])],
@@ -42,6 +56,17 @@ def oauth_callback(request: WebhookRequest) -> WebhookResponse:
     query = {
         name: values[0] if values else "" for name, values in request.query.items()
     }
+    callback_asset_id, separator, callback_nonce = query.get("state", "").partition(".")
+    expected_nonce = request.asset.auth_state.get(OAUTH_NONCE_STATE_KEY, "")
+    if (
+        not separator
+        or callback_asset_id != str(request.asset_id)
+        or not expected_nonce
+        or not hmac.compare_digest(callback_nonce, expected_nonce)
+    ):
+        raise ValueError("OAuth state mismatch.")
+
+    request.asset.auth_state.pop(OAUTH_NONCE_STATE_KEY, None)
     if "error" in query:
         message = f"Error: {query['error']}"
         if query.get("error_description"):
@@ -52,8 +77,8 @@ def oauth_callback(request: WebhookRequest) -> WebhookResponse:
             status_code=400,
         )
 
-    if query["state"] != str(request.asset_id):
-        raise ValueError("OAuth state mismatch.")
+    if not query.get("code"):
+        raise ValueError("OAuth authorization code is missing.")
 
     flow.set_authorization_code(query["code"])
     return WebhookResponse.text_response(

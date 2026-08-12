@@ -20,7 +20,7 @@ from soar_sdk.params import Param, Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
-from ..graph import get_graph_client
+from ..graph import encode_graph_id, encode_graph_path, get_graph_client
 from ..target_user import resolve_target_user_id, target_user_id_param
 
 
@@ -76,9 +76,9 @@ class DeleteFileOutput(ActionOutput):
 
 
 def _get_delegated_delete_file_endpoint(params: DeleteFileParams) -> str:
-    drive_id = params.drive_id or ""
-    file_id = params.file_id or ""
-    file_path = (params.file_path or "").strip("/\\")
+    drive_id = encode_graph_id(params.drive_id or "")
+    file_id = encode_graph_id(params.file_id or "")
+    file_path = encode_graph_path((params.file_path or "").strip("/\\"))
 
     if not file_id and not file_path:
         raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
@@ -102,9 +102,9 @@ def _get_delegated_delete_file_endpoint(params: DeleteFileParams) -> str:
 def _get_client_credentials_delete_file_endpoint(
     params: DeleteFileParams, asset: Asset
 ) -> str:
-    drive_id = params.drive_id or ""
-    file_id = params.file_id or ""
-    file_path = (params.file_path or "").strip("/\\")
+    drive_id = encode_graph_id(params.drive_id or "")
+    file_id = encode_graph_id(params.file_id or "")
+    file_path = encode_graph_path((params.file_path or "").strip("/\\"))
 
     if not file_id and not file_path:
         raise ActionFailure(MANDATORY_FILE_ID_OR_PATH_MESSAGE)
@@ -120,9 +120,8 @@ def _get_client_credentials_delete_file_endpoint(
             file_path=file_path,
         )
 
-    target_user_id = resolve_target_user_id(
-        params.target_user_id,
-        asset.target_user_id,
+    target_user_id = encode_graph_id(
+        resolve_target_user_id(params.target_user_id, asset.target_user_id)
     )
     if file_id:
         return DELETE_FILE_CLIENT_CREDENTIALS_FILE_ID_ENDPOINT.format(

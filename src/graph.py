@@ -11,9 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+import json
+from urllib.parse import quote
+from typing import Any
+
 import httpx
 from soar_sdk.auth import OAuthBearerAuth
 from soar_sdk.auth.flows import AuthorizationCodeFlow
+from soar_sdk.exceptions import ActionFailure
 
 from .asset import Asset
 from .auth import (
@@ -22,6 +27,52 @@ from .auth import (
     is_client_credentials_auth,
 )
 from .consts import MICROSOFT_GRAPH_BASE_URL, REDIRECT_URI_STATE_KEY
+
+
+MAX_GRAPH_JSON_BYTES = 10 * 1024 * 1024
+
+
+def encode_graph_id(value: str) -> str:
+    """Encode an opaque value used as one Microsoft Graph path segment."""
+    if value in {".", ".."}:
+        raise ActionFailure("Microsoft Graph identifiers cannot be dot segments")
+    return quote(value, safe="@")
+
+
+def encode_graph_path(value: str) -> str:
+    """Encode a Microsoft Graph item path while retaining its separators."""
+    segments = value.split("/")
+    if any(segment in {".", ".."} for segment in segments):
+        raise ActionFailure("Microsoft Graph paths cannot contain dot segments")
+    return "/".join(encode_graph_id(segment) for segment in segments)
+
+
+def get_bounded_graph_json(
+    graph_client: httpx.Client,
+    endpoint: str,
+    *,
+    max_bytes: int = MAX_GRAPH_JSON_BYTES,
+) -> dict[str, Any]:
+    """Stream and decode one Graph JSON response within a fixed byte budget."""
+    chunks: list[bytes] = []
+    total_bytes = 0
+    with graph_client.stream("GET", endpoint) as response:
+        response.raise_for_status()
+        for chunk in response.iter_bytes():
+            total_bytes += len(chunk)
+            if total_bytes > max_bytes:
+                raise ActionFailure(
+                    "Microsoft Graph response exceeded the response-size limit"
+                )
+            chunks.append(chunk)
+
+    try:
+        payload = json.loads(b"".join(chunks))
+    except (UnicodeDecodeError, json.JSONDecodeError) as e:
+        raise ActionFailure("Microsoft Graph returned invalid JSON") from e
+    if not isinstance(payload, dict):
+        raise ActionFailure("Microsoft Graph returned an invalid response shape")
+    return payload
 
 
 def get_graph_client(

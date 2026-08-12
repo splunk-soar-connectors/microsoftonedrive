@@ -20,7 +20,7 @@ from soar_sdk.params import Param, Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
-from ..graph import get_graph_client
+from ..graph import encode_graph_id, encode_graph_path, get_graph_client
 from ..target_user import resolve_target_user_id, target_user_id_param
 
 
@@ -74,9 +74,9 @@ class DeleteFolderOutput(ActionOutput):
 
 
 def _get_delegated_delete_folder_endpoint(params: DeleteFolderParams) -> str:
-    drive_id = params.drive_id or ""
-    folder_id = params.folder_id or ""
-    folder_path = (params.folder_path or "").strip("/\\")
+    drive_id = encode_graph_id(params.drive_id or "")
+    folder_id = encode_graph_id(params.folder_id or "")
+    folder_path = encode_graph_path((params.folder_path or "").strip("/\\"))
 
     if not folder_id and not folder_path:
         raise ActionFailure(MANDATORY_FOLDER_ID_OR_PATH_MESSAGE)
@@ -100,9 +100,9 @@ def _get_delegated_delete_folder_endpoint(params: DeleteFolderParams) -> str:
 def _get_client_credentials_delete_folder_endpoint(
     params: DeleteFolderParams, asset: Asset
 ) -> str:
-    drive_id = params.drive_id or ""
-    folder_id = params.folder_id or ""
-    folder_path = (params.folder_path or "").strip("/\\")
+    drive_id = encode_graph_id(params.drive_id or "")
+    folder_id = encode_graph_id(params.folder_id or "")
+    folder_path = encode_graph_path((params.folder_path or "").strip("/\\"))
 
     if not folder_id and not folder_path:
         raise ActionFailure(MANDATORY_FOLDER_ID_OR_PATH_MESSAGE)
@@ -118,9 +118,8 @@ def _get_client_credentials_delete_folder_endpoint(
             folder_path=folder_path,
         )
 
-    target_user_id = resolve_target_user_id(
-        params.target_user_id,
-        asset.target_user_id,
+    target_user_id = encode_graph_id(
+        resolve_target_user_id(params.target_user_id, asset.target_user_id)
     )
     if folder_id:
         return DELETE_FOLDER_CLIENT_CREDENTIALS_FOLDER_ID_ENDPOINT.format(

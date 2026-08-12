@@ -22,7 +22,7 @@ from soar_sdk.params import Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
-from ..graph import get_graph_client
+from ..graph import encode_graph_id, get_bounded_graph_json, get_graph_client
 from ..target_user import resolve_target_user_id, target_user_id_param
 
 
@@ -31,6 +31,8 @@ AUTHORIZATION_REQUIRED_MESSAGE = (
 )
 GRAPH_VALUE_FIELD = "value"
 GRAPH_NEXT_LINK_FIELD = "@odata.nextLink"
+MAX_GRAPH_PAGES = 1000
+MAX_DRIVE_RESULTS = 200
 LIST_DRIVES_ENDPOINT = "/me/drives"
 LIST_DRIVES_CLIENT_CREDENTIALS_ENDPOINT = "/users/{target_user_id}/drives"
 
@@ -138,13 +140,28 @@ def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]
     """
     drives: list[dict[str, Any]] = []
     next_endpoint: str | None = endpoint
+    visited_endpoints: set[str] = set()
+    page_count = 0
 
     while next_endpoint:
-        response = graph_client.get(next_endpoint)
-        response.raise_for_status()
-        response_json = response.json()
-        drives.extend(response_json.get(GRAPH_VALUE_FIELD, []))
+        if next_endpoint in visited_endpoints:
+            raise ActionFailure(
+                "Microsoft Graph pagination repeated a continuation URL"
+            )
+        if page_count >= MAX_GRAPH_PAGES:
+            raise ActionFailure("Microsoft Graph pagination exceeded the page limit")
+        visited_endpoints.add(next_endpoint)
+        page_count += 1
+        response_json = get_bounded_graph_json(graph_client, next_endpoint)
+        page_drives = response_json.get(GRAPH_VALUE_FIELD, [])
+        if not isinstance(page_drives, list):
+            raise ActionFailure("Microsoft Graph returned an invalid drive list")
+        if len(drives) + len(page_drives) > MAX_DRIVE_RESULTS:
+            raise ActionFailure("Microsoft Graph exceeded the drive result limit")
+        drives.extend(page_drives)
         next_endpoint = response_json.get(GRAPH_NEXT_LINK_FIELD)
+        if next_endpoint and len(drives) >= MAX_DRIVE_RESULTS:
+            raise ActionFailure("Microsoft Graph exceeded the drive result limit")
 
     return drives
 
@@ -152,9 +169,8 @@ def _get_list_response(graph_client: Any, endpoint: str) -> list[dict[str, Any]]
 def _get_list_drives_endpoint(params: ListDriveParams, asset: Asset) -> str:
     if is_client_credentials_auth(asset):
         return LIST_DRIVES_CLIENT_CREDENTIALS_ENDPOINT.format(
-            target_user_id=resolve_target_user_id(
-                params.target_user_id,
-                asset.target_user_id,
+            target_user_id=encode_graph_id(
+                resolve_target_user_id(params.target_user_id, asset.target_user_id)
             )
         )
 

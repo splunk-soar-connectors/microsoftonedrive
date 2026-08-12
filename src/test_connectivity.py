@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import time
+import secrets
+import urllib.parse
 
 import httpx
 from soar_sdk import logging
@@ -28,6 +30,7 @@ from .consts import (
     AUTHORIZATION_ERROR_STATE_KEY,
     AUTHORIZATION_URL_STATE_KEY,
     MICROSOFT_GRAPH_BASE_URL,
+    OAUTH_NONCE_STATE_KEY,
     REDIRECT_URI_STATE_KEY,
 )
 
@@ -67,6 +70,8 @@ def run_delegated_test_connectivity(
     oauth_start_url: str,
 ) -> None:
     asset.auth_state.pop(AUTHORIZATION_ERROR_STATE_KEY, None)
+    oauth_nonce = secrets.token_urlsafe(32)
+    asset.auth_state[OAUTH_NONCE_STATE_KEY] = oauth_nonce
     flow = get_auth_code_flow(
         asset,
         str(soar.get_asset_id()),
@@ -81,7 +86,10 @@ def run_delegated_test_connectivity(
     logging.info(oauth_callback_url)
     asset.auth_state[REDIRECT_URI_STATE_KEY] = oauth_callback_url
     asset.auth_state[AUTHORIZATION_URL_STATE_KEY] = flow.get_authorization_url()
-    url_for_authorize_request = f"{oauth_start_url}?asset_id={soar.get_asset_id()}&"
+    start_query = urllib.parse.urlencode(
+        {"asset_id": soar.get_asset_id(), "state_nonce": oauth_nonce}
+    )
+    url_for_authorize_request = f"{oauth_start_url}?{start_query}"
 
     logging.info("Please authorize user in a separate tab using URL")
     logging.info(url_for_authorize_request)  # nosemgrep
