@@ -43,6 +43,7 @@ def register_actions(app: App) -> App:
         action_type="investigate",
         render_as="table",
         summary_type=GetFileSummary,
+        read_only=True,
     )
     app.register_action(
         action=list_items,
@@ -51,6 +52,7 @@ def register_actions(app: App) -> App:
         view_handler=display_list_items_view,
         view_template="microsoftonedrive_list_items.html",
         summary_type=ListItemsSummary,
+        read_only=True,
     )
     app.register_action(
         action=list_drive,
@@ -58,6 +60,7 @@ def register_actions(app: App) -> App:
         action_type="investigate",
         render_as="table",
         summary_type=ListDriveSummary,
+        read_only=True,
     )
     app.register_action(
         action=search_file,
@@ -65,6 +68,7 @@ def register_actions(app: App) -> App:
         action_type="investigate",
         render_as="table",
         summary_type=SearchFileSummary,
+        read_only=True,
     )
     app.register_action(
         action=upload_file,
