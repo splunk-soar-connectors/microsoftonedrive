@@ -25,7 +25,7 @@ from soar_sdk.params import Param, Params
 
 from ..asset import Asset
 from ..auth import is_client_credentials_auth
-from ..graph import get_graph_client
+from ..graph import encode_graph_id, get_graph_client
 from ..target_user import resolve_target_user_id, target_user_id_param
 
 
@@ -226,8 +226,8 @@ def _is_filename_fallback_enabled(
 
 
 def _get_delegated_search_endpoint(params: SearchFileParams) -> str:
-    drive_id = params.drive_id or ""
-    folder_id = params.folder_id or ""
+    drive_id = encode_graph_id(params.drive_id or "")
+    folder_id = encode_graph_id(params.folder_id or "")
     search_text = _encode_search_text(params.search_text)
 
     if drive_id:
@@ -268,9 +268,8 @@ def _resolve_client_credentials_drive_id(
     if drive_id:
         return drive_id
 
-    target_user_id = resolve_target_user_id(
-        params.target_user_id,
-        asset.target_user_id,
+    target_user_id = encode_graph_id(
+        resolve_target_user_id(params.target_user_id, asset.target_user_id)
     )
     if graph_client is None:
         raise ActionFailure(GRAPH_CLIENT_REQUIRED_MESSAGE)
@@ -289,7 +288,8 @@ def _resolve_client_credentials_drive_id(
 
 
 def _get_drive_search_endpoint(params: SearchFileParams, drive_id: str) -> str:
-    folder_id = params.folder_id or ""
+    drive_id = encode_graph_id(drive_id)
+    folder_id = encode_graph_id(params.folder_id or "")
     search_text = _encode_search_text(params.search_text)
 
     if folder_id:
@@ -382,12 +382,11 @@ def _get_filename_search_response(
             response_json = response.json()
 
             for item in response_json.get(GRAPH_VALUE_FIELD, []):
+                child_folder_id = encode_graph_id(str(item.get("id") or ""))
                 if normalized_search_text in str(item.get("name") or "").casefold():
                     matches.append(item)
                     if len(matches) >= max_results:
                         break
-
-                child_folder_id = str(item.get("id") or "")
                 if (
                     item.get(FOLDER_FIELD) is not None
                     and child_folder_id

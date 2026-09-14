@@ -169,7 +169,7 @@ def test_client_credentials_actions_override_asset_target_user(
                 folder_path="Parent Folder",
                 folder_name="Reports",
             ),
-            "/drives/drive-id/root:/Parent Folder:/children",
+            "/drives/drive-id/root:/Parent%20Folder:/children",
         ),
     ],
 )
