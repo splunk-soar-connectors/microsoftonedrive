@@ -24,7 +24,7 @@ def test_sdk_auth_partition_encrypts_tokens_at_rest() -> None:
     backend = MagicMock()
     persisted: dict = {}
     backend.load_state.side_effect = lambda: persisted
-    backend.save_state.side_effect = lambda value: persisted.update(value)
+    backend.save_state.side_effect = persisted.update
     auth_state = AssetState(backend, "auth", "42", encrypted=True)
 
     auth_state.put_all(
