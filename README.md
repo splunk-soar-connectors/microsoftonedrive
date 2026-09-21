@@ -1,7 +1,7 @@
 # Microsoft OneDrive
 
 Publisher: Splunk <br>
-Connector Version: 3.1.1 <br>
+Connector Version: 3.1.2 <br>
 Product Vendor: Microsoft <br>
 Product Name: Microsoft OneDrive <br>
 Minimum Product Version: 7.0.0
