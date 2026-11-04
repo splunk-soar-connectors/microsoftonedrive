@@ -20,10 +20,11 @@ from .auth import is_client_credentials_auth
 from .consts import OAUTH_CALLBACK_ROUTE, OAUTH_START_ROUTE
 from .test_connectivity import run_test_connectivity
 from .webhooks import register_webhooks
+from .webhook_runtime import WebhookApp
 
 
 def create_ms_onedrive_soar_connector_app() -> App:
-    app = App(
+    app = WebhookApp(
         name="Microsoft OneDrive",
         app_type="sandbox",
         logo="logo_microsoftonedrive.svg",
